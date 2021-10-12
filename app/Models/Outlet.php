@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Models\BaseModel;
 
-class TradePoint extends BaseModel
+class Outlet extends BaseModel
 {
     /**
      * The attributes that are mass assignable.
