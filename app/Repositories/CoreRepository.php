@@ -27,7 +27,7 @@ abstract class CoreRepository
     }
 
     /**
-     * @return mixed
+     * @return Illuminate\Database\Eloquent\Model
      */
     abstract protected function getModelClass();
 
@@ -35,6 +35,6 @@ abstract class CoreRepository
      * @return Model|\Illuminate\Contracts\Foundation\Application|mixed
      */
     protected function startConditions() {
-        return $this->model->factory();
+        return clone $this->model;
     }
 }

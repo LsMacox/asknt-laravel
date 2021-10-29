@@ -32,6 +32,6 @@ class CreateOutletsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('trade_points');
+        Schema::dropIfExists('outlets');
     }
 }
