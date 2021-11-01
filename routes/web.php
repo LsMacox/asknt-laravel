@@ -17,3 +17,6 @@ use Illuminate\Support\Facades\Route;
 //    return view('welcome');
 //});
 
+Route::any('{any}', function(){
+    include public_path().'/index.html';
+})->where('any', '.*');
