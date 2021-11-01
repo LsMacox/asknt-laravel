@@ -38,7 +38,7 @@ class LoginController extends Controller
         $request->validate([
             'login' => 'required|string|min:2|max:255',
             'password' => 'required|string|min:2|max:255',
-            'device_name' => 'required|string|exists:personal_access_tokens,name',
+            'device_name' => 'required|string',
         ]);
 
 
