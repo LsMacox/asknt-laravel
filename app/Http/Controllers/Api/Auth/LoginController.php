@@ -41,17 +41,18 @@ class LoginController extends Controller
             'device_name' => 'required|string',
         ]);
 
-
         $user = $userRepo->findByLogin($request->login);
+        $userRole = $user->getRoles()->first();
 
-        if (! $user || ! Hash::check($request->password, $user->password)) {
+        if (! $user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
                 'login' => [__('auth.failed')],
             ]);
         }
 
         $user->tokens()->delete();
-        return $user->createToken($request->device_name)->plainTextToken;
+
+        return $user->createToken($request->device_name, ['level:'.$userRole->level])->plainTextToken;
     }
 
 }
