@@ -3,18 +3,25 @@
 namespace App\Models\Wialon;
 
 use App\Models\BaseModel;
+use App\Filters\Filterable;
 
 class WialonConnection extends BaseModel
 {
+    use Filterable;
+
     /**
      * The attributes that are mass assignable.
      *
      * @var string[]
      */
     protected $fillable = [
+        'id',
         'name',
         'carrier_code',
         'host',
+        'token',
+        'created_at',
+        'updated_at',
     ];
 
     /**
@@ -23,6 +30,11 @@ class WialonConnection extends BaseModel
      * @var array
      */
     protected $hidden = [
-        'token',
+//        'token',
+    ];
+
+    protected $casts = [
+        'created_at' => 'timestamp',
+        'updated_at' => 'timestamp',
     ];
 }

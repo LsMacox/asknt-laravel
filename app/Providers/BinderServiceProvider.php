@@ -13,7 +13,6 @@ class BinderServiceProvider extends ServiceProvider
      * @var array
      */
     public $bindings = [
-        'wialon' => Wialon::class,
     ];
 
     /**
@@ -23,6 +22,6 @@ class BinderServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        $this->app->instance('wialon', $this->app->make(Wialon::class));
     }
 }

@@ -16,8 +16,8 @@ class CreateWialonConnectionsTable extends Migration
         Schema::create('wialon_connections', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->smallInteger('carrier_code');
-            $table->string('host')->unique();
+            $table->integer('carrier_code')->unique();
+            $table->string('host');
             $table->string('token')->unique();
             $table->timestamps();
         });

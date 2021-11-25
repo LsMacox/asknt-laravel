@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions name="SI_Avantern_ShipmentStatus_Async_Out" targetNamespace="http://cherkizovo-group.ru/ERP/AvanternShipment"
+                  xmlns:p1="http://cherkizovo-group.ru/ERP/AvanternShipment"
+                  xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy"
+                  xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
+                  xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+    <wsdl:documentation/>
+    <wsp:UsingPolicy wsdl:required="false"/>
+    <wsp:Policy wsu:Id="OP_SI_Avantern_ShipmentStatus_Async_Out"/>
+    <wsdl:types>
+        <xsd:schema targetNamespace="http://cherkizovo-group.ru/ERP/AvanternShipment"
+                    xmlns="http://cherkizovo-group.ru/ERP/AvanternShipment"
+                    xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+            <xsd:element name="MT_Shipment_Avantern_resp" type="DT_Shipment_ERP_resp"/>
+            <xsd:complexType name="DT_Shipment_ERP_resp">
+                <xsd:annotation>
+                    <xsd:appinfo source="http://sap.com/xi/VersionID">07f77f3cbd8011ebc1ea0000007a7632</xsd:appinfo>
+                </xsd:annotation>
+                <xsd:sequence>
+                    <xsd:element name="system" type="xsd:string">
+                        <xsd:annotation>
+                            <xsd:appinfo source="http://sap.com/xi/TextID">3348cf20be2d11ebc8b7cb9c7f000001</xsd:appinfo>
+                        </xsd:annotation>
+                    </xsd:element>
+                    <xsd:element name="waybill">
+                        <xsd:annotation>
+                            <xsd:appinfo source="http://sap.com/xi/TextID">07e5fd3ebd8011ebc451fed17f000001</xsd:appinfo>
+                        </xsd:annotation>
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:element name="number" type="xsd:string" minOccurs="0">
+                                    <xsd:annotation>
+                                        <xsd:appinfo source="http://sap.com/xi/TextID">07e5bb38bd8011ebc742fed17f000001</xsd:appinfo>
+                                        <xsd:documentation>номер маршрутного листа</xsd:documentation>
+                                    </xsd:annotation>
+                                </xsd:element>
+                                <xsd:element name="timestamp" type="xsd:string" minOccurs="0">
+                                    <xsd:annotation>
+                                        <xsd:appinfo source="http://sap.com/xi/TextID">07e5bb39bd8011eb8674fed17f000001</xsd:appinfo>
+                                        <xsd:documentation>TIMESTAMP(версия отправки документа)</xsd:documentation>
+                                    </xsd:annotation>
+                                </xsd:element>
+                                <xsd:element name="processing" type="xsd:string" minOccurs="0">
+                                    <xsd:annotation>
+                                        <xsd:appinfo source="http://sap.com/xi/TextID">07e5fd3abd8011ebc287fed17f000001</xsd:appinfo>
+                                        <xsd:documentation>статус обработки маршрута: &quot;S&quot; - успешная обработка, &quot;E&quot; - ошибка</xsd:documentation>
+                                    </xsd:annotation>
+                                </xsd:element>
+                                <xsd:element name="messages" minOccurs="0">
+                                    <xsd:annotation>
+                                        <xsd:appinfo source="http://sap.com/xi/TextID">07e5fd3dbd8011eba651fed17f000001</xsd:appinfo>
+                                        <xsd:documentation>список сообщений об ошибках, здесь только ошибки</xsd:documentation>
+                                    </xsd:annotation>
+                                    <xsd:complexType>
+                                        <xsd:sequence>
+                                            <xsd:element name="message" minOccurs="0" maxOccurs="unbounded">
+                                                <xsd:annotation>
+                                                    <xsd:appinfo source="http://sap.com/xi/TextID">3348cf21be2d11eba805cb9c7f000001</xsd:appinfo>
+                                                </xsd:annotation>
+                                                <xsd:complexType>
+                                                    <xsd:sequence>
+                                                        <xsd:element name="item_no" type="xsd:string" minOccurs="0">
+                                                            <xsd:annotation>
+                                                                <xsd:appinfo source="http://sap.com/xi/TextID">07e5fd3bbd8011ebcbabfed17f000001</xsd:appinfo>
+                                                                <xsd:documentation>порядковый номер сообщения для маршрута</xsd:documentation>
+                                                            </xsd:annotation>
+                                                        </xsd:element>
+                                                        <xsd:element name="text" type="xsd:string" minOccurs="0">
+                                                            <xsd:annotation>
+                                                                <xsd:appinfo source="http://sap.com/xi/TextID">07e5fd3cbd8011eba850fed17f000001</xsd:appinfo>
+                                                                <xsd:documentation>текст сообщения об ошибке</xsd:documentation>
+                                                            </xsd:annotation>
+                                                        </xsd:element>
+                                                    </xsd:sequence>
+                                                </xsd:complexType>
+                                            </xsd:element>
+                                        </xsd:sequence>
+                                    </xsd:complexType>
+                                </xsd:element>
+                            </xsd:sequence>
+                        </xsd:complexType>
+                    </xsd:element>
+                </xsd:sequence>
+            </xsd:complexType>
+        </xsd:schema>
+    </wsdl:types>
+    <wsdl:message name="MT_Shipment_Avantern_resp">
+        <wsdl:documentation/>
+        <wsdl:part name="MT_Shipment_Avantern_resp" element="p1:MT_Shipment_Avantern_resp"/>
+    </wsdl:message>
+    <wsdl:portType name="SI_Avantern_ShipmentStatus_Async_Out">
+        <wsdl:documentation/>
+        <wsdl:operation name="SI_Avantern_ShipmentStatus_Async_Out">
+            <wsdl:documentation/>
+            <wsp:Policy>
+                <wsp:PolicyReference URI="#OP_SI_Avantern_ShipmentStatus_Async_Out"/>
+            </wsp:Policy>
+            <wsdl:input message="p1:MT_Shipment_Avantern_resp"/>
+        </wsdl:operation>
+    </wsdl:portType>
+    <wsdl:binding name="SI_Avantern_ShipmentStatus_Async_OutBinding" type="p1:SI_Avantern_ShipmentStatus_Async_Out">
+        <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"
+                      xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"/>
+        <wsdl:operation name="SI_Avantern_ShipmentStatus_Async_Out">
+            <soap:operation soapAction="http://sap.com/xi/WebService/soap1.1"
+                            xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"/>
+            <wsdl:input>
+                <soap:body use="literal"
+                           xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"/>
+            </wsdl:input>
+        </wsdl:operation>
+    </wsdl:binding>
+    <wsdl:service name="SI_Avantern_ShipmentStatus_Async_OutService">
+        <wsdl:port name="HTTP_Port" binding="p1:SI_Avantern_ShipmentStatus_Async_OutBinding">
+            <soap:address location="http://mow03-piq01tl.cherkizovsky.net:50000/XISOAPAdapter/MessageServlet?senderParty=&amp;senderService=BC_Avantern&amp;receiverParty=&amp;receiverService=&amp;interface=SI_Avantern_ShipmentStatus_Async_Out&amp;interfaceNamespace=http%3A%2F%2Fcherkizovo-group.ru%2FERP%2FAvanternShipment"
+                          xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"/>
+        </wsdl:port>
+        <wsdl:port name="HTTPS_Port" binding="p1:SI_Avantern_ShipmentStatus_Async_OutBinding">
+            <soap:address location="https://mow03-piq01tl.cherkizovsky.net:50001/XISOAPAdapter/MessageServlet?senderParty=&amp;senderService=BC_Avantern&amp;receiverParty=&amp;receiverService=&amp;interface=SI_Avantern_ShipmentStatus_Async_Out&amp;interfaceNamespace=http%3A%2F%2Fcherkizovo-group.ru%2FERP%2FAvanternShipment"
+                          xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"/>
+        </wsdl:port>
+    </wsdl:service>
+</wsdl:definitions>

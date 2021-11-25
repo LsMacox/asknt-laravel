@@ -28,7 +28,7 @@ trait WialonError {
 
     /// METHODS
     /** error message generator */
-    protected static function error($code = '', $text = ''){
+    public static function error($code = '', $text = ''){
         $code = intval($code);
         if ( isset(self::$errors[$code]) )
             $text = self::$errors[$code].' '.$text;
