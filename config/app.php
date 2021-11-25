@@ -167,6 +167,7 @@ return [
          */
         jeremykenedy\LaravelRoles\RolesServiceProvider::class,
         Adldap\Laravel\AdldapServiceProvider::class,
+        Artisaninweb\SoapWrapper\ServiceProvider::class,
 
         /*
          * Application Service Providers...
@@ -232,8 +233,9 @@ return [
         'URL' => Illuminate\Support\Facades\URL::class,
         'Validator' => Illuminate\Support\Facades\Validator::class,
         'View' => Illuminate\Support\Facades\View::class,
-        'Wialon' => \App\Facades\Wialon\Wialon::class,
-        'Adldap' => Adldap\Laravel\Facades\Adldap::class
+        'Adldap' => Adldap\Laravel\Facades\Adldap::class,
+        'Wialon' => \App\Facades\Wialon::class,
+        'SoapWrapper' => Artisaninweb\SoapWrapper\Facade::class,
     ],
 
 ];
