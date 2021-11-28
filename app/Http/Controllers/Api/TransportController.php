@@ -3,25 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\Wialon\GetBriefInfoTransport;
 use Illuminate\Http\Request;
-use Artisaninweb\SoapWrapper\SoapWrapper;
+use Laminas\Soap\Client as LaminasClient;
+use App;
 
 class TransportController extends Controller
 {
-    /**
-     * @var SoapWrapper
-     */
-    protected $soapWrapper;
-
-    /**
-     * TransportController constructor.
-     * @param SoapWrapper $soapWrapper
-     */
-    public function __construct(SoapWrapper $soapWrapper)
-    {
-        $this->soapWrapper = $soapWrapper;
-    }
 
     /**
      * Получение краткой информации о транспорте
@@ -33,6 +20,17 @@ class TransportController extends Controller
     {
 //        $this->wialonTest();
 //        $this->sapTest();
+        $this->mySapTest();
+    }
+
+    public function mySapTest ()
+    {
+        $wsdl = file_get_contents(route('avantern.shipment.wsdl'));
+        $client = new LaminasClient('https://graphical.weather.gov/xml/DWMLgen/wsdl/ndfdXML.wsdl');
+        dd($client->getFunctions());
+        $res = $client->saveAvanternShipment();
+
+        dd($res);
     }
 
 //    public function shipmentStatusTest () {

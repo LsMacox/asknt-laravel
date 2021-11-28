@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "3a6b11f87f55352e09dbed173e0018dd",
+    "content-hash": "32eeaac1f08fd1868c9ef58da6c60a0c",
     "packages": [
         {
             "name": "adldap2/adldap2",
@@ -128,63 +128,6 @@
                 "source": "https://github.com/Adldap2/Adldap2-Laravel/tree/v6.1.5"
             },
             "time": "2021-02-12T19:09:23+00:00"
-        },
-        {
-            "name": "artisaninweb/laravel-soap",
-            "version": "0.3.0.10",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/notfalsedev/laravel-soap.git",
-                "reference": "809073fe1116e3e3daadcf8571fc58b0a9603574"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/notfalsedev/laravel-soap/zipball/809073fe1116e3e3daadcf8571fc58b0a9603574",
-                "reference": "809073fe1116e3e3daadcf8571fc58b0a9603574",
-                "shasum": ""
-            },
-            "require": {
-                "ext-soap": "*",
-                "php": ">=5.4.0"
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "providers": [
-                        "Artisaninweb\\SoapWrapper\\ServiceProvider"
-                    ],
-                    "aliases": {
-                        "SoapWrapper": "Artisaninweb\\SoapWrapper\\Facade"
-                    }
-                }
-            },
-            "autoload": {
-                "psr-0": {
-                    "Artisaninweb\\SoapWrapper": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Michael van de Rijt",
-                    "email": "me@mvdrijt.com"
-                }
-            ],
-            "description": "A SoapClient wrapper integration for Laravel",
-            "keywords": [
-                "client",
-                "laravel",
-                "soap",
-                "wrapper"
-            ],
-            "support": {
-                "issues": "https://github.com/notfalsedev/laravel-soap/issues",
-                "source": "https://github.com/notfalsedev/laravel-soap/tree/0.3.0.10"
-            },
-            "time": "2021-05-04T14:48:03+00:00"
         },
         {
             "name": "asm89/stack-cors",

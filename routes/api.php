@@ -20,7 +20,6 @@ Route::prefix('avantern')->group(function () {
     Route::name('avantern.shipment')->post('/shipment', [\App\Http\Controllers\Api\AvanternSoapShipmentController::class, 'soapServer']);
 });
 
-
 Route::middleware('auth:sanctum')->namespace('Api')->group(function () {
     Route::get('transport/brief-info', 'TransportController@getBriefInfo');
 

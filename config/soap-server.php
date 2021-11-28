@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'wsdl_cache_enabled' => env('WSDL_CACHE_ENABLED', true),
+    'wsdl_cache_enabled' => env('WSDL_CACHE_ENABLED', false),
 
     'wsdl_formatting_enabled' => env('WSDL_FORMATTING_ENABLED', false),
 
