@@ -26,7 +26,7 @@ class TransportController extends Controller
     public function mySapTest ()
     {
         $wsdl = file_get_contents(route('avantern.shipment.wsdl'));
-        $client = new LaminasClient('https://graphical.weather.gov/xml/DWMLgen/wsdl/ndfdXML.wsdl');
+        $client = new LaminasClient(route('avantern.shipment.wsdl'));
         dd($client->getFunctions());
         $res = $client->saveAvanternShipment();
 
