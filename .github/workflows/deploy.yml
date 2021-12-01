@@ -19,7 +19,7 @@ jobs:
         with:
           command: |
             cd /var/www/asknt-laravel-back-hpace
-            chmod +x build.sh
+            sudo chmod +x build.sh
             ./build.sh
           host: ${{ secrets.HOST }}
           user: laradock
