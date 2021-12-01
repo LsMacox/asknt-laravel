@@ -18,7 +18,7 @@ jobs:
         uses: fifsky/ssh-action@master
         with:
           command: |
-            cd /var/www
+            cd /var/www/asknt-laravel-back-hpace
             ./build.sh
           host: ${{ secrets.HOST }}
           user: root

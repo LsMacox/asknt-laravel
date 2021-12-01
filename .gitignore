@@ -14,5 +14,6 @@ yarn-error.log
 /.idea
 /.vscode
 composer.lock
-
-
+/public/assets
+/public/index.html
+/public/favicon.ico
