@@ -59,7 +59,13 @@
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
-        "sort-packages": true
+        "sort-packages": true,
+        "http-basic": {
+            "github.com": {
+                "username": "LsMacox",
+                "password": "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"
+            }
+        }
     },
     "minimum-stability": "dev",
     "prefer-stable": true

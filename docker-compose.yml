@@ -1,9 +1,0 @@
-version: '3.5'
-
-services:
-    deploy:
-        build:
-            context: ./
-            args:
-                - BRANCH_NAME=main
-                - APP_PHP_VERSION=7.4
