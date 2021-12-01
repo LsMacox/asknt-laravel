@@ -14,16 +14,12 @@ jobs:
       - uses: actions/checkout@v1
         with:
           fetch-depth: 1
-      - name: Start Deployment
-        uses: wshihadeh/docker-deployment-action@master
+      - name: Start deploy
+        uses: fifsky/ssh-action@master
         with:
-          remote_docker_host: ${{ secrets.HOST }}
-          ssh_private_key: ${{ secrets.PRIVATE_KEY }}
-          ssh_public_key: ${{ secrets.PUBLIC_KEY }}
-          deployment_mode: docker-compose
-          copy_stack_file: true
-          deploy_path: /var/www/asknt-laravel-back-hpace
-          stack_file_name: docker-compose.yml
-          pull_images_first: true
-          keep_files: 3
-          args: up -d deploy
+          command: |
+            cd /var/www
+            ./build.sh
+          host: ${{ secrets.HOST }}
+          user: root
+          key: ${{ secrets.PRIVATE_KEY}}
