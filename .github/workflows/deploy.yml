@@ -18,9 +18,8 @@ jobs:
         uses: fifsky/ssh-action@master
         with:
           command: |
-            cd /var/www/asknt-laravel-back-hpace |
-            chmod +x build.sh |
-            ./build.sh
+            chmod +x /var/www/asknt-laravel-back-hpace/build.sh |
+            ./var/www/asknt-laravel-back-hpacebuild.sh
           host: ${{ secrets.HOST }}
           user: laradock
           key: ${{ secrets.PRIVATE_KEY}}
