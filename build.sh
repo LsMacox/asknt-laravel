@@ -26,6 +26,9 @@ fi
 COMPOSER_WORK_DIR=./
 COMPOSER_ARGS='-n --working-dir='"${COMPOSER_WORK_DIR}"' --ignore-platform-reqs'
 
+git fetch origin ${BUILD_GIT_BRANCH}
+git reset --hard origin/${BUILD_GIT_BRANCH}
+
 DIR_VENDOR='vendor'
 if [ -d "$DIR_VENDOR" ];
 then
@@ -34,8 +37,7 @@ else
     composer install --no-cache ${COMPOSER_ARGS}
 fi
 
-git fetch origin ${BUILD_GIT_BRANCH}
-git reset --hard origin/${BUILD_GIT_BRANCH}
 php artisan key:generate
+php artisan migrate
 php artisan config:cache
 php artisan storage:link
