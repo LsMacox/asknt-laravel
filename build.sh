@@ -12,8 +12,8 @@ if [ -f .env ]; then
     export $(cat .env | grep -v '#' | awk '/=/ {print $1}')
 fi
 
-if [ -n "$PHP_VERSION" ]; then PHP_VERSION='7.4'; fi
-if [ -n "$BUILD_GIT_BRANCH" ]; then BUILD_GIT_BRANCH='main'; fi
+if [ -z "$PHP_VERSION" ]; then PHP_VERSION='7.4'; fi
+if [ -z "$BUILD_GIT_BRANCH" ]; then BUILD_GIT_BRANCH='main'; fi
 
 COMPOSER_ARGS='-n --ignore-platform-reqs'
 
