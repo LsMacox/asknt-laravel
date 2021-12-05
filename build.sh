@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -a
 
@@ -15,9 +15,10 @@ if [ -z "$BUILD_GIT_BRANCH" ]; then BUILD_GIT_BRANCH='main'; fi
 git fetch origin ${BUILD_GIT_BRANCH}
 git reset --hard origin/${BUILD_GIT_BRANCH}
 
+
 composer install
 
 php artisan key:generate
-php artisan migrate
 php artisan config:cache
+php artisan migrate
 php artisan storage:link

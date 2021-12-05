@@ -18,10 +18,10 @@ jobs:
         uses: fifsky/ssh-action@master
         with:
           command: |
-            cd /var/www/asknt-laravel-back-hpace |
-            chmod +x build.sh |
+            cd /var/www/asknt-laravel-back-hpace
+            chmod +x build.sh
             ./build.sh
           host: ${{ secrets.HOST }}
-          user: laradock
+          user: root
           key: ${{ secrets.PRIVATE_KEY}}
           port: 2222
