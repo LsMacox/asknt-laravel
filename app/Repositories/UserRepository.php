@@ -15,7 +15,15 @@ class UserRepository extends CoreRepository
     }
 
     public function findByLogin (string $login) {
-        return $this->startConditions()->where('email', $login)
-            ->orWhere('name', $login)->first();
+        return $this->startConditions()
+            ->where('email', $login)
+            ->orWhere('name', $login)
+            ->first();
+    }
+
+    public function getRoleById (int $id) {
+        return $this->startConditions()
+            ->find($id)
+            ->getRoles()->first();
     }
 }

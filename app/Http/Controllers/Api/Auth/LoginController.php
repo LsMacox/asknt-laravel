@@ -42,7 +42,7 @@ class LoginController extends Controller
         ]);
 
         $user = $userRepo->findByLogin($request->login);
-        $userRole = $user->getRoles()->first();
+        $userRole = $userRepo->getRoleById($user->id);
 
         if (! $user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
