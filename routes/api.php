@@ -16,8 +16,8 @@ use Illuminate\Support\Facades\Route;
 Route::post('/login', [\App\Http\Controllers\Api\Auth\LoginController::class, 'token'])->name('api.login');
 
 Route::prefix('avantern')->group(function () {
-    Route::name('avantern.shipment.wsdl')->get('/shipment.wsdl', [\App\Http\Controllers\Api\AvanternSoapShipmentController::class, 'wsdlProvider']);
-    Route::name('avantern.shipment')->post('/shipment', [\App\Http\Controllers\Api\AvanternSoapShipmentController::class, 'soapServer']);
+    Route::name('avantern.shipment.wsdl')->get('/shipment.wsdl', [\App\Http\Controllers\Api\SoapServerAvanternShipmentController::class, 'wsdlProvider']);
+    Route::name('avantern.shipment')->post('/shipment', [\App\Http\Controllers\Api\SoapServerAvanternShipmentController::class, 'soapServer']);
 });
 
 Route::middleware('auth:sanctum')->namespace('Api')->group(function () {

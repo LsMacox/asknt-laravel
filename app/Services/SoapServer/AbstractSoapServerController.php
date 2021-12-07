@@ -9,9 +9,6 @@ use Illuminate\Routing\ResponseFactory;
 use Illuminate\Contracts\Container\Container;
 use Laminas\Soap\Server\DocumentLiteralWrapper;
 use Illuminate\Routing\Controller as BaseController;
-use App\Services\SoapServer\Wsdl\ComplexTypeStrategy\ArrayOfTypeComplex;
-use App\Services\SoapServer\Wsdl\ComplexTypeStrategy\ComplexTypeStrategyInterface;
-use KDuma\SoapServer\BetterReflectionDiscovery;
 
 abstract class AbstractSoapServerController extends BaseController
 {
@@ -31,6 +28,13 @@ abstract class AbstractSoapServerController extends BaseController
     abstract protected function getWsdlUri(): string;
 
     /**
+     * response wsdl
+     * @param ResponseFactory $responseFactory
+     * @return mixed
+     */
+    abstract public function wsdlProvider(ResponseFactory $responseFactory);
+
+    /**
      * @return string Service name (Defaults to server host class basename)
      */
     protected function getName(): string
@@ -44,14 +48,6 @@ abstract class AbstractSoapServerController extends BaseController
     protected function getFaultExceptionsNames(): array
     {
         return [\Exception::class];
-    }
-
-    /**
-     * @return string[] Complex types to register
-     */
-    protected function getTypes(): array
-    {
-        return [];
     }
 
     /**
@@ -71,22 +67,6 @@ abstract class AbstractSoapServerController extends BaseController
     }
 
     /**
-     * @return string[] Additional headers to sent with WSDL responses
-     */
-    protected function getWsdlHeaders(): array
-    {
-        return config('soap-server.headers.wsdl');
-    }
-
-    /**
-     * @return ComplexTypeStrategyInterface Complex type strategy
-     */
-    protected function getStrategy(): ComplexTypeStrategyInterface
-    {
-        return new ArrayOfTypeComplex;
-    }
-
-    /**
      * @return string[] SOAP server options
      */
     protected function getOptions(): array
@@ -95,59 +75,19 @@ abstract class AbstractSoapServerController extends BaseController
     }
 
     /**
+     * @return string[] Additional headers to sent with WSDL responses
+     */
+    protected function getWsdlHeaders(): array
+    {
+        return config('soap-server.headers.wsdl');
+    }
+
+    /**
      * @return bool Check if WSDL extension cache
      */
     protected function getWsdlCacheEnabled(): bool
     {
         return config('soap-server.wsdl_cache_enabled');
-    }
-
-    /**
-     * @return bool Check if wsdl formatting is enabled
-     */
-    protected function getFormatWsdlOutput(): bool
-    {
-        return config('soap-server.wsdl_formatting_enabled');
-    }
-
-    public function wsdlProvider(ResponseFactory $responseFactory)
-    {
-        $this->disableSoapCacheWhenNeeded();
-
-        // Create wsdl object and register type(s).
-        $wsdl = new Wsdl('wsdl', $this->getEndpoint());
-        $strategy = tap($this->getStrategy(), function (ComplexTypeStrategyInterface $strategy) use ($wsdl) {
-            // Set type(s) on strategy object.
-            $strategy->setContext($wsdl);
-
-            foreach($this->getTypes() as $key => $class) {
-                $strategy->addComplexType($class);
-            }
-        });
-
-        collect($this->getTypes())->each(function($class, $key) use ($wsdl) {
-            $wsdl->addType($class, $key);
-        });
-
-        // Auto-discover and output xml.
-        $autodiscover = new AutoDiscover($strategy, $this->getEndpoint(), null, array_flip($this->getClassmap()));
-
-        $autodiscover->setBindingStyle(['style' => 'document']);
-        $autodiscover->setOperationBodyStyle(['use' => 'literal']);
-
-        $autodiscover->setClass($this->getService());
-        $autodiscover->setServiceName($this->getName());
-        $autodiscover->setDiscoveryStrategy(new BetterReflectionDiscovery());
-
-        $dom = $autodiscover->generate()->toDomDocument();
-
-        if($this->getFormatWsdlOutput()){
-            $dom->preserveWhiteSpace = false;
-            $dom->formatOutput = true;
-            $dom->normalizeDocument();
-        }
-
-        return $responseFactory->make($dom->saveXML(), 200, $this->getWsdlHeaders());
     }
 
     public function soapServer(Container $container, ResponseFactory $responseFactory)
