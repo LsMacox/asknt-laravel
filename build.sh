@@ -15,7 +15,6 @@ if [ -z "$BUILD_GIT_BRANCH" ]; then BUILD_GIT_BRANCH='main'; fi
 git fetch origin ${BUILD_GIT_BRANCH}
 git reset --hard origin/${BUILD_GIT_BRANCH}
 
-rm composer.lock
 composer install
 
 chmod -R 777 storage
