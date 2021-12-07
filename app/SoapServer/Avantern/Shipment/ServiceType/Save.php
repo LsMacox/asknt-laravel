@@ -23,7 +23,7 @@ class Save
      */
     public function saveAvanternShipment(ShipmentData $data)
     {
-        dd('dff');
+        Log::debug('ShipmentData' + json_encode($data));
     }
 
 }
