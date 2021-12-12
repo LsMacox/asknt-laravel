@@ -20,7 +20,7 @@ class CreateOutletsTable extends Migration
             $table->string('address');
             $table->double('lng');
             $table->double('lat');
-            $table->smallInteger('radius');
+            $table->smallInteger('radius')->default(500);
             $table->timestamps();
         });
     }

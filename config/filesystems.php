@@ -35,6 +35,11 @@ return [
             'root' => storage_path('app'),
         ],
 
+        'wsdl' => [
+            'driver' => 'local',
+            'root' => storage_path('wsdl'),
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

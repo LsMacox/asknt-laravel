@@ -3,32 +3,26 @@
 namespace App\Http\Controllers\Api;
 
 use App\Services\SoapServer\AbstractSoapServerController;
-use App\SoapServer\Avantern\Shipment\ServiceType\Save as SoapShipmentService;
+use App\SoapServices\ShipmentSoapService;
 use Illuminate\Routing\ResponseFactory;
-use App\SoapServer\Avantern\Shipment\StructType\ShipmentData;
 
 class SoapServerAvanternShipmentController extends AbstractSoapServerController
 {
     protected function getService(): string
     {
-        return SoapShipmentService::class;
+        return ShipmentSoapService::class;
     }
 
     protected function getWsdlUri(): string
     {
-        return route('avantern.shipment.wsdl');
+        return Storage::disk('wsdl')
+            ->get('avantern/Avantern_Shipment_Service.wsdl');
+//        return route('avantern.shipment.wsdl');2
     }
 
     protected function getEndpoint(): string
     {
         return route('avantern.shipment');
-    }
-
-    protected function getClassmap(): array
-    {
-        return [
-            'tns:shipmentData' => ShipmentData::class,
-        ];
     }
 
     public function wsdlProvider(ResponseFactory $responseFactory)

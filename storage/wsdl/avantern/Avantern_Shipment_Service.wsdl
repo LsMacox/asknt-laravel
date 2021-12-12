@@ -1,13 +1,13 @@
 <wsdl:definitions
     xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
-    xmlns:tns="http://45.12.5.89/api/avantern/shipment"
+    xmlns:tns="http://asknt.test/api/avantern/shipment"
     xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
     name="SoapShipmentServer"
-    targetNamespace="http://45.12.5.89/api/avantern/shipment">
+    targetNamespace="http://asknt.test/api/avantern/shipment">
     <wsdl:documentation />
     <wsdl:types>
-        <xsd:schema targetNamespace="http://45.12.5.89/api/avantern/shipment">
+        <xsd:schema targetNamespace="http://asknt.test/api/avantern/shipment">
             <xsd:element name="saveAvanternShipment" type="tns:shipmentData" />
             <xsd:complexType name="shipmentData">
                 <xsd:sequence>
@@ -156,6 +156,13 @@
                                                 <xsd:annotation>
                                                     <xsd:documentation>
                                                         id склада из SAP, должно передаваться только одно значение 1С или SAP
+                                                    </xsd:documentation>
+                                                </xsd:annotation>
+                                            </xsd:element>
+                                            <xsd:element name="time" type="xsd:string" minOccurs="0">
+                                                <xsd:annotation>
+                                                    <xsd:documentation>
+                                                        плановое время прибытия
                                                     </xsd:documentation>
                                                 </xsd:annotation>
                                             </xsd:element>
@@ -320,7 +327,7 @@
     <wsdl:binding name="SoapShipmentServerBinding" type="tns:SoapShipmentServerPort">
         <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
         <wsdl:operation name="saveAvanternShipment">
-            <soap:operation soapAction="http://45.12.5.89/api/avantern/shipment#saveAvanternShipment"/>
+            <soap:operation soapAction="http://asknt.test/api/avantern/shipment#saveAvanternShipment"/>
             <wsdl:input>
                 <soap:body use="literal"/>
             </wsdl:input>
@@ -328,7 +335,7 @@
     </wsdl:binding>
     <wsdl:service name="SoapShipmentServerService">
         <wsdl:port name="SoapShipmentServerPort" binding="tns:SoapShipmentServerBinding">
-            <soap:address location="http://45.12.5.89/api/avantern/shipment"/>
+            <soap:address location="http://asknt.test/api/avantern/shipment"/>
         </wsdl:port>
     </wsdl:service>
     <wsdl:message name="saveAvanternShipmentIn">

@@ -16,13 +16,23 @@ use Illuminate\Support\Facades\Route;
 Route::post('/login', [\App\Http\Controllers\Api\Auth\LoginController::class, 'token'])->name('api.login');
 
 Route::prefix('avantern')->group(function () {
+    Route::name('avantern.shipment_status.wsdl')->get('/shipment-status.wsdl', function () {
+        return response(Storage::disk('wsdl')
+                ->get('avantern/Avantern_ShipmentStatus_Service.wsdl'), 200, config('soap-server.headers.wsdl'));
+    });
     Route::name('avantern.shipment.wsdl')->get('/shipment.wsdl', [\App\Http\Controllers\Api\SoapServerAvanternShipmentController::class, 'wsdlProvider']);
     Route::name('avantern.shipment')->post('/shipment', [\App\Http\Controllers\Api\SoapServerAvanternShipmentController::class, 'soapServer']);
 });
 
 Route::middleware('auth:sanctum')->namespace('Api')->group(function () {
-    Route::get('transport/brief-info', 'TransportController@getBriefInfo');
+    /* RetailOutletsController */
+    Route::resource('retail-outlets', 'RetailOutletsController');
 
+    /* TransportController */
+    Route::get('transport/brief-info', 'TransportController@getBriefInfo');
+    Route::get('transport/test', 'TransportController@test');
+
+    /* WialonConnectionController */
 //    Route::prefix('wialon-connection')->middleware('level:4')->group(function () {
 //        Route::post('create', 'WialonConnectionController@create');
 //        Route::patch('update', 'WialonConnectionController@update');
