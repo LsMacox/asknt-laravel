@@ -2,14 +2,17 @@
 
 namespace App\Services\Wialon;
 
+use Illuminate\Support\Arr;
+
 /**
  * Class Wialon
  * @package App\Services\Wialon
  */
 class Wialon{
+    private $only_hosts = [];
     private $sid = null;
     private $base_api_url = '';
-    private $default_params = array();
+    private $default_params = [];
 
     /**
      * Wialon constructor.
@@ -105,7 +108,13 @@ class Wialon{
      */
     public function callDefault ($action, $args) {
         $results = [];
-        $connections = config('wialon.connections.default');
+        $connections = collect(config('wialon.connections.default'));
+
+        if (!empty($this->only_hosts)) {
+            $connections = $connections->filter(function ($item) {
+                return in_array($item['host'], $this->only_hosts);
+            });
+        }
 
         foreach ($connections as $connection) {
             ['scheme' => $scheme,
@@ -125,6 +134,15 @@ class Wialon{
         }
 
         return $results;
+    }
+
+    /**
+     * @param array $hosts
+     * @return $this
+     */
+    public function useOnlyHosts (array $hosts = []) {
+        $this->only_hosts = $hosts;
+        return $this;
     }
 
     /**
@@ -164,7 +182,7 @@ class Wialon{
     }
 
     /**
-     * Unknonwn methods handler
+     * Unknown methods handler
      * @param $name
      * @param $args
      * @return bool|string

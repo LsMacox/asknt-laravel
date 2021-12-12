@@ -98,6 +98,7 @@ abstract class AbstractSoapServerController extends BaseController
             $service = $container->make($this->getService());
             $server = new Server($this->getWsdlUri());
             $server->setClass(new DocumentLiteralWrapper($service));
+            $server->setDebugMode(true);
             $server->registerFaultException($this->getFaultExceptionsNames());
             $server->setClassmap($this->getClassmap());
             $server->setOptions($this->getOptions());
@@ -112,6 +113,7 @@ abstract class AbstractSoapServerController extends BaseController
             if ($response instanceof SoapFault) {
                 return $responseFactory->make(self::serverFault($response), 500, $this->getHeaders());
             } else {
+
                 return $responseFactory->make($response, 200, $this->getHeaders());
             }
 
@@ -150,7 +152,7 @@ XML;
     protected function disableSoapCacheWhenNeeded(): void
     {
         if (!$this->getWsdlCacheEnabled()) {
-            ini_set('soap.wsdl_cache_enable', 0);
+            ini_set("soap.wsdl_cache_enabled", false);
             ini_set('soap.wsdl_cache_ttl', 0);
         }
     }
