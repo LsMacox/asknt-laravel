@@ -4,7 +4,6 @@
 namespace App\Repositories;
 
 use App\Models\Wialon\WialonConnection as Model;
-use Illuminate\Http\Request;
 
 class WialonConnectionRepository extends CoreRepository
 {

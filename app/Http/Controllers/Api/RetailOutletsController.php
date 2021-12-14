@@ -4,12 +4,62 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\RetailOutlets\CreateRequest;
+use App\Http\Requests\Api\RetailOutlets\UpdateRequest;
+use App\Http\Resources\OutletResource;
 use App\Models\Outlet;
+use App\Repositories\RetailOutletRepository;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class RetailOutletsController extends Controller
 {
+
+    private $retailOutletRepository;
+
+    /**
+     * RetailOutletsController constructor.
+     */
+    public function __construct()
+    {
+        $this->retailOutletRepository = app(RetailOutletRepository::class);
+    }
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function list(Request $request) {
+        $request->validate([
+            'offset' => 'required|integer',
+            'limit' => 'required|integer',
+            'sortBy' => 'required|string',
+            'sortByDesc' => 'boolean',
+            'search' => 'string|max:255'
+        ]);
+
+        $inp = function ($val) use ($request) {
+            return $request->input($val);
+        };
+
+        $res = $this->retailOutletRepository
+                    ->search($inp('search'));
+
+        $total = $res->count();
+        $items = OutletResource::collection(
+            $res->offset($inp('offset'))
+                ->limit($inp('limit'))
+                ->get()
+                ->sortBy([
+                    [$inp('sortBy'), $inp('sortByDesc') ? 'desc' : 'asc'],
+                ])
+                ->all()
+        );
+
+        return response()->json(
+            compact( 'total', 'items'),
+            200
+        );
+    }
 
     /**
      * Show the form for creating a new resource.
@@ -18,9 +68,11 @@ class RetailOutletsController extends Controller
      */
     public function create(CreateRequest $request)
     {
-        Outlet::create($request->validated());
+        $validated = $request->validated();
 
-        return response('Торговая точка создана', 200);
+        $res = Outlet::create($validated);
+
+        return response()->json(new OutletResource($res), 200);
     }
 
     /**
@@ -30,12 +82,12 @@ class RetailOutletsController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(CreateRequest $request, $id)
+    public function update(UpdateRequest $request, $id)
     {
         $outlet = Outlet::find($id);
         $outlet->update($request->validated());
 
-        return response('Торговая точка обновлена', 200);
+        return response()->json(new OutletResource($outlet), 200);
     }
 
     /**

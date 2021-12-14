@@ -32,10 +32,7 @@ class ShipmentSoapService
         \Log::channel('soap-server')->debug($system.': '.json_encode($waybill));
     }
 
-    /**
-     * @param Validator $validator
-     */
-    protected function handleValidatorErrors (Validator $validator) {
+    protected function handleValidatorErrors () {
         $client = new \Laminas\Soap\Client(route('avantern.shipment_status.wsdl'));
         dd($client->getFunctions());
     }

@@ -26,7 +26,10 @@ Route::prefix('avantern')->group(function () {
 
 Route::middleware('auth:sanctum')->namespace('Api')->group(function () {
     /* RetailOutletsController */
-    Route::resource('retail-outlets', 'RetailOutletsController');
+    Route::get('retail-outlets/list', 'RetailOutletsController@list');
+    Route::post('retail-outlets/create', 'RetailOutletsController@create');
+    Route::patch('retail-outlets/update/{retail_outlet}', 'RetailOutletsController@update');
+    Route::delete('retail-outlets/delete/{retail_outlet}', 'RetailOutletsController@destroy');
 
     /* TransportController */
     Route::get('transport/brief-info', 'TransportController@getBriefInfo');
