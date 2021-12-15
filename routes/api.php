@@ -31,6 +31,12 @@ Route::middleware('auth:sanctum')->namespace('Api')->group(function () {
     Route::patch('retail-outlets/update/{retail_outlet}', 'RetailOutletsController@update');
     Route::delete('retail-outlets/delete/{retail_outlet}', 'RetailOutletsController@destroy');
 
+    /* LoadingZonesController */
+    Route::get('loading-zones/list', 'LoadingZonesController@list');
+    Route::post('loading-zones/create', 'LoadingZonesController@create');
+    Route::patch('loading-zones/update/{retail_outlet}', 'LoadingZonesController@update');
+    Route::delete('loading-zones/delete/{retail_outlet}', 'LoadingZonesController@destroy');
+
     /* TransportController */
     Route::get('transport/brief-info', 'TransportController@getBriefInfo');
     Route::get('transport/test', 'TransportController@test');

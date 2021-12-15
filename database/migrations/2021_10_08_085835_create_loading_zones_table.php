@@ -16,11 +16,11 @@ class CreateLoadingZonesTable extends Migration
         Schema::create('loading_zones', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->integer('id_sap')->unique()->nullable();
-            $table->uuid('id_1c')->unique()->nullable();
+            $table->string('id_sap')->unique()->nullable();
+            $table->string('id_1c')->unique()->nullable();
             $table->double('lng');
             $table->double('lat');
-            $table->smallInteger('radius');
+            $table->smallInteger('radius')->default(500);
             $table->timestamps();
         });
     }
