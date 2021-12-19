@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\RetailOutlets\CreateRequest;
 use App\Http\Requests\Api\RetailOutlets\UpdateRequest;
 use App\Http\Resources\OutletResource;
-use App\Models\Outlet;
+use App\Models\RetailOutlet;
 use App\Repositories\RetailOutletRepository;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -70,7 +70,7 @@ class RetailOutletsController extends Controller
     {
         $validated = $request->validated();
 
-        $res = Outlet::create($validated);
+        $res = RetailOutlet::create($validated);
 
         return response()->json(new OutletResource($res), 200);
     }
@@ -84,7 +84,7 @@ class RetailOutletsController extends Controller
      */
     public function update(UpdateRequest $request, $id)
     {
-        $outlet = Outlet::find($id);
+        $outlet = RetailOutlet::find($id);
         $outlet->update($request->validated());
 
         return response()->json(new OutletResource($outlet), 200);
@@ -98,7 +98,7 @@ class RetailOutletsController extends Controller
      */
     public function destroy($id)
     {
-        Outlet::find($id)->delete();
+        RetailOutlet::find($id)->delete();
 
         return response('', Response::HTTP_NO_CONTENT);
     }

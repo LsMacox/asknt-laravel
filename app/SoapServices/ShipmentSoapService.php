@@ -4,10 +4,19 @@ declare(strict_types=1);
 
 namespace App\SoapServices;
 
+use App\Models\ShipmentList\ShipmentOrders;
+use App\Models\ShipmentList\ShipmentRetailOutlet;
+use App\Repositories\LoadingZoneRepository;
+use App\SoapServices\Struct\ShipmentStatus\DT_Shipment_ERP_resp;
+use App\SoapServices\Struct\ShipmentStatus\message;
+use App\SoapServices\Struct\ShipmentStatus\messages;
+use App\SoapServices\Struct\ShipmentStatus\waybill;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
 use App\Models\ShipmentList\Shipment;
+use Illuminate\Support\Facades\Storage;
 
 
 /**
@@ -16,6 +25,14 @@ use App\Models\ShipmentList\Shipment;
  */
 class ShipmentSoapService
 {
+
+    private $loadingZoneRepository;
+
+    public function __construct()
+    {
+        $this->loadingZoneRepository = app(LoadingZoneRepository::class);
+    }
+
     /**
      * Method to call the operation originally named saveAvanternShipment
      * Meta information extracted from the WSDL
@@ -27,14 +44,78 @@ class ShipmentSoapService
     {
         $validator = $this->validate($waybill);
 
-        dd($validator->errors());
+        if ($validator->fails()) {
+            $this->handleValidatorErrors($system, $waybill, $validator->errors());
+        } else {
+            $this->saveWaybillInDB($system, $validator->validated());
+        }
 
         \Log::channel('soap-server')->debug($system.': '.json_encode($waybill));
     }
 
-    protected function handleValidatorErrors () {
-        $client = new \Laminas\Soap\Client(route('avantern.shipment_status.wsdl'));
-        dd($client->getFunctions());
+    /**
+     * @param string $system
+     * @param $waybill
+     * @param $errors
+     */
+    protected function handleValidatorErrors (string $system, $waybill, $errors)
+    {
+        $messages = [];
+        foreach ($errors->all() as $k => $error) {
+            $struct_message = new message((string) $k, $error);
+            array_push($messages, $struct_message);
+        }
+
+
+
+        $struct_messages = new messages($messages);
+        $struct_waybill = new waybill(
+            $waybill->number,
+            now()->format('Y-m-d H:i:s'),
+            'E',
+            $struct_messages
+        );
+        $struct_DTShipmentERPresp = new DT_Shipment_ERP_resp($system, $struct_waybill);
+        $this->sendShipmentStatus($struct_DTShipmentERPresp);
+    }
+
+    /**
+     * @param string $system
+     * @param $waybill
+     */
+    protected function saveWaybillInDB (string $system, $waybill) {
+        $waybill['timestamp'] = $this->rawDateToIso($waybill['timestamp']);
+        $waybill['date'] = $this->rawDateToIso($waybill['date']);
+        $waybill['mark'] = Shipment::markToBoolean($waybill['mark']);
+
+        $isFirstCreate = !Shipment::where('id', $waybill['number'])->exists();
+        $shipment = Shipment::updateOrCreate(['id' => $waybill['number']], $waybill);
+        $statusDelete = \Str::is(Shipment::STATUS_DELETE, $waybill['status']);
+
+        if (!$statusDelete) {
+            foreach ($waybill['scores']['score'] as $score) {
+                $score['date'] = $this->rawDateToIso($score['date']);
+                $shipmentScores = ShipmentRetailOutlet::updateOrCreate(['id' => $score['score'], 'shipment_id' => $shipment->id], $score);
+
+                foreach ($score['orders']['order'] as $order) {
+                    $order['return'] = ShipmentOrders::returnToBoolean($order['return']);
+                    ShipmentOrders::updateOrCreate(['id' => $order['order'], 'shipment_retail_outlet_id' => $shipmentScores->id], $order);
+                }
+            }
+        }
+
+        if ($isFirstCreate) {
+            $this->wialonCreateGeozones($shipment);
+        }
+
+        $struct_waybill = new waybill(
+            $waybill['number'],
+            now()->format('Y-m-d H:i:s'),
+            'S',
+            new messages([])
+        );
+        $struct_DTShipmentERPresp = new DT_Shipment_ERP_resp($system, $struct_waybill);
+        $this->sendShipmentStatus($struct_DTShipmentERPresp);
     }
 
     /**
@@ -47,9 +128,9 @@ class ShipmentSoapService
 
         return $validator = Validator::make($waybill, [
             'number' => 'required|string',
-            'status' => ['required', 'string', Rule::in(Shipment::ENUM_STATUS)],
-            'timestamp' => 'required|string|max:255',
-            'date' => 'required|date',
+            'status' => ['required', Rule::in(Shipment::ENUM_STATUS)],
+            'timestamp' => 'required|date_format:Y-m-d H:i:s',
+            'date' => 'required|date_format:Y-m-d H:i:s',
             'time' => 'required|string|date_format:H:i',
             'carrier' => 'string|max:255',
             'car' => 'required|string|max:255',
@@ -75,9 +156,9 @@ class ShipmentSoapService
             'scores.score.*.name' => 'required|string|max:255',
             'scores.score.*.legal_name' => 'string|max:255',
             'scores.score.*.adres' => 'required|string|max:255',
-            'scores.score.*.long' => 'required|string|numeric',
-            'scores.score.*.lat' => 'required|string|numeric',
-            'scores.score.*.date' => 'date',
+            'scores.score.*.long' => 'required|numeric',
+            'scores.score.*.lat' => 'required|numeric',
+            'scores.score.*.date' => 'date_format:Y-m-d H:i:s',
             'scores.score.*.arrive_from' => 'string|date_format:H:i',
             'scores.score.*.arrive_to' => 'string|date_format:H:i',
             'scores.score.*.turn' => 'required|numeric|min:0',
@@ -86,8 +167,153 @@ class ShipmentSoapService
             'scores.score.*.orders.order.*.order' => 'required|numeric',
             'scores.score.*.orders.order.*.product' => 'required|string|max:255',
             'scores.score.*.orders.order.*.weight' => 'required|numeric',
-            'scores.score.*.orders.order.*.return' => ['required', 'string', Rule::in(['не возврат', 'возврат'])],
+            'scores.score.*.orders.order.*.return' => ['required', 'string', Rule::in(ShipmentOrders::ENUM_RETURN_STR)],
         ]);
+    }
+
+    /**
+     * @param Shipment $shipment
+     */
+    protected function wialonCreateGeozones (Shipment $shipment) {
+        $loadingZones  = $this->loadingZoneRepository
+            ->withByIdSapOr1c($shipment->stock['idsap'], $shipment->stock['id1c'])
+            ->whereNotNull(['lng', 'lat'])
+            ->get();
+        $retailOutlets = $shipment->retailOutlets()
+            ->whereNotNull(['long', 'lat'])
+            ->get();
+
+        $geoZones = $loadingZones->merge($retailOutlets)->all();
+
+        foreach ($geoZones as $zone) {
+
+            $wSearchParams = json_encode(array(
+                'spec' => [
+                    'itemsType' => 'avl_unit',
+                    'propName' => '',
+                    'propValueMask' => '',
+                    'sortType' => '',
+                    'propType' => '',
+                    'or_logic' => 0
+                ],
+                'force' => 1,
+                'flags' => 8388609,
+                'from' => 0,
+                'to' => 100,
+            ));
+
+
+            $wObject = \Wialon::core_search_items($wSearchParams);
+            $wItems = collect($wObject)
+                ->map(function ($item) {
+                    return collect(json_decode($item)->items)
+                        ->map(function ($item) {
+                            $item->registration_plate = collect($item->pflds)
+                                ->where('n', 'registration_plate')
+                                ->first()
+                                ->v;
+                            return $item;
+                        });
+                });
+
+            $kInWhichValue = $wItems->search(function ($item) use ($shipment) {
+                return $item->contains('registration_plate', $shipment->car)
+                    || $item->contains('registration_plate', $shipment->trailer);
+            });
+
+            if ($kInWhichValue) {
+                $wGeoZonesParams = json_encode(array(
+                    'itemId' => $zone->id,
+                    'id' => 0,
+                    'callMode' => 'create',
+                    'n' => $zone->name,
+                    'd' => 'Геозона создана веб-сервисом',
+                    't' => 3,
+                    'c' => '#D50037',
+                    'min' => '1',
+                    'max' => '19',
+                    'p' => [
+                        [
+                            'x' => $zone->long ?? $zone->lng,
+                            'y' => $zone->lat,
+                            'r' => $zone->radius ?? 100
+                        ]
+                    ]
+                ));
+
+                $wUpdateNotificationParams = json_encode(array(
+                     'itemId' => '',
+					 'id' =>'',
+					 'callMode' => '',
+					 'e' => '',
+					 'n' => '',
+					 'txt' => '',
+					 'ta' => '',
+					 'td' => '',
+					 'ma' => '',
+					 'mmtd' => '',
+					 'cdt' => '',
+					 'mast' => '',
+					 'mpst' => '',
+					 'cp' => '',
+					 'fl' => '',
+					 'tz' => '',
+					 'la' => '',
+					 'un' => [''],
+					 'sch' => [
+                         'f1' => '',
+						'f2' => '',
+						't1' => '',
+						't2' => '',
+						'm' => '',
+						'y' => '',
+						'w' => ''
+					 ],
+					 'ctrl_sch' => [
+                        'f1' => '',
+                        'f2' => '',
+                        't1' => '',
+                        't2' => '',
+                        'm' => '',
+                        'y' => '',
+                        'w' => ''
+                     ],
+					 'trg' => [
+                        't' => '',
+						'p' => [
+                            '' => '',
+						]
+					 ],
+					 'act' => [
+						[
+                            't' => '',
+							'p' => [
+                                '' => '',
+							]
+						]
+					 ]
+                ));
+
+
+                $wUpdate = \Wialon::useOnlyHosts([$kInWhichValue])->resource_update_zone($wGeoZonesParams);
+//                $wUpdate = \Wialon::useOnlyHosts([$kInWhichValue])->resource_update_notification($wUpdateNotificationParams);
+                dd($wUpdate);
+            }
+        }
+    }
+
+    /**
+     * @param DT_Shipment_ERP_resp $DT_Shipment_ERP_resp
+     */
+    protected function sendShipmentStatus(DT_Shipment_ERP_resp $DT_Shipment_ERP_resp) {
+        $login = config('soap-server.wsdl.shipment-status.username');
+        $password = config('soap-server.wsdl.shipment-status.password');
+
+//        $wsdl = route('avantern.shipment_status.wsdl');
+        $wsdl = Storage::disk('wsdl')->path('avantern/Avantern_ShipmentStatus_Service.wsdl');
+
+        $client = new \Laminas\Soap\Client($wsdl, ['login' => $login, 'password' => $password]);
+        $client->SI_ShipmentStatus_Avantern_Async_Out($DT_Shipment_ERP_resp);
     }
 
     /**
@@ -98,23 +324,17 @@ class ShipmentSoapService
     protected function prepareWaybill ($waybill) {
         $waybill = $this->objectToArray($waybill);
 
-        $waybill['status'] = (int) $waybill['status'];
         $waybill['mark'] = mb_strtolower($waybill['mark']);
 
         $scores = $waybill['scores']['score'];
         $scores = $this->wrapAssoc($scores);
 
         $waybill['scores']['score'] = collect($scores)->map(function ($score) {
-            $score['score'] = (int) $score['score'];
-            $score['long'] = (int) $score['long'];
-            $score['lat'] = (int) $score['lat'];
-            $score['turn'] = (int) $score['turn'];
 
             $orders = $score['orders']['order'];
             $orders = $this->wrapAssoc($orders);
 
             $score['orders']['order'] = collect($orders)->map(function ($order) {
-                $order['order'] = (int) $order['order'];
                 $order['return'] = mb_strtolower($order['return']);
                 return $order;
             })->toArray();
@@ -131,6 +351,15 @@ class ShipmentSoapService
      */
     protected function wrapAssoc (array $arr) {
         return Arr::isAssoc($arr) ? [$arr] : $arr;
+    }
+
+    /**
+     * parse raw string date and convert to iso format
+     * @param string $date
+     * @return string
+     */
+    protected function rawDateToIso (string $date) {
+        return Carbon::parse($date)->toIso8601String();
     }
 
     /**

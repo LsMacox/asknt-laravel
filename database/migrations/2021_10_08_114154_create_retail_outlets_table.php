@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateWialonReportsTable extends Migration
+class CreateRetailOutletsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,11 +13,14 @@ class CreateWialonReportsTable extends Migration
      */
     public function up()
     {
-        Schema::create('wialon_reports', function (Blueprint $table) {
+        Schema::create('retail_outlets', function (Blueprint $table) {
             $table->id();
-            $table->string('car_name')->nullable();
-            $table->string('transport_comp')->nullable();
-            $table->string('shipping_warehouse')->nullable();
+            $table->string('name');
+            $table->integer('code')->unique();
+            $table->string('address');
+            $table->double('lng');
+            $table->double('lat');
+            $table->smallInteger('radius')->default(100);
             $table->timestamps();
         });
     }
@@ -29,6 +32,6 @@ class CreateWialonReportsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('wialon_reports');
+        Schema::dropIfExists('retail_outlets');
     }
 }

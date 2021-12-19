@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Models\Wialon;
+namespace App\Models;
 
 use App\Models\BaseModel;
 
-class WialonReports extends BaseModel
+class Reports extends BaseModel
 {
     /**
      * The attributes that are mass assignable.

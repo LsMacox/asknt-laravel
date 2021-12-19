@@ -3,6 +3,8 @@
 namespace App\Models\ShipmentList;
 
 use App\Models\BaseModel;
+use Str;
+use App\Models\ShipmentList\ShipmentRetailOutlet;
 
 class Shipment extends BaseModel
 {
@@ -20,6 +22,13 @@ class Shipment extends BaseModel
     const ENUM_MARK = [self::MARK_OWN, self::MARK_HIRED];
     const ENUM_MARK_STR = [self::MARK_OWN_STR, self::MARK_HIRED_STR];
 
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function retailOutlets()
+    {
+        return $this->hasMany(ShipmentRetailOutlet::class);
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -52,5 +61,13 @@ class Shipment extends BaseModel
       'temperature' => 'array',
       'stock' => 'array',
     ];
+
+    /**
+     * @param ENUM_MARK_STR $mark
+     */
+    public static function markToBoolean (string $mark) {
+        $lMark = Str::lower($mark);
+        return Str::is(self::MARK_OWN_STR, $lMark);
+    }
 
 }

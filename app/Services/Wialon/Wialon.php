@@ -93,7 +93,7 @@ class Wialon{
         curl_setopt_array($ch, $options);
         $result = curl_exec($ch);
 
-        if($result === FALSE)
+        if($result === false)
             $result = '{"error":-1,"message":'.curl_error($ch).'}';
 
         curl_close($ch);
@@ -125,8 +125,9 @@ class Wialon{
             $wialon = new self($scheme, $host, $port);
             $loginResult = $wialon->login($token);
 
+
             if (isset($loginResult['error'])) {
-                $results[$host] = WialonError::error($loginResult['error']);
+                $results[$host] = WialonError::error($loginResult['error'], $loginResult['reason']);
             } else {
                 $res = call_user_func_array(array($wialon, $action), [$args]);
                 $results[$host] = $res;
@@ -161,6 +162,7 @@ class Wialon{
         $result = $this->token_login(json_encode($data));
 
         $json_result = json_decode($result, true);
+
         if(isset($json_result['eid'])) {
             $this->sid = $json_result['eid'];
         }

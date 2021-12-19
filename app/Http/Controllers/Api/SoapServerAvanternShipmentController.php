@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Services\SoapServer\AbstractSoapServerController;
 use App\SoapServices\ShipmentSoapService;
 use Illuminate\Routing\ResponseFactory;
+use Illuminate\Support\Facades\Storage;
 
 class SoapServerAvanternShipmentController extends AbstractSoapServerController
 {
@@ -16,8 +17,8 @@ class SoapServerAvanternShipmentController extends AbstractSoapServerController
     protected function getWsdlUri(): string
     {
         return Storage::disk('wsdl')
-            ->get('avantern/Avantern_Shipment_Service.wsdl');
-//        return route('avantern.shipment.wsdl');2
+            ->path('avantern/Avantern_Shipment_Service.wsdl');
+//        return route('avantern.shipment.wsdl');
     }
 
     protected function getEndpoint(): string
@@ -27,7 +28,10 @@ class SoapServerAvanternShipmentController extends AbstractSoapServerController
 
     public function wsdlProvider(ResponseFactory $responseFactory)
     {
-        $path = storage_path('wsdl/avantern/Avantern_Shipment_Service.wsdl');
-        return $responseFactory->make(file_get_contents($path), 200, $this->getWsdlHeaders());
+        return $responseFactory->make(
+            Storage::disk('wsdl')->get('avantern/Avantern_Shipment_Service.wsdl'),
+            200,
+            $this->getWsdlHeaders()
+        );
     }
 }

@@ -3,7 +3,7 @@
 
 namespace App\Repositories;
 
-use App\Models\Outlet as Model;
+use App\Models\RetailOutlet as Model;
 
 class RetailOutletRepository extends CoreRepository
 {
@@ -14,6 +14,10 @@ class RetailOutletRepository extends CoreRepository
         return Model::class;
     }
 
+    /**
+     * @param $search
+     * @return \Illuminate\Contracts\Container\ContextualBindingBuilder
+     */
     public function search ($search) {
         return $this->startConditions()
             ->when($search, function ($query, $search) {
@@ -23,5 +27,6 @@ class RetailOutletRepository extends CoreRepository
                     ->orWhere('code', 'ilike', "%$search%");
             });
     }
+
 
 }

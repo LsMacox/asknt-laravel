@@ -5,7 +5,7 @@ namespace App\Models;
 use App\Models\BaseModel;
 use App\Filters\Filterable;
 
-class Outlet extends BaseModel
+class RetailOutlet extends BaseModel
 {
 
     use Filterable;

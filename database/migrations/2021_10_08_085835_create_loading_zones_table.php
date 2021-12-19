@@ -18,8 +18,8 @@ class CreateLoadingZonesTable extends Migration
             $table->string('name');
             $table->string('id_sap')->unique()->nullable();
             $table->string('id_1c')->unique()->nullable();
-            $table->double('lng');
-            $table->double('lat');
+            $table->double('lng')->nullable();
+            $table->double('lat')->nullable();
             $table->smallInteger('radius')->default(500);
             $table->timestamps();
         });

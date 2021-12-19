@@ -22,4 +22,15 @@ class LoadingZoneRepository extends CoreRepository
             });
     }
 
+    /**
+     * @param string $idSap
+     * @param string $id1c
+     * @return mixed
+     */
+    public function withByIdSapOr1c ($idSap, $id1c) {
+        return $this->startConditions()
+            ->where('id_sap', $idSap)
+            ->orWhere('id_1c', $id1c);
+    }
+
 }

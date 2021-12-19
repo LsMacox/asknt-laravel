@@ -17,11 +17,16 @@ Route::post('/login', [\App\Http\Controllers\Api\Auth\LoginController::class, 't
 
 Route::prefix('avantern')->group(function () {
     Route::name('avantern.shipment_status.wsdl')->get('/shipment-status.wsdl', function () {
-        return response(Storage::disk('wsdl')
-                ->get('avantern/Avantern_ShipmentStatus_Service.wsdl'), 200, config('soap-server.headers.wsdl'));
+        $wsdl = \Storage::disk('wsdl')->path('avantern/Avantern_ShipmentStatus_Service.wsdl');
+        return response($wsdl, 200, config('soap-server.headers.wsdl'));
     });
     Route::name('avantern.shipment.wsdl')->get('/shipment.wsdl', [\App\Http\Controllers\Api\SoapServerAvanternShipmentController::class, 'wsdlProvider']);
     Route::name('avantern.shipment')->post('/shipment', [\App\Http\Controllers\Api\SoapServerAvanternShipmentController::class, 'soapServer']);
+});
+
+Route::prefix('wialon')->group(function () {
+    Route::get('entrance-to-geofence');
+    Route::get('departure-from-geofence');
 });
 
 Route::middleware('auth:sanctum')->namespace('Api')->group(function () {

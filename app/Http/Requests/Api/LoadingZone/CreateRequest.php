@@ -25,8 +25,8 @@ class CreateRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'id_sap' => 'required|string|max:255|unique:loading_zones,id_sap',
-            'id_1c' => 'required|string|max:255|unique:loading_zones,id_1c',
+            'id_sap' => 'required_without:id_1c|unique:loading_zones,id_sap',
+            'id_1c' => 'required_without:id_sap|unique:loading_zones,id_1c',
             'lng' => 'required|numeric',
             'lat' => 'required|numeric',
             'radius' => 'numeric|max:9999',

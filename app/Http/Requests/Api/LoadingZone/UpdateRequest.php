@@ -25,8 +25,8 @@ class UpdateRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'id_sap' => 'required|string|max:255',
-            'id_1c' => 'required|string|max:255',
+            'id_sap' => 'required_without:id_1c|max:255',
+            'id_1c' => 'required_without:id_sap|max:255',
             'lng' => 'required|numeric',
             'lat' => 'required|numeric',
             'radius' => 'numeric|max:9999',

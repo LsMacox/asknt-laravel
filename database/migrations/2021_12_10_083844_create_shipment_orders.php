@@ -15,7 +15,7 @@ class CreateShipmentOrders extends Migration
     {
         Schema::create('shipment_orders', function (Blueprint $table) {
             $table->integer('id')->unique();
-            $table->foreignId('shipment_retail_outlet_id')->constrained();
+            $table->foreignId('shipment_retail_outlet_id')->constrained()->onDelete('cascade');;
             $table->string('product');
             $table->string('weight')->nullable();
             $table->boolean('return');

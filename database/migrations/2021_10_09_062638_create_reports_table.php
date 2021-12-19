@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateOutletsTable extends Migration
+class CreateReportsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,14 +13,11 @@ class CreateOutletsTable extends Migration
      */
     public function up()
     {
-        Schema::create('outlets', function (Blueprint $table) {
+        Schema::create('reports', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->integer('code')->unique();
-            $table->string('address');
-            $table->double('lng');
-            $table->double('lat');
-            $table->smallInteger('radius')->default(500);
+            $table->string('car_name')->nullable();
+            $table->string('transport_comp')->nullable();
+            $table->string('shipping_warehouse')->nullable();
             $table->timestamps();
         });
     }
@@ -32,6 +29,6 @@ class CreateOutletsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('outlets');
+        Schema::dropIfExists('reports');
     }
 }
