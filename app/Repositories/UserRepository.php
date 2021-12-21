@@ -14,6 +14,10 @@ class UserRepository extends CoreRepository
         return Model::class;
     }
 
+    /**
+     * @param string $login
+     * @return mixed
+     */
     public function findByLogin (string $login) {
         return $this->startConditions()
             ->where('email', $login)
@@ -21,6 +25,10 @@ class UserRepository extends CoreRepository
             ->first();
     }
 
+    /**
+     * @param int $id
+     * @return mixed
+     */
     public function getRoleById (int $id) {
         return $this->startConditions()
             ->find($id)

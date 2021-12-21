@@ -4,12 +4,11 @@ namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use App\Repositories\UserRepository;
 use Adldap\AdldapInterface;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Auth;
+use Illuminate\Support\Facades\RateLimiter;
 
 class LoginController extends Controller
 {
@@ -30,7 +29,6 @@ class LoginController extends Controller
     /**
      * Получение токена для spa
      * @param Request $request
-     * @param UserRepository $userRepo
      * @return mixed
      * @throws ValidationException
      */
@@ -41,18 +39,58 @@ class LoginController extends Controller
             'device_name' => 'required|string',
         ]);
 
-        $user = $userRepo->findByLogin($request->login);
-        $userRole = $userRepo->getRoleById($user->id);
+        if ($this->hasTooManyRequests($request)) {
+            throw ValidationException::withMessages([
+                'login' => [__('auth.throttle', ['time' =>
+                    now()->parse(
+                        RateLimiter::
+                        availableIn($this->throttleKey($request)) + 1
+                    )->format('i') . ' минут.'
+                ])],
+            ]);
+        }
 
-        if (! $user || !Hash::check($request->password, $user->password)) {
+        $isAuth = Auth::attempt(
+            [
+                'email' => $request->login,
+                'password' => $request->password,
+            ]
+        );
+
+        if (!$isAuth) {
             throw ValidationException::withMessages([
                 'login' => [__('auth.failed')],
             ]);
         }
 
-        $user->tokens()->delete();
+        RateLimiter::clear('login:'.$request->ip());
+        $user = Auth::user();
 
+        $userRole = $userRepo->getRoleById($user->id);
         return $user->createToken($request->device_name, ['level:'.$userRole->level])->plainTextToken;
+    }
+
+    /**
+     * @param Request $request
+     * @return mixed
+     */
+    protected function hasTooManyRequests(Request $request)
+    {
+        $maxLoginAttempts = 6 * 2;
+
+        return RateLimiter::tooManyAttempts(
+            $this->throttleKey($request), $maxLoginAttempts
+        );
+    }
+
+    /**
+     * Get the throttle key for the given request.
+     *
+     * @param Request $request
+     * @return string
+     */
+    protected function throttleKey (Request $request): string {
+        return 'login:'.$request->ip();
     }
 
 }

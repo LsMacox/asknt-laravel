@@ -199,7 +199,7 @@ class ShipmentSoapService
                 'force' => 1,
                 'flags' => 8388609,
                 'from' => 0,
-                'to' => 100,
+                'to' => 0,
             ));
 
 
@@ -224,8 +224,10 @@ class ShipmentSoapService
             if ($kInWhichValue) {
                 $wGeoZonesParams = json_encode(array(
                     'itemId' => $zone->id,
-                    'id' => 0,
+                    'id' => $zone->id,
                     'callMode' => 'create',
+                    'w' => 10,
+                    'f' => 32,
                     'n' => $zone->name,
                     'd' => 'Геозона создана веб-сервисом',
                     't' => 3,
@@ -242,54 +244,26 @@ class ShipmentSoapService
                 ));
 
                 $wUpdateNotificationParams = json_encode(array(
-                     'itemId' => '',
-					 'id' =>'',
-					 'callMode' => '',
-					 'e' => '',
-					 'n' => '',
-					 'txt' => '',
-					 'ta' => '',
-					 'td' => '',
-					 'ma' => '',
-					 'mmtd' => '',
-					 'cdt' => '',
-					 'mast' => '',
-					 'mpst' => '',
-					 'cp' => '',
-					 'fl' => '',
-					 'tz' => '',
-					 'la' => '',
-					 'un' => [''],
-					 'sch' => [
-                         'f1' => '',
-						'f2' => '',
-						't1' => '',
-						't2' => '',
-						'm' => '',
-						'y' => '',
-						'w' => ''
-					 ],
-					 'ctrl_sch' => [
-                        'f1' => '',
-                        'f2' => '',
-                        't1' => '',
-                        't2' => '',
-                        'm' => '',
-                        'y' => '',
-                        'w' => ''
-                     ],
+					 'id' => 0,
+					 'callMode' => 'create',
+					 'e' => 1,
+					 'n' => 'Уведомление тест 1',
+					 'txt' => 'Это тестовое уведомление',
+					 'ma' => 0,
+					 'fl' => 0,
+					 'la' => 'ru',
+					 'un' => ['3697'],
 					 'trg' => [
-                        't' => '',
+                        't' => 'driver',
 						'p' => [
-                            '' => '',
+                            'url' => 'http://test.com',
+                            'get' => 1,
 						]
 					 ],
 					 'act' => [
 						[
-                            't' => '',
-							'p' => [
-                                '' => '',
-							]
+                            't' => 'alarm',
+                            'p' => []
 						]
 					 ]
                 ));

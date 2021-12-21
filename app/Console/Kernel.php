@@ -5,6 +5,7 @@ namespace App\Console;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use App\Jobs\GrabWialonData;
+use App\Jobs\GrabADGroups;
 
 class Kernel extends ConsoleKernel
 {
@@ -26,6 +27,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->job(new GrabWialonData)->dailyAt('2:00');
+        $schedule->job(new GrabADGroups)->dailyAt('2:00');
     }
 
     /**
