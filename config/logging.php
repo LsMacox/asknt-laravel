@@ -53,6 +53,12 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
         ],
 
+        'wialon-actions' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/wialon-actions.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+        ],
+
         'daily' => [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),
