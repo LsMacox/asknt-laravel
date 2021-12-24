@@ -28,6 +28,7 @@ class CreateShipmentsTable extends Migration
             $table->string('driver')->nullable();
             $table->string('phone')->nullable();
             $table->jsonb('temperature');
+            $table->boolean('completed')->default(false);
             $table->jsonb('stock');
             $table->timestamps();
         });

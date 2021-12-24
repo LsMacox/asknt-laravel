@@ -27,8 +27,8 @@ class CreateRequest extends FormRequest
             'name' => 'required|string|max:255',
             'code' => 'required|string|unique:outlets,code',
             'address' => 'required|string|max:255',
-            'lng' => 'required|numeric',
-            'lat' => 'required|numeric',
+            'lng' => 'required|numeric|between:-180,180',
+            'lat' => 'required|numeric|between:-90,90',
             'radius' => 'numeric|max:9999',
         ];
     }

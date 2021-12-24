@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Wialon;
 
 use App\Models\BaseModel;
 use App\Filters\Filterable;

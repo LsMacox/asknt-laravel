@@ -25,10 +25,8 @@ class UpdateRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'id_sap' => 'required_without:id_1c|max:255',
-            'id_1c' => 'required_without:id_sap|max:255',
-            'lng' => 'required|numeric',
-            'lat' => 'required|numeric',
+            'lng' => 'required|numeric|between:-180,180',
+            'lat' => 'required|numeric|between:-90,90',
             'radius' => 'numeric|max:9999',
         ];
     }
@@ -37,8 +35,6 @@ class UpdateRequest extends FormRequest
     {
         return [
             'name' => 'Название',
-            'id_sap' => 'id SAP',
-            'id_1c' => 'id 1C',
             'lng' => 'Долгота центра',
             'lat' => 'Широта центра',
             'radius' => 'Радиус зоны',

@@ -15,7 +15,7 @@ class CreateShipmentRetailOutlets extends Migration
     {
         Schema::create('shipment_retail_outlets', function (Blueprint $table) {
             $table->unsignedBigInteger('id')->unique();
-            $table->foreignId('shipment_id')->constrained()->onDelete('cascade');;
+            $table->foreignId('shipment_id')->constrained()->onDelete('cascade');
             $table->string('name');
             $table->string('legal_name')->nullable();
             $table->string('adres');

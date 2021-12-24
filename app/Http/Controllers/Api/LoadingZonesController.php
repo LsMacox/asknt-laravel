@@ -84,10 +84,10 @@ class LoadingZonesController extends Controller
      */
     public function update(UpdateRequest $request, $id)
     {
-        $outlet = LoadingZone::find($id);
-        $outlet->update($request->validated());
+        $loadingZone = LoadingZone::find($id);
+        $loadingZone->update($request->validated());
 
-        return response()->json(new LoadingZoneResource($outlet), 200);
+        return response()->json(new LoadingZoneResource($loadingZone), 200);
     }
 
     /**

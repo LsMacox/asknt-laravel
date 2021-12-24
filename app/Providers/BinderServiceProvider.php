@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\Wialon\WialonResource;
 use Illuminate\Support\ServiceProvider;
 use App\Services\Wialon\Wialon;
 
@@ -23,5 +24,6 @@ class BinderServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->app->instance('wialon', $this->app->make(Wialon::class));
+        $this->app->instance('wialon-resource', $this->app->make(WialonResource::class));
     }
 }

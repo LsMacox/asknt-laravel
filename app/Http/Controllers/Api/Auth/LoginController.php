@@ -18,6 +18,16 @@ class LoginController extends Controller
     protected $ldap;
 
     /**
+     * @var int
+     */
+    protected $maxLoginAttempts = 5;
+
+    /**
+     * @var float|int
+     */
+    protected $decayMinutes = 60;
+
+    /**
      * LoginController constructor.
      * @param AdldapInterface $ldap
      */
@@ -39,16 +49,20 @@ class LoginController extends Controller
             'device_name' => 'required|string',
         ]);
 
+//        dd($this->ldap->search()->setDn('OU=ASCNT,OU=Special,OU=_groups,OU=departments,DC=cherkizovsky,DC=net')->get());
+
         if ($this->hasTooManyRequests($request)) {
             throw ValidationException::withMessages([
                 'login' => [__('auth.throttle', ['time' =>
-                    now()->parse(
+                    (int) now()->parse(
                         RateLimiter::
                         availableIn($this->throttleKey($request)) + 1
                     )->format('i') . ' минут.'
                 ])],
             ]);
         }
+
+        RateLimiter::hit($this->throttleKey($request), $this->decayMinutes * 60);
 
         $isAuth = Auth::attempt(
             [
@@ -63,7 +77,7 @@ class LoginController extends Controller
             ]);
         }
 
-        RateLimiter::clear('login:'.$request->ip());
+        RateLimiter::clear($this->throttleKey($request));
         $user = Auth::user();
 
         $userRole = $userRepo->getRoleById($user->id);
@@ -76,10 +90,8 @@ class LoginController extends Controller
      */
     protected function hasTooManyRequests(Request $request)
     {
-        $maxLoginAttempts = 6 * 2;
-
         return RateLimiter::tooManyAttempts(
-            $this->throttleKey($request), $maxLoginAttempts
+            $this->throttleKey($request), $this->maxLoginAttempts
         );
     }
 
@@ -89,8 +101,8 @@ class LoginController extends Controller
      * @param Request $request
      * @return string
      */
-    protected function throttleKey (Request $request): string {
-        return 'login:'.$request->ip();
+    public function throttleKey (Request $request): string {
+        return sha1(\URL::current().'|'.$request->ip());
     }
 
 }

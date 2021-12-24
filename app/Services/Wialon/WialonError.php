@@ -4,13 +4,18 @@
 namespace App\Services\Wialon;
 
 
+
 /**
- * Wialon errorCode to textMessage converter
- * Class WialonError
+ * Trait WialonError
+ * wialon errorCode to textMessage converter
+ * @package App\Services\Wialon
  */
 trait WialonError {
-    /// PROPERTIES
-    /** list of error messages with codes */
+
+    /**
+     * List of error messages with codes
+     * @var string[]
+     */
     protected static $errors = array(
         1 => 'Invalid session',
         2 => 'Invalid service',
@@ -26,13 +31,21 @@ trait WialonError {
         1003 => 'Only one request of given time is allowed at the moment'
     );
 
-    /// METHODS
-    /** error message generator */
-    public static function error($code = '', $text = ''){
+    /**
+     * Error message generator
+     * @param string|integer $code
+     * @param string $text
+     * @return string
+     */
+    public static function error ($code = '', string $text = '') {
         $code = intval($code);
-        if ( isset(self::$errors[$code]) )
+
+        if ( isset(self::$errors[$code]) ) {
             $text = self::$errors[$code].' '.$text;
+        }
+
         $message = sprintf('%d: %s', $code, $text);
+
         return sprintf('WialonError( %s )', $message);
     }
 }

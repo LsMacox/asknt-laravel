@@ -27,8 +27,8 @@ class CreateRequest extends FormRequest
             'name' => 'required|string|max:255',
             'id_sap' => 'required_without:id_1c|unique:loading_zones,id_sap',
             'id_1c' => 'required_without:id_sap|unique:loading_zones,id_1c',
-            'lng' => 'required|numeric',
-            'lat' => 'required|numeric',
+            'lng' => 'required|numeric|between:-180,180',
+            'lat' => 'required|numeric|between:-90,90',
             'radius' => 'numeric|max:9999',
         ];
     }

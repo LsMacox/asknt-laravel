@@ -26,8 +26,10 @@ Route::prefix('avantern')->group(function () {
 });
 
 Route::prefix('wialon')->group(function () {
-    Route::get('entrance-to-geofence');
-    Route::get('departure-from-geofence');
+    Route::get('door-action', 'WialonActionsController@doorAction')->name('wialon.door-action');
+    Route::get('temp-violation', 'WialonActionsController@tempViolation')->name('wialon.temp-violation');
+    Route::get('entrance-to-geofence', 'WialonActionsController@entranceToGeofence')->name('wialon.entrance-to-geofence');
+    Route::get('departure-from-geofence', 'WialonActionsController@departureFromGeofence')->name('wialon.departure-from-geofence');
 });
 
 Route::middleware('auth:sanctum')->namespace('Api')->group(function () {
@@ -43,9 +45,7 @@ Route::middleware('auth:sanctum')->namespace('Api')->group(function () {
     Route::patch('loading-zones/update/{retail_outlet}', 'LoadingZonesController@update');
     Route::delete('loading-zones/delete/{retail_outlet}', 'LoadingZonesController@destroy');
 
-    /* TransportController */
-    Route::get('transport/brief-info', 'TransportController@getBriefInfo');
-    Route::get('transport/test', 'TransportController@test');
+
 
     /* WialonConnectionController */
 //    Route::prefix('wialon-connection')->middleware('level:4')->middleware('ability:level:4')->group(function () {

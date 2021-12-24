@@ -4,6 +4,7 @@ namespace App\Models\ShipmentList;
 
 use App\Models\BaseModel;
 use App\Models\ShipmentList\ShipmentOrders;
+use App\Models\Wialon\WialonGeofence;
 
 class ShipmentRetailOutlet extends BaseModel
 {
@@ -25,6 +26,14 @@ class ShipmentRetailOutlet extends BaseModel
     }
 
     /**
+     * Get all of the wialon geofences' comments.
+     */
+    public function wialonGeofences()
+    {
+        return $this->morphMany(WialonGeofence::class, 'geofenceable');
+    }
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var string[]
@@ -42,5 +51,17 @@ class ShipmentRetailOutlet extends BaseModel
         'arrive_to',
         'turn',
     ];
+
+    /**
+     * The "booted" method of the model.
+     *
+     * @return void
+     */
+    protected static function booted()
+    {
+        static::deleted(function ($model) {
+            $model->wialonGeofences()->delete();
+        });
+    }
 
 }

@@ -2,8 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\LoadingZone;
+use App\Models\RetailOutlet;
 use App\Models\ShipmentList\Shipment;
 use App\Models\ShipmentList\ShipmentRetailOutlet;
+use App\Observers\LoadingZoneObserver;
+use App\Observers\RetailOutletObserver;
 use App\Observers\ShipmentObserver;
 use App\Observers\ShipmentRetailOutletObserver;
 use Illuminate\Support\ServiceProvider;
@@ -29,5 +33,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Shipment::observe(ShipmentObserver::class);
         ShipmentRetailOutlet::observe(ShipmentRetailOutletObserver::class);
+        LoadingZone::observe(LoadingZoneObserver::class);
+        RetailOutlet::observe(RetailOutletObserver::class);
     }
 }
