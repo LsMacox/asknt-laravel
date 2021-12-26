@@ -25,13 +25,4 @@ class UserRepository extends CoreRepository
             ->first();
     }
 
-    /**
-     * @param int $id
-     * @return mixed
-     */
-    public function getRoleById (int $id) {
-        return $this->startConditions()
-            ->find($id)
-            ->getRoles()->first();
-    }
 }

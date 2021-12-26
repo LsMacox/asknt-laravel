@@ -9,6 +9,7 @@ use Adldap\AdldapInterface;
 use Illuminate\Validation\ValidationException;
 use Auth;
 use Illuminate\Support\Facades\RateLimiter;
+use App\Models\User;
 
 class LoginController extends Controller
 {
@@ -49,8 +50,6 @@ class LoginController extends Controller
             'device_name' => 'required|string',
         ]);
 
-//        dd($this->ldap->search()->setDn('OU=ASCNT,OU=Special,OU=_groups,OU=departments,DC=cherkizovsky,DC=net')->get());
-
         if ($this->hasTooManyRequests($request)) {
             throw ValidationException::withMessages([
                 'login' => [__('auth.throttle', ['time' =>
@@ -63,6 +62,7 @@ class LoginController extends Controller
         }
 
         RateLimiter::hit($this->throttleKey($request), $this->decayMinutes * 60);
+
 
         $isAuth = Auth::attempt(
             [
@@ -78,10 +78,20 @@ class LoginController extends Controller
         }
 
         RateLimiter::clear($this->throttleKey($request));
-        $user = Auth::user();
 
-        $userRole = $userRepo->getRoleById($user->id);
-        return $user->createToken($request->device_name, ['level:'.$userRole->level])->plainTextToken;
+        $user = Auth::user();
+        $role = $user->getRoles()->sortByDesc('level')->first();
+
+        return $user->createToken($request->device_name, ['level:'.$role->level])->plainTextToken;
+    }
+
+    /**
+     * Получение роли пользователя
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getRole () {
+        $role = Auth::user()->getRoles()->sortByDesc('level')->first();
+        return response()->json($role);
     }
 
     /**

@@ -78,7 +78,31 @@ class RetailOutletObserver
      */
     public function deleted(RetailOutlet $retailOutlet)
     {
-        //
+        $shipmentRetailOutlet = ShipmentRetailOutlet::find($retailOutlet->code);
+        $shipment = $shipmentRetailOutlet->shipment()->first();
+        $wialonGeofence = $shipmentRetailOutlet->wialonGeofences()->first();
+
+        $wObjects = WialonResource::getObjectsWithRegPlate();
+        $objectHost = $wObjects->search(function ($item) use ($shipment) {
+            return $item->contains('registration_plate', \Str::lower($shipment->car))
+                || $item->contains('registration_plate', \Str::lower($shipment->trailer));
+        });
+        $wResource = WialonResource::firstResource()[$objectHost];
+
+        if ($wialonGeofence) {
+            $params = [
+                'itemId' => $wResource->id,
+                'id' => $wialonGeofence->id,
+                'callMode' => 'delete',
+            ];
+
+            \Wialon::useOnlyHosts([$objectHost])->resource_update_zone(
+                json_encode($params)
+            );
+
+            $wialonGeofence->delete();
+        }
+
     }
 
     /**

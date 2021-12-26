@@ -13,8 +13,9 @@ class UsersTableSeeder extends Seeder
      */
     public function run()
     {
-        $adminRole = config('roles.models.role')::where('slug', 'admin')->first();
-        $managerRole = config('roles.models.role')::where('slug', 'manager')->first();
+        $adminRole = config('roles.models.role')::where('slug', 'ascntadmin')->first();
+        $managerRole = config('roles.models.role')::where('slug', 'ascntmanager')->first();
+        $dispRole = config('roles.models.role')::where('slug', 'ascntdisp')->first();
 
         if (config('roles.models.defaultUser')::where('email', '=', 'admin@admin.com')->first() === null) {
             $newUser = config('roles.models.defaultUser')::create([
@@ -26,7 +27,7 @@ class UsersTableSeeder extends Seeder
             $newUser->attachRole($adminRole);
         }
 
-        if (config('roles.models.defaultUser')::where('email', '=', 'user@user.com')->first() === null) {
+        if (config('roles.models.defaultUser')::where('email', '=', 'manager@manager.com')->first() === null) {
             $newUser = config('roles.models.defaultUser')::create([
                 'name'     => 'Manager',
                 'email'    => 'manager@manager.com',
@@ -36,14 +37,14 @@ class UsersTableSeeder extends Seeder
             $newUser->attachRole($managerRole);
         }
 
-        if (config('roles.models.defaultUser')::where('email', '=', 'user@user.com')->first() === null) {
+        if (config('roles.models.defaultUser')::where('email', '=', 'disp@disp.com')->first() === null) {
             $newUser = config('roles.models.defaultUser')::create([
                 'name'     => 'Disp',
                 'email'    => 'disp@disp.com',
                 'password' => bcrypt('password'),
             ]);
 
-            $newUser->attachRole($managerRole);
+            $newUser->attachRole($dispRole);
         }
     }
 }

@@ -33,19 +33,20 @@ Route::prefix('wialon')->group(function () {
 });
 
 Route::middleware('auth:sanctum')->namespace('Api')->group(function () {
-    /* RetailOutletsController */
-    Route::get('retail-outlets/list', 'RetailOutletsController@list');
-    Route::post('retail-outlets/create', 'RetailOutletsController@create');
-    Route::patch('retail-outlets/update/{retail_outlet}', 'RetailOutletsController@update');
-    Route::delete('retail-outlets/delete/{retail_outlet}', 'RetailOutletsController@destroy');
+    Route::get('user-role', [\App\Http\Controllers\Api\Auth\LoginController::class, 'getRole']);
 
-    /* LoadingZonesController */
-    Route::get('loading-zones/list', 'LoadingZonesController@list');
-    Route::post('loading-zones/create', 'LoadingZonesController@create');
-    Route::patch('loading-zones/update/{retail_outlet}', 'LoadingZonesController@update');
-    Route::delete('loading-zones/delete/{retail_outlet}', 'LoadingZonesController@destroy');
-
-
+    Route::middleware('level:3')->group(function () {
+        /* RetailOutletsController */
+        Route::get('retail-outlets/list', 'RetailOutletsController@list');
+        Route::post('retail-outlets/create', 'RetailOutletsController@create');
+        Route::patch('retail-outlets/update/{retail_outlet}', 'RetailOutletsController@update');
+        Route::delete('retail-outlets/delete/{retail_outlet}', 'RetailOutletsController@destroy');
+        /* LoadingZonesController */
+        Route::get('loading-zones/list', 'LoadingZonesController@list');
+        Route::post('loading-zones/create', 'LoadingZonesController@create');
+        Route::patch('loading-zones/update/{retail_outlet}', 'LoadingZonesController@update');
+        Route::delete('loading-zones/delete/{retail_outlet}', 'LoadingZonesController@destroy');
+    });
 
     /* WialonConnectionController */
 //    Route::prefix('wialon-connection')->middleware('level:4')->middleware('ability:level:4')->group(function () {

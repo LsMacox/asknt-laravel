@@ -89,7 +89,7 @@ class ShipmentSoapService
             $struct_messages
         );
         $struct_DTShipmentERPresp = new DT_Shipment_ERP_resp($system, $struct_waybill);
-        $this->sendShipmentStatus($struct_DTShipmentERPresp);
+//        $this->sendShipmentStatus($struct_DTShipmentERPresp);
     }
 
     /**
@@ -128,7 +128,7 @@ class ShipmentSoapService
             new messages([])
         );
         $struct_DTShipmentERPresp = new DT_Shipment_ERP_resp($system, $struct_waybill);
-        $this->sendShipmentStatus($struct_DTShipmentERPresp);
+//        $this->sendShipmentStatus($struct_DTShipmentERPresp);
     }
 
     /**
