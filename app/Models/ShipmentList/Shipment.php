@@ -3,8 +3,9 @@
 namespace App\Models\ShipmentList;
 
 use App\Models\BaseModel;
-use Str;
 use App\Models\ShipmentList\ShipmentRetailOutlet;
+use App\Models\Wialon\WialonNotification;
+use Str;
 
 class Shipment extends BaseModel
 {
@@ -28,6 +29,14 @@ class Shipment extends BaseModel
     public function retailOutlets()
     {
         return $this->hasMany(ShipmentRetailOutlet::class);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function wialonNotifications()
+    {
+        return $this->hasMany(WialonNotification::class);
     }
 
     /**

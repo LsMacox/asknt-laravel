@@ -89,7 +89,7 @@ class ShipmentSoapService
             $struct_messages
         );
         $struct_DTShipmentERPresp = new DT_Shipment_ERP_resp($system, $struct_waybill);
-//        $this->sendShipmentStatus($struct_DTShipmentERPresp);
+        $this->sendShipmentStatus($struct_DTShipmentERPresp);
     }
 
     /**
@@ -128,7 +128,7 @@ class ShipmentSoapService
             new messages([])
         );
         $struct_DTShipmentERPresp = new DT_Shipment_ERP_resp($system, $struct_waybill);
-//        $this->sendShipmentStatus($struct_DTShipmentERPresp);
+        $this->sendShipmentStatus($struct_DTShipmentERPresp);
     }
 
     /**
@@ -319,14 +319,12 @@ class ShipmentSoapService
                                 });
 
         foreach (self::WIALON_NOTIFICATION_NAMES as $name) {
-            $notification = collect($resource->unf)->where('n', $name)->first();
-
             $params = [
                 'itemId' => $resource->id,
-                'id' => optional($notification)->id ?? 0,
-                'callMode' => $notification ? 'update' : 'create',
+                'id' => 0,
+                'callMode' => 'create',
                 'e' => 1,
-                'n' => $name,
+                'n' => '['.$wObject->nm.']: '.$name,
                 'txt' => 'zone=%ZONE%&zones_all=%ZONES_MIN%&date=%CURR_TIME%&location=%LOCATION%&unit=%UNIT%&unit_id=%UNIT_ID%',
                 'ta' => 0,
                 'td' => 0,
@@ -359,9 +357,14 @@ class ShipmentSoapService
                 ])
             );
 
-            $wUpdate = \Wialon::useOnlyHosts([$host])->resource_update_notification(
+            $wCreate = \Wialon::useOnlyHosts([$host])->resource_update_notification(
                 json_encode($updateNotificationParams)
             );
+
+            $shipment->wialonNotifications()->create([
+                'id' => $wCreate[$host][0],
+                'name' => $wCreate[$host][1]->n
+            ]);
 
         }
     }
