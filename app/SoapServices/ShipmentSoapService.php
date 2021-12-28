@@ -188,15 +188,11 @@ class ShipmentSoapService
      * @param Shipment $shipment
      */
     protected function initWialon (Shipment $shipment) {
-        $loadingZones = $this->loadingZoneRepository
-            ->builderByIdSapOr1c($shipment->stock['idsap'], $shipment->stock['id1c'])
-            ->whereNotNull(['lng', 'lat'])
-            ->get();
-        $retailOutlets = $shipment->retailOutlets()
+        $retailOutlets = $shipment->shipmentRetailOutlets()
             ->whereNotNull(['long', 'lat'])
             ->get();
 
-        $geofences = $loadingZones->merge($retailOutlets);
+        $geofences = $retailOutlets;
 
         $wObjects = WialonResource::getObjectsWithRegPlate();
         $objectHost = $wObjects->search(function ($item) use ($shipment) {

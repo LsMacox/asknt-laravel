@@ -11,14 +11,6 @@ class WialonConnectionFilter extends QueryFilter
      */
     public function name(string $name)
     {
-        $this->builder->whereRaw("LOWER('.$name.') LIKE '%'". strtolower($name)."'%'");
-    }
-
-    /**
-     * @param string $host
-     */
-    public function host(string $host)
-    {
-        $this->builder->whereRaw("LOWER('.$host.') LIKE '%'". strtolower($host)."'%'");
+        $this->builder->where("LOWER('.$name.') LIKE '%'". strtolower($name)."'%'");
     }
 }

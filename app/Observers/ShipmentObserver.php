@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\LoadingZone;
 use App\Models\ShipmentList\Shipment;
+use App\Facades\WialonResource;
 
 
 class ShipmentObserver
@@ -29,6 +30,31 @@ class ShipmentObserver
     public function updated(Shipment $shipment)
     {
         $this->updateOrCreateLoadingZone($shipment);
+
+        if ($shipment->completed) {
+            $wObjects = WialonResource::getObjectsWithRegPlate();
+            $objectHost = $wObjects->search(function ($item) use ($shipment) {
+                return $item->contains('registration_plate', \Str::lower($shipment->car))
+                    || $item->contains('registration_plate', \Str::lower($shipment->trailer));
+            });
+            $wResource = WialonResource::firstResource()[$objectHost];
+
+            $wialonNotifications = $shipment->wialonNotifications()->get();
+
+            foreach ($wialonNotifications as $notification) {
+                $params = [
+                    'itemId' => $wResource->id,
+                    'id' => $notification->id,
+                    'callMode' => 'delete',
+                ];
+
+                \Wialon::useOnlyHosts([$objectHost])->resource_update_zone(
+                    json_encode($params)
+                );
+
+                $notification->delete();
+            }
+        }
     }
 
     /**
@@ -77,9 +103,6 @@ class ShipmentObserver
             $data['id_sap'] = $shipment->stock['idsap'];
         }
 
-        $loadingZone = LoadingZone::updateOrCreate(
-            $data,
-            ['name' => $shipment->stock['name']]
-        );
+        $shipment->loadingZones()->updateOrCreate(['name' => $shipment->stock['name']]);
     }
 }

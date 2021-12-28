@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\BaseModel;
 use App\Filters\Filterable;
+use App\Models\ShipmentList\Shipment;
 use App\Models\Wialon\WialonGeofence;
 
 class LoadingZone extends BaseModel
@@ -19,6 +20,7 @@ class LoadingZone extends BaseModel
     protected $fillable = [
         'name',
         'id_sap',
+        'shipment_id',
         'id_1c',
         'lng',
         'lat',
@@ -31,6 +33,14 @@ class LoadingZone extends BaseModel
     public function wialonGeofences()
     {
         return $this->morphMany(WialonGeofence::class, 'geofenceable');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function shipment()
+    {
+        return $this->belongsTo(Shipment::class);
     }
 
     /**

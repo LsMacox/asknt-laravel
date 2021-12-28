@@ -25,7 +25,7 @@ class CreateRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'code' => 'required|string|unique:outlets,code',
+            'code' => 'required|string|unique:retail_outlets,code',
             'address' => 'required|string|max:255',
             'lng' => 'required|numeric|between:-180,180',
             'lat' => 'required|numeric|between:-90,90',

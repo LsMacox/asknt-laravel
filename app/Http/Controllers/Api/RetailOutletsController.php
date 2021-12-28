@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\RetailOutlets\CreateRequest;
 use App\Http\Requests\Api\RetailOutlets\UpdateRequest;
-use App\Http\Resources\OutletResource;
+use App\Http\Resources\RetailOutletResource;
 use App\Models\RetailOutlet;
 use App\Repositories\RetailOutletRepository;
 use Illuminate\Http\Request;
@@ -45,7 +45,7 @@ class RetailOutletsController extends Controller
                     ->search($inp('search'));
 
         $total = $res->count();
-        $items = OutletResource::collection(
+        $items = RetailOutletResource::collection(
             $res->offset($inp('offset'))
                 ->limit($inp('limit'))
                 ->get()
@@ -69,10 +69,9 @@ class RetailOutletsController extends Controller
     public function create(CreateRequest $request)
     {
         $validated = $request->validated();
-
         $res = RetailOutlet::create($validated);
 
-        return response()->json(new OutletResource($res), 200);
+        return response()->json(new RetailOutletResource($res), 200);
     }
 
     /**
@@ -85,9 +84,9 @@ class RetailOutletsController extends Controller
     public function update(UpdateRequest $request, $id)
     {
         $outlet = RetailOutlet::find($id);
-        $outlet->update($request->validated());
+        $outlet->update($request->except(['code']));
 
-        return response()->json(new OutletResource($outlet), 200);
+        return response()->json(new RetailOutletResource($outlet), 200);
     }
 
     /**

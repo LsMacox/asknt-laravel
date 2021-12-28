@@ -3,20 +3,35 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Controllers\Controller;
+use App\Http\Resources\ShipmentMainResource;
+use App\Repositories\ShipmentRepository;
+use Illuminate\Http\Request;
 
-use App\Http\Resources\ShipmentResource;
-use App\Models\ShipmentList\Shipment;
-
-
-class ShipmentController
+class ShipmentController extends Controller
 {
 
+    private $shipmentRepository;
+
     /**
+     * DashboardController constructor.
+     */
+    public function __construct()
+    {
+        $this->shipmentRepository = app(ShipmentRepository::class);
+    }
+
+    /**
+     * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function list () {
+    public function list(Request $request) {
+        $items = $this->shipmentRepository->all();
+
         return response()->json(
-            ShipmentResource::collection(Shipment::all())
+            ShipmentMainResource::collection($items),
+            200
+
         );
     }
 

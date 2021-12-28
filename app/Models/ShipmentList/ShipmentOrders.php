@@ -17,7 +17,7 @@ class ShipmentOrders extends BaseModel
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function retailOutlet () {
+    public function shipmentRetailOutlet () {
         return $this->belongsTo(ShipmentRetailOutlet::class);
     }
 

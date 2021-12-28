@@ -16,6 +16,7 @@ class CreateLoadingZonesTable extends Migration
         Schema::create('loading_zones', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->foreignId('shipment_id');
             $table->string('id_sap')->unique()->nullable();
             $table->string('id_1c')->unique()->nullable();
             $table->double('lng')->nullable();

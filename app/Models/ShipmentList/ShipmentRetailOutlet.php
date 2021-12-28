@@ -21,12 +21,12 @@ class ShipmentRetailOutlet extends BaseModel
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    public function orders() {
+    public function shipmentOrders() {
         return $this->hasMany(ShipmentOrders::class);
     }
 
     /**
-     * Get all of the wialon geofences' comments.
+     * Get all of the wialon geofences'.
      */
     public function wialonGeofences()
     {

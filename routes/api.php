@@ -34,7 +34,8 @@ Route::prefix('wialon')->group(function () {
 
 Route::middleware('auth:sanctum')->namespace('Api')->group(function () {
     Route::get('user-role', [\App\Http\Controllers\Api\Auth\LoginController::class, 'getRole']);
-
+    /* DashboardController */
+    Route::post('dashboard/list', 'DashboardController@list');
     /* ShipmentController */
     Route::get('shipment/list', 'ShipmentController@list');
 
@@ -50,6 +51,7 @@ Route::middleware('auth:sanctum')->namespace('Api')->group(function () {
         Route::patch('loading-zones/update/{retail_outlet}', 'LoadingZonesController@update');
         Route::delete('loading-zones/delete/{retail_outlet}', 'LoadingZonesController@destroy');
     });
+
 
     /* WialonConnectionController */
 //    Route::prefix('wialon-connection')->middleware('level:4')->middleware('ability:level:4')->group(function () {

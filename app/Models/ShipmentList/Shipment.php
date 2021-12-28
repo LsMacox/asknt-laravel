@@ -2,13 +2,16 @@
 
 namespace App\Models\ShipmentList;
 
+use App\Filters\Filterable;
 use App\Models\BaseModel;
+use App\Models\LoadingZone;
 use App\Models\ShipmentList\ShipmentRetailOutlet;
 use App\Models\Wialon\WialonNotification;
 use Str;
 
 class Shipment extends BaseModel
 {
+    use Filterable;
 
     const STATUS_DELETE = '-1';
     const STATUS_CREATE = '0';
@@ -26,9 +29,17 @@ class Shipment extends BaseModel
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    public function retailOutlets()
+    public function shipmentRetailOutlets()
     {
         return $this->hasMany(ShipmentRetailOutlet::class);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function loadingZones()
+    {
+        return $this->hasMany(LoadingZone::class);
     }
 
     /**
@@ -58,6 +69,8 @@ class Shipment extends BaseModel
         'driver',
         'phone',
         'temperature',
+        'completed',
+        'not_completed',
         'stock',
     ];
 
