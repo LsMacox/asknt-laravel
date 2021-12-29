@@ -34,12 +34,18 @@ abstract class QueryFilter
         $this->builder = $builder;
 
         foreach ($this->fields() as $field => $value) {
-            if (is_array($value)) {
+            if ($field === 'filter') {
                 foreach ($value as $f => $v) {
-                    $this->execFilters($f, $v);
+                    $method = 'filter'.ucfirst(camel_case($f));
+                    if (is_array($v)) {
+                        foreach ($v as $fv) $this->callMethod($method, $fv);
+                    } else {
+                        $this->callMethod($method, $v);
+                    }
                 }
             } else {
-                $this->execFilters($field, $value);
+                $method = camel_case($field);
+                $this->callMethod($method, $value);
             }
         }
     }
@@ -48,8 +54,7 @@ abstract class QueryFilter
      * @param $method
      * @param $value
      */
-    protected function execFilters ($method, $value) {
-        $method = camel_case($method);
+    protected function callMethod ($method, $value) {
         if (method_exists($this, $method)) {
             call_user_func_array([$this, $method], (array)$value);
         }
