@@ -34,16 +34,24 @@ abstract class QueryFilter
         $this->builder = $builder;
 
         foreach ($this->fields() as $field => $value) {
-            $method = camel_case($field);
-            if (method_exists($this, $method)) {
-                if (is_array($value)) {
-                    foreach ($value as $v) {
-                        call_user_func_array([$this, $method], (array)$v);
-                    }
-                } else {
-                    call_user_func_array([$this, $method], (array)$value);
+            if (is_array($value)) {
+                foreach ($value as $f => $v) {
+                    $this->execFilters($f, $v);
                 }
+            } else {
+                $this->execFilters($field, $value);
             }
+        }
+    }
+
+    /**
+     * @param $method
+     * @param $value
+     */
+    protected function execFilters ($method, $value) {
+        $method = camel_case($method);
+        if (method_exists($this, $method)) {
+            call_user_func_array([$this, $method], (array)$value);
         }
     }
 
@@ -54,17 +62,10 @@ abstract class QueryFilter
     {
         return array_filter(array_map(
             function ($v) {
-                return $this->recursiveTrim($v);
+                return is_string($v) ? trim($v) : $v;
             },
             $this->request->all()
         ));
-    }
-
-    protected function recursiveTrim($v) {
-        if (is_array($v)) {
-            return $this->recursiveTrim($v);
-        }
-        return trim($v);
     }
 
 }

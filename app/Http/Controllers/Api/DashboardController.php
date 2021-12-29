@@ -8,8 +8,6 @@ use App\Http\Requests\Api\ShipmentList\ShipmentFilterRequest;
 use App\Http\Resources\DashboardMainResource;
 use App\Models\ShipmentList\Shipment;
 use App\Repositories\ShipmentRepository;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 
 class DashboardController extends Controller

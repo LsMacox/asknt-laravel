@@ -8,18 +8,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class DashboardMainResource extends JsonResource
 {
 
-    private $loadingZoneRepository;
-
-    /**
-     * RetailOutletsController constructor.
-     * @param  mixed  $resource
-     */
-    public function __construct($resource)
-    {
-        parent::__construct($resource);
-        $this->loadingZoneRepository = app(LoadingZoneRepository::class);
-    }
-
     /**
      * Transform the resource collection into an array.
      *
@@ -28,9 +16,7 @@ class DashboardMainResource extends JsonResource
      */
     public function toArray($request)
     {
-
-        $loading_warehouse = optional($this->loadingZoneRepository
-                                    ->builderByIdSapOr1c($this->stock['idsap'], $this->stock['id1c'])
+        $loading_warehouse = optional($this->loadingZones()
                                     ->first())->name;
 
         return [

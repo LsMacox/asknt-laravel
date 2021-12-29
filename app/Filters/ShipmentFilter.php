@@ -2,8 +2,7 @@
 
 namespace App\Filters;
 
-use Illuminate\Database\Eloquent\Builder;
-use Carbon;
+use Illuminate\Support\Carbon;
 
 class ShipmentFilter extends QueryFilter
 {
@@ -60,8 +59,8 @@ class ShipmentFilter extends QueryFilter
         $this->builder->whereBetween(
             'created_at',
             [
-                Carbon::parse($this->fields()['dateStart']),
-                Carbon::parse($this->fields()['dateEnd'])
+                Carbon::parse($this->fields()['filter']['date_start']),
+                Carbon::parse($this->fields()['filter']['date_end'])
             ]
         );
     }
