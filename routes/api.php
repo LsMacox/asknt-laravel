@@ -12,9 +12,8 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
-// middleware('throttle:login')
-    Route::post('/login', [\App\Http\Controllers\Api\Auth\LoginController::class, 'token'])
-        ->name('api.login');
+Route::post('/login', [\App\Http\Controllers\Api\Auth\LoginController::class, 'token'])
+    ->name('api.login');
 
 Route::prefix('avantern')->group(function () {
     Route::name('avantern.shipment_status.wsdl')->get('/shipment-status.wsdl', function () {

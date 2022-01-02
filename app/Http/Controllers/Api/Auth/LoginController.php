@@ -4,12 +4,10 @@ namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Repositories\UserRepository;
 use Adldap\AdldapInterface;
 use Illuminate\Validation\ValidationException;
 use Auth;
 use Illuminate\Support\Facades\RateLimiter;
-use App\Models\User;
 
 class LoginController extends Controller
 {
@@ -43,12 +41,16 @@ class LoginController extends Controller
      * @return mixed
      * @throws ValidationException
      */
-    public function token(Request $request, UserRepository $userRepo) {
+    public function token(Request $request) {
         $request->validate([
             'login' => 'required|string|min:2|max:255',
             'password' => 'required|string|min:2|max:255',
             'device_name' => 'required|string',
         ]);
+
+        if (Auth::check()) {
+            return Auth::user()->currentAccessToken();
+        }
 
         if ($this->hasTooManyRequests($request)) {
             throw ValidationException::withMessages([
@@ -62,7 +64,6 @@ class LoginController extends Controller
         }
 
         RateLimiter::hit($this->throttleKey($request), $this->decayMinutes * 60);
-
 
         $isAuth = Auth::attempt(
             [
@@ -80,7 +81,25 @@ class LoginController extends Controller
         RateLimiter::clear($this->throttleKey($request));
 
         $user = Auth::user();
-        $role = $user->getRoles()->sortByDesc('level')->first();
+        $adUser = $this->ldap->search()->findByGuid($user->objectguid);
+
+        if ($adUser) {
+            $dbRoles = config('roles.models.role')::all();
+            $adUserGroups = $adUser->getGroups()->filter(function ($group) use ($dbRoles) {
+                return $dbRoles->contains('name', $group->cn[0]);
+            });
+
+            if ($adUserGroups->isEmpty()) {
+                throw ValidationException::withMessages([
+                    'login' => [__('auth.role')],
+                ]);
+            }
+
+            $role = $dbRoles->where('name', $adUserGroups->first()->cn[0])->first();
+            $user->attachRole($role);
+        } else {
+            $role = $user->getRoles()->sortByDesc('level')->first();
+        }
 
         return $user->createToken($request->device_name, ['level:'.$role->level])->plainTextToken;
     }

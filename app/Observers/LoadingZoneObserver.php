@@ -110,6 +110,17 @@ class LoadingZoneObserver
     }
 
     /**
+     * Handle the LoadingZone "deleted" event.
+     *
+     * @param  \App\Models\LoadingZone  $loadingZone
+     * @return void
+     */
+    public function deleted(LoadingZone $loadingZone)
+    {
+        $loadingZone->wialonGeofences()->delete();
+    }
+
+    /**
      * Handle the LoadingZone "restored" event.
      *
      * @param  \App\Models\LoadingZone  $loadingZone

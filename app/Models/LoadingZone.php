@@ -43,16 +43,4 @@ class LoadingZone extends BaseModel
         return $this->belongsTo(Shipment::class);
     }
 
-    /**
-     * The "booted" method of the model.
-     *
-     * @return void
-     */
-    protected static function booted()
-    {
-        static::deleted(function ($model) {
-            $model->wialonGeofences()->delete();
-        });
-    }
-
 }
