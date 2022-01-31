@@ -140,7 +140,7 @@ class ShipmentSoapService
         $waybill = $this->prepareWaybill($waybill);
 
         return $validator = Validator::make($waybill, [
-            'number' => 'required|string',
+            'number' => 'required|string|unique:shipments,id',
             'status' => ['required', Rule::in(Shipment::ENUM_STATUS)],
             'timestamp' => 'required|date_format:Y-m-d H:i:s',
             'date' => 'required|date_format:Y-m-d H:i:s',
@@ -165,7 +165,7 @@ class ShipmentSoapService
             'stock.idsap' => 'prohibited_unless:stock.id1c,|string|max:255',
             'stock.time' => 'string|date_format:H:i',
 
-            'scores.score.*.score' => 'required|numeric',
+            'scores.score.*.score' => 'required|numeric|unique:shipment_retail_outlets,id',
             'scores.score.*.name' => 'required|string|max:255',
             'scores.score.*.legal_name' => 'string|max:255',
             'scores.score.*.adres' => 'required|string|max:255',
@@ -177,7 +177,7 @@ class ShipmentSoapService
             'scores.score.*.turn' => 'required|numeric|min:0',
             'scores.score.*.orders' => 'required|array',
 
-            'scores.score.*.orders.order.*.order' => 'required|numeric',
+            'scores.score.*.orders.order.*.order' => 'required|numeric|unique:shipment_orders,id',
             'scores.score.*.orders.order.*.product' => 'required|string|max:255',
             'scores.score.*.orders.order.*.weight' => 'required|numeric',
             'scores.score.*.orders.order.*.return' => ['required', 'string', Rule::in(ShipmentOrders::ENUM_RETURN_STR)],
