@@ -25,10 +25,9 @@ Route::prefix('avantern')->group(function () {
 });
 
 Route::prefix('wialon')->group(function () {
-    Route::get('door-action', 'WialonActionsController@doorAction')->name('wialon.door-action');
-    Route::get('temp-violation', 'WialonActionsController@tempViolation')->name('wialon.temp-violation');
-    Route::get('entrance-to-geofence', 'WialonActionsController@entranceToGeofence')->name('wialon.entrance-to-geofence');
-    Route::get('departure-from-geofence', 'WialonActionsController@departureFromGeofence')->name('wialon.departure-from-geofence');
+    Route::post('temp-violation', 'WialonActionsController@tempViolation')->name('wialon.temp-violation');
+    Route::post('entrance-to-geofence', 'WialonActionsController@entranceToGeofence')->name('wialon.entrance-to-geofence');
+    Route::post('departure-from-geofence', 'WialonActionsController@departureFromGeofence')->name('wialon.departure-from-geofence');
 });
 
 Route::middleware('auth:sanctum')->namespace('Api')->group(function () {
@@ -37,6 +36,10 @@ Route::middleware('auth:sanctum')->namespace('Api')->group(function () {
     Route::post('dashboard/list', 'DashboardController@list');
     /* ShipmentController */
     Route::get('shipment/list', 'ShipmentController@list');
+
+    Route::middleware('level:1')->group(function () {
+        Route::post('report/list', 'ReportController@list');
+    });
 
     Route::middleware('level:3')->group(function () {
         /* RetailOutletsController */

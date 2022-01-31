@@ -27,30 +27,6 @@ class Shipment extends BaseModel
     const ENUM_MARK_STR = [self::MARK_OWN_STR, self::MARK_HIRED_STR];
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function shipmentRetailOutlets()
-    {
-        return $this->hasMany(ShipmentRetailOutlet::class);
-    }
-
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function loadingZones()
-    {
-        return $this->hasMany(LoadingZone::class);
-    }
-
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function wialonNotifications()
-    {
-        return $this->hasMany(WialonNotification::class);
-    }
-
-    /**
      * The attributes that are mass assignable.
      *
      * @var string[]
@@ -80,9 +56,33 @@ class Shipment extends BaseModel
      * @var array
      */
     protected $casts = [
-      'temperature' => 'array',
-      'stock' => 'array',
+        'temperature' => 'array',
+        'stock' => 'array',
     ];
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function shipmentRetailOutlets()
+    {
+        return $this->hasMany(ShipmentRetailOutlet::class);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function loadingZones()
+    {
+        return $this->hasMany(LoadingZone::class);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function wialonNotifications()
+    {
+        return $this->hasMany(WialonNotification::class);
+    }
 
     /**
      * @param ENUM_MARK_STR $mark

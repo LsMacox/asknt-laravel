@@ -32,7 +32,6 @@ class ShipmentSoapService
     const WIALON_NOTIFICATION_NAMES = [
         'вход в геозону',
         'выход из геозоны',
-        'дверь'
     ];
 
     /**
@@ -57,6 +56,8 @@ class ShipmentSoapService
      */
     public function saveAvanternShipment(string $system, $waybill)
     {
+        \Log::channel('soap-server')->debug($system.': '.json_encode($waybill));
+
         $validator = $this->validate($waybill);
 
         if ($validator->fails()) {
@@ -64,8 +65,6 @@ class ShipmentSoapService
         } else {
             $this->saveWaybillInDB($system, $validator->validated());
         }
-
-        \Log::channel('soap-server')->debug($system.': '.json_encode($waybill));
     }
 
     /**
@@ -76,6 +75,7 @@ class ShipmentSoapService
     protected function handleValidatorErrors (string $system, $waybill, $errors)
     {
         $messages = [];
+
         foreach ($errors->all() as $k => $error) {
             $struct_message = new message((string) $k, $error);
             array_push($messages, $struct_message);
@@ -88,8 +88,8 @@ class ShipmentSoapService
             'E',
             $struct_messages
         );
-        $struct_DTShipmentERPresp = new DT_Shipment_ERP_resp($system, $struct_waybill);
-        $this->sendShipmentStatus($struct_DTShipmentERPresp);
+        $struct_DTShipmentERPResp = new DT_Shipment_ERP_resp($system, $struct_waybill);
+        $this->sendShipmentStatus($struct_DTShipmentERPResp);
     }
 
     /**
@@ -127,8 +127,8 @@ class ShipmentSoapService
             'S',
             new messages([])
         );
-        $struct_DTShipmentERPresp = new DT_Shipment_ERP_resp($system, $struct_waybill);
-        $this->sendShipmentStatus($struct_DTShipmentERPresp);
+        $struct_DTShipmentERPResp = new DT_Shipment_ERP_resp($system, $struct_waybill);
+        $this->sendShipmentStatus($struct_DTShipmentERPResp);
     }
 
     /**
@@ -188,11 +188,9 @@ class ShipmentSoapService
      * @param Shipment $shipment
      */
     protected function initWialon (Shipment $shipment) {
-        $retailOutlets = $shipment->shipmentRetailOutlets()
+        $geofences = $shipment->shipmentRetailOutlets()
             ->whereNotNull(['long', 'lat'])
             ->get();
-
-        $geofences = $retailOutlets;
 
         $wObjects = WialonResource::getObjectsWithRegPlate();
         $objectHost = $wObjects->search(function ($item) use ($shipment) {
@@ -321,7 +319,7 @@ class ShipmentSoapService
                 'callMode' => 'create',
                 'e' => 1,
                 'n' => '['.$wObject->nm.']: '.$name,
-                'txt' => 'zone=%ZONE%&zones_all=%ZONES_MIN%&date=%CURR_TIME%&location=%LOCATION%&unit=%UNIT%&unit_id=%UNIT_ID%',
+                'txt' => 'unit_id=%UNIT_ID%&sensor_door=%SENSOR(*дверь*)%&sensor_temp=%SENSOR(*средняя темп*)%&msg_time=%MSG_TIME%&zone=%ZONE%&zones_min=%ZONES_MIN%&lat=%LAT%&long=%LON%&notification=%NOTIFICATION%',
                 'ta' => 0,
                 'td' => 0,
                 'ma' => 0,
@@ -383,7 +381,7 @@ class ShipmentSoapService
             'callMode' => 'create',
             'e' => 1,
             'n' => '['.$wObject->nm.']: Температурное нарушение',
-            'txt' => 'unit=%UNIT%&unit_id=%UNIT_ID%&sensor=%SENSOR(*)%&date=%CURR_TIME%',
+            'txt' => 'unit_id=%UNIT_ID%&sensor_temp=%SENSOR(*средняя темп*)%&msg_time=%MSG_TIME%&lat=%LAT%&long=%LON%&notification=%NOTIFICATION%',
             'ta' => 0,
             'td' => 0,
             'ma' => 0,
@@ -411,6 +409,12 @@ class ShipmentSoapService
                     'p' => [
                         'url' => route('wialon.temp-violation'),
                         'get' => 0
+                    ]
+                ],
+                [
+                    't' => 'event',
+                    'p' => [
+                        'flags' => '0',
                     ]
                 ]
             ],
@@ -449,6 +453,12 @@ class ShipmentSoapService
                                 'url' => route('wialon.entrance-to-geofence'),
                                 'get' => 0
                             ]
+                        ],
+                        [
+                            't' => 'event',
+                            'p' => [
+                                'flags' => '0',
+                            ]
                         ]
                     ],
                     'trg' => [
@@ -469,6 +479,12 @@ class ShipmentSoapService
                                 'url' => route('wialon.departure-from-geofence'),
                                 'get' => 0
                             ]
+                        ],
+                        [
+                            't' => 'event',
+                            'p' => [
+                                'flags' => '0',
+                            ]
                         ]
                     ],
                     'trg' => [
@@ -477,26 +493,6 @@ class ShipmentSoapService
                             'type' => 1,
                             'lo' => 'OR',
                             'geozone_ids' => $args['geofences']->implode('id', ','),
-                        ]
-                    ],
-                ];
-            case 'дверь':
-                return [
-                    'act' => [
-                        [
-                            't' => 'push_messages',
-                            'p' => [
-                                'url' => route('wialon.door-action'),
-                                'get' => 0
-                            ]
-                        ]
-                    ],
-                    'trg' => [
-                        't' => 'sensor_value',
-                        'p' => [
-                            'merge' => '0',
-                            'sensor_name_mask' => '*дверь*',
-                            'sensor_type' => 'any',
                         ]
                     ],
                 ];
@@ -517,7 +513,6 @@ class ShipmentSoapService
         $scores = $this->wrapAssoc($scores);
 
         $waybill['scores']['score'] = collect($scores)->map(function ($score) {
-
             $orders = $score['orders']['order'];
             $orders = $this->wrapAssoc($orders);
 

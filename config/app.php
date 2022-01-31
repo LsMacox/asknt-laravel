@@ -167,6 +167,7 @@ return [
          */
         jeremykenedy\LaravelRoles\RolesServiceProvider::class,
         Adldap\Laravel\AdldapServiceProvider::class,
+        Maatwebsite\Excel\ExcelServiceProvider::class,
 
         /*
          * Application Service Providers...
@@ -235,6 +236,7 @@ return [
         'Adldap' => Adldap\Laravel\Facades\Adldap::class,
         'Wialon' => \App\Facades\Wialon::class,
         'WialonResource' => \App\Facades\WialonResource::class,
+        'Excel' => Maatwebsite\Excel\Facades\Excel::class,
     ],
 
 ];

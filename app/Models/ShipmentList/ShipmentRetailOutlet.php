@@ -9,6 +9,24 @@ use App\Models\Wialon\WialonGeofence;
 class ShipmentRetailOutlet extends BaseModel
 {
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var string[]
+     */
+    protected $fillable = [
+        'id',
+        'name',
+        'shipment_id',
+        'legal_name',
+        'adres',
+        'long',
+        'lat',
+        'date',
+        'arrive_from',
+        'arrive_to',
+        'turn',
+    ];
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -31,37 +49,6 @@ class ShipmentRetailOutlet extends BaseModel
     public function wialonGeofences()
     {
         return $this->morphMany(WialonGeofence::class, 'geofenceable');
-    }
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var string[]
-     */
-    protected $fillable = [
-        'id',
-        'name',
-        'shipment_id',
-        'legal_name',
-        'adres',
-        'long',
-        'lat',
-        'date',
-        'arrive_from',
-        'arrive_to',
-        'turn',
-    ];
-
-    /**
-     * The "booted" method of the model.
-     *
-     * @return void
-     */
-    protected static function booted()
-    {
-        static::deleted(function ($model) {
-            $model->wialonGeofences()->delete();
-        });
     }
 
 }

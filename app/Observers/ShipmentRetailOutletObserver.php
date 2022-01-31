@@ -37,7 +37,7 @@ class ShipmentRetailOutletObserver
      */
     public function deleted(ShipmentRetailOutlet $shipmentRetailOutlet)
     {
-        //
+        $shipmentRetailOutlet->wialonGeofences()->delete();
     }
 
     /**

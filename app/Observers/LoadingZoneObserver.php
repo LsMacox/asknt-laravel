@@ -32,6 +32,7 @@ class LoadingZoneObserver
             ->orWhere('stock->idsap', $loadingZone->id_sap)
             ->first();
 
+
         $wObjects = WialonResource::getObjectsWithRegPlate();
         $objectHost = $wObjects->search(function ($item) use ($shipment) {
             return $item->contains('registration_plate', \Str::lower($shipment->car))
@@ -80,9 +81,22 @@ class LoadingZoneObserver
      */
     public function deleting(LoadingZone $loadingZone)
     {
+        //
+    }
+
+    /**
+     * Handle the LoadingZone "deleted" event.
+     *
+     * @param  \App\Models\LoadingZone  $loadingZone
+     * @return void
+     */
+    public function deleted(LoadingZone $loadingZone)
+    {
         $shipment = Shipment::where('stock->id1c', $loadingZone->id_1c)
             ->orWhere('stock->idsap', $loadingZone->id_sap)
             ->first();
+
+        if (!$shipment) return;
 
         $wObjects = WialonResource::getObjectsWithRegPlate();
         $objectHost = $wObjects->search(function ($item) use ($shipment) {
@@ -106,18 +120,6 @@ class LoadingZoneObserver
 
             $wialonGeofence->delete();
         }
-
-    }
-
-    /**
-     * Handle the LoadingZone "deleted" event.
-     *
-     * @param  \App\Models\LoadingZone  $loadingZone
-     * @return void
-     */
-    public function deleted(LoadingZone $loadingZone)
-    {
-        $loadingZone->wialonGeofences()->delete();
     }
 
     /**

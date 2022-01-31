@@ -25,9 +25,9 @@ class ShipmentFilterRequest extends FormRequest
     public function rules()
     {
         return [
-            'offset' => 'required|integer',
-            'limit' => 'required|integer',
-            'sortBy' => 'required|string',
+            'offset' => 'integer',
+            'limit' => 'required_with:offset|integer',
+            'sortBy' => 'required_with:offset|string',
             'sortByDesc' => 'boolean',
 
             'filter.car' => 'array',

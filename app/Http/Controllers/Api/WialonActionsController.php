@@ -9,10 +9,6 @@ use Illuminate\Http\Request;
 class WialonActionsController
 {
 
-    public function doorAction (Request $request) {
-        \Log::channel('wialon-actions')->debug('doorAction: '.json_encode($request->all()));
-    }
-
     public function tempViolation (Request $request) {
         \Log::channel('wialon-actions')->debug('tempViolation: '.json_encode($request->all()));
     }

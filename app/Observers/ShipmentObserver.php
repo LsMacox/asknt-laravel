@@ -18,7 +18,7 @@ class ShipmentObserver
      */
     public function created(Shipment $shipment)
     {
-        $this->updateOrCreateLoadingZone($shipment);
+        $shipment->loadingZones()->create($shipment->stock);
     }
 
     /**
@@ -29,7 +29,7 @@ class ShipmentObserver
      */
     public function updated(Shipment $shipment)
     {
-        $this->updateOrCreateLoadingZone($shipment);
+        $shipment->loadingZones()->update($shipment->stock);
 
         if ($shipment->completed) {
             $wObjects = WialonResource::getObjectsWithRegPlate();
@@ -90,19 +90,4 @@ class ShipmentObserver
         //
     }
 
-    /**
-     * @param Shipment $shipment
-     */
-    protected function updateOrCreateLoadingZone (Shipment $shipment) {
-        $data = [];
-
-        if (!empty($shipment->stock['id1c'])) {
-            $data['id_1c'] = $shipment->stock['id1c'];
-        }
-        if (!empty($shipment->stock['idsap'])) {
-            $data['id_sap'] = $shipment->stock['idsap'];
-        }
-
-        $shipment->loadingZones()->updateOrCreate(['name' => $shipment->stock['name']]);
-    }
 }

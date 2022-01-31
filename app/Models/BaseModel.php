@@ -14,5 +14,4 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class BaseModel extends Model
 {
     use HasFactory;
-
 }

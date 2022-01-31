@@ -29,6 +29,7 @@ class RetailOutletObserver
     {
         $shipmentRetailOutlet = ShipmentRetailOutlet::find($retailOutlet->code);
         $shipment = $shipmentRetailOutlet->shipment()->first();
+        $wialonGeofence = $shipmentRetailOutlet->wialonGeofences()->first();
 
         $wObjects = WialonResource::getObjectsWithRegPlate();
         $objectHost = $wObjects->search(function ($item) use ($shipment) {
@@ -36,8 +37,6 @@ class RetailOutletObserver
                 || $item->contains('registration_plate', \Str::lower($shipment->trailer));
         });
         $wResource = WialonResource::firstResource()[$objectHost];
-
-        $wialonGeofence = $shipmentRetailOutlet->wialonGeofences()->first();
 
         $params = [
             'itemId' => $wResource->id,
