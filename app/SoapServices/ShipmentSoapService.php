@@ -319,7 +319,9 @@ class ShipmentSoapService
                 'callMode' => 'create',
                 'e' => 1,
                 'n' => '['.$wObject->nm.']: '.$name,
-                'txt' => 'unit_id=%UNIT_ID%&sensor_door=%SENSOR(*дверь*)%&sensor_temp=%SENSOR(*средняя темп*)%&msg_time=%MSG_TIME%&zone=%ZONE%&zones_min=%ZONES_MIN%&lat=%LAT%&long=%LON%&notification=%NOTIFICATION%',
+                'txt' =>
+                    'unit_id=%UNIT_ID%&sensor_door=%SENSOR(*дверь*)%&sensor_temp=%SENSOR(*средняя темп*)%&msg_time=%MSG_TIME%&zone=%ZONE%&zones_min=%ZONES_MIN%&lat=%LAT%&long=%LON%&notification=%NOTIFICATION%&stuff_id='
+                    .config('wialon.connections.stuff_id'),
                 'ta' => 0,
                 'td' => 0,
                 'ma' => 0,
@@ -381,7 +383,9 @@ class ShipmentSoapService
             'callMode' => 'create',
             'e' => 1,
             'n' => '['.$wObject->nm.']: Температурное нарушение',
-            'txt' => 'unit_id=%UNIT_ID%&sensor_temp=%SENSOR(*средняя темп*)%&msg_time=%MSG_TIME%&lat=%LAT%&long=%LON%&notification=%NOTIFICATION%',
+            'txt' =>
+                'unit_id=%UNIT_ID%&sensor_temp=%SENSOR(*средняя темп*)%&msg_time=%MSG_TIME%&lat=%LAT%&long=%LON%&notification=%NOTIFICATION%&stuff_id='
+                .config('wialon.connections.stuff_id'),
             'ta' => 0,
             'td' => 0,
             'ma' => 0,

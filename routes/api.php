@@ -24,7 +24,7 @@ Route::prefix('avantern')->group(function () {
     Route::name('avantern.shipment')->post('/shipment', [\App\Http\Controllers\Api\SoapServerAvanternShipmentController::class, 'soapServer']);
 });
 
-Route::prefix('wialon')->group(function () {
+Route::prefix('wialon')->middleware('wialon.initiator')->namespace('Api')->group(function () {
     Route::post('temp-violation', 'WialonActionsController@tempViolation')->name('wialon.temp-violation');
     Route::post('entrance-to-geofence', 'WialonActionsController@entranceToGeofence')->name('wialon.entrance-to-geofence');
     Route::post('departure-from-geofence', 'WialonActionsController@departureFromGeofence')->name('wialon.departure-from-geofence');

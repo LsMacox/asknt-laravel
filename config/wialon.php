@@ -12,12 +12,14 @@ return [
     */
 
     'connections' => [
+        'stuff_id' => '36fe9b8c34424a68a67a60d1e730704a', // required
         'default' => [
             [
                 'scheme' => 'https',
                 'host' => 'hst-api.wialon.com',
                 'port' => '',
                 'token' => '752dbc1700b13e297ce789f1faa100e2191CE426B494FF0D00DAA90E9D6CDBBF59CA45C2',
+
             ],
             [
                 'scheme' => 'https',
