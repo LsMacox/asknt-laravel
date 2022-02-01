@@ -26,8 +26,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->job(new GrabWialonData)->dailyAt('2:00');
-        $schedule->job(new GrabADGroups)->dailyAt('2:00');
+        //
     }
 
     /**

@@ -16,3 +16,4 @@ yarn-error.log
 /public/assets
 /public/index.html
 /public/favicon.ico
+worker.log

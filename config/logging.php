@@ -53,6 +53,12 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
         ],
 
+        'jobs' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/my-jobs.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+        ],
+
         'wialon-actions' => [
             'driver' => 'single',
             'path' => storage_path('logs/wialon-actions.log'),

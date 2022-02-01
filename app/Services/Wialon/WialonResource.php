@@ -84,7 +84,7 @@ class WialonResource
         ));
 
         return \Wialon::core_search_items($params)->map(function ($object) {
-            return collect($object['items']);
+            return !is_string($object) ? collect($object['items']) : collect();
         });
     }
 
