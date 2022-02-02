@@ -27,7 +27,7 @@ class InitWialon implements ShouldQueue
      *
      * @var int
      */
-    public $tries = 1;
+    public $tries = 5;
 
     const WIALON_NOTIFICATION_NAMES = [
         'вход в геозону',
