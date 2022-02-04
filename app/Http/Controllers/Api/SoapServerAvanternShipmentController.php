@@ -19,7 +19,7 @@ class SoapServerAvanternShipmentController extends AbstractSoapServerController
      */
     protected function getWsdlUri(): string
     {
-        return $this->getDynamicWsdl();
+        return route('avantern.shipment.wsdl');
     }
 
     protected function getEndpoint(): string
