@@ -6,21 +6,17 @@ namespace App\SoapServices;
 
 use App\Models\ShipmentList\ShipmentOrders;
 use App\Models\ShipmentList\ShipmentRetailOutlet;
-use App\Models\Wialon\WialonGeofence;
-use App\Repositories\LoadingZoneRepository;
 use App\SoapServices\Struct\ShipmentStatus\DT_Shipment_ERP_resp;
 use App\SoapServices\Struct\ShipmentStatus\message;
 use App\SoapServices\Struct\ShipmentStatus\messages;
 use App\SoapServices\Struct\ShipmentStatus\waybill;
+use Illuminate\Foundation\Bus\PendingDispatch;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
 use App\Models\ShipmentList\Shipment;
-use Illuminate\Support\Facades\Storage;
-use WialonResource;
 use App\Jobs\SendShipmentStatus;
 use App\Jobs\InitWialon;
 
@@ -32,85 +28,92 @@ use App\Jobs\InitWialon;
 class ShipmentSoapService
 {
 
-    const WIALON_NOTIFICATION_NAMES = [
-        'вход в геозону',
-        'выход из геозоны',
-    ];
+    /**
+     * Система откуда пришел маршрутный лист
+     * @var string $system
+     */
+    private $system;
 
     /**
-     * @var \Illuminate\Contracts\Foundation\Application|mixed
+     * Маршрутный лист
+     * @var array $waybill
      */
-    private $loadingZoneRepository;
-
-    /**
-     * ShipmentSoapService constructor.
-     */
-    public function __construct()
-    {
-        $this->loadingZoneRepository = app(LoadingZoneRepository::class);
-    }
+    private $waybill;
 
     /**
      * Method to call the operation originally named saveAvanternShipment
      * Meta information extracted from the WSDL
      * - documentation: saving data
      * @param string $system
+     * @param object $waybill
      * @return \stdClass $waybill
      */
-    public function saveAvanternShipment(string $system, $waybill)
+    public function saveAvanternShipment (string $system, object $waybill)
     {
-        \Log::channel('soap-server')->debug('Shipment['.$waybill->number.']: '.json_encode($waybill));
+        $this->system = $system;
+        $this->waybill = $this->prepareWaybill($waybill);
 
-        $validator = $this->validate($waybill);
+        \Log::channel('soap-server')->debug('Shipment['.$this->waybill['number'].']: '.json_encode($this->waybill));
+
+        $validator = $this->validate();
 
         if ($validator->fails()) {
-            $this->handleValidatorErrors($system, $waybill, $validator->errors());
+            $this->handleValidatorErrors($validator->errors());
         } else {
-            $this->saveWaybill($system, $validator->validated());
+            $this->saveWaybill();
         }
     }
 
     /**
-     * @param string $system
-     * @param $waybill
      * @param $errors
      */
-    protected function handleValidatorErrors (string $system, $waybill, $errors)
+    protected function handleValidatorErrors ($errors)
     {
-        \Log::channel('soap-server')->debug('Shipment errors['.$waybill->number.']: '.json_encode($errors));
+        \Log::channel('soap-server')->debug('Shipment errors['.$this->waybill['number'].']: '.json_encode($errors));
 
         $messages = [];
-
         foreach ($errors->all() as $k => $error) {
             $struct_message = new message((string) $k, $error);
-            array_push($messages, $struct_message);
+            $messages[] = $struct_message;
         }
 
-        $struct_messages = new messages($messages);
-        $struct_waybill = new waybill(
-            $waybill->number,
-            now()->format('Y-m-d H:i:s'),
-            'E',
-            $struct_messages
+        SendShipmentStatus::dispatch(
+            $this->structShipmentStatus($messages, true)
         );
-        $struct_DTShipmentERPResp = new DT_Shipment_ERP_resp($system, $struct_waybill);
-        SendShipmentStatus::dispatch($struct_DTShipmentERPResp);
     }
 
     /**
-     * @param string $system
-     * @param $waybill
+     * @return PendingDispatch|void
      */
-    protected function saveWaybill (string $system, $waybill) {
-        $waybill['timestamp'] = $this->rawDateToIso($waybill['timestamp']);
-        $waybill['date'] = $this->rawDateToIso($waybill['date']);
-        $waybill['mark'] = Shipment::markToBoolean($waybill['mark']);
+    protected function saveWaybill ()
+    {
+        $this->waybill['timestamp'] = $this->rawDateToIso($this->waybill['timestamp']);
+        $this->waybill['date'] = $this->rawDateToIso($this->waybill['date']);
+        $this->waybill['mark'] = Shipment::markToBoolean($this->waybill['mark']);
 
-        $shipment = Shipment::updateOrCreate(['id' => $waybill['number']], $waybill);
-        $statusDelete = \Str::is(Shipment::STATUS_DELETE, $waybill['status']);
+        $wObjects = \WialonResource::getObjectsWithRegPlate();
+        $hostId = $wObjects->search(function ($item) {
+            return $item->contains('registration_plate', \Str::lower($this->waybill['car']))
+                || $item->contains('registration_plate', \Str::lower($this->waybill['trailer']));
+        });
+
+        if (!$hostId) {
+            $errors = [
+                new message('1', 'Такая машина или прицеп не существует не в одной системе wialon')
+            ];
+            return SendShipmentStatus::dispatch(
+                $this->structShipmentStatus($errors, true)
+            );
+        }
+
+        $shipment = Shipment::updateOrCreate(
+            ['id' => $this->waybill['number']],
+            array_merge($this->waybill, ['w_conn_id' => $hostId])
+        );
+        $statusDelete = \Str::is(Shipment::STATUS_DELETE, $this->waybill['status']);
 
         if (!$statusDelete) {
-            foreach ($waybill['scores']['score'] as $score) {
+            foreach ($this->waybill['scores']['score'] as $score) {
                 $score['date'] = $this->rawDateToIso($score['date']);
                 $shipmentScores = ShipmentRetailOutlet::updateOrCreate(['id' => $score['score'], 'shipment_id' => $shipment->id], $score);
 
@@ -121,29 +124,21 @@ class ShipmentSoapService
             }
         }
 
-        $struct_waybill = new waybill(
-            $waybill['number'],
-            now()->format('Y-m-d H:i:s'),
-            'S',
-            new messages([])
-        );
-        $struct_DTShipmentERPResp = new DT_Shipment_ERP_resp($system, $struct_waybill);
-
-        Bus::chain([
+        return Bus::chain([
             new InitWialon($shipment),
-            new SendShipmentStatus($struct_DTShipmentERPResp)
+            new SendShipmentStatus(
+                $this->structShipmentStatus([])
+            )
         ])->dispatch();
     }
 
     /**
      * Validate waybill
-     * @param $waybill
      * @return \Illuminate\Contracts\Validation\Validator
      */
-    protected function validate ($waybill) {
-        $waybill = $this->prepareWaybill($waybill);
-
-        return $validator = Validator::make($waybill, [
+    protected function validate (): \Illuminate\Contracts\Validation\Validator
+    {
+        return $validator = Validator::make($this->waybill, [
             'number' => 'required|string|unique:shipments,id',
             'status' => ['required', Rule::in(Shipment::ENUM_STATUS)],
             'timestamp' => 'required|date_format:Y-m-d H:i:s',
@@ -189,11 +184,29 @@ class ShipmentSoapService
     }
 
     /**
+     * @param array $messages
+     * @param bool $error
+     * @return DT_Shipment_ERP_resp
+     */
+    protected function structShipmentStatus (array $messages, bool $error = false): DT_Shipment_ERP_resp
+    {
+        $struct_messages = new messages($messages);
+        $struct_waybill = new waybill(
+            $this->waybill['number'],
+            now()->format('Y-m-d H:i:s'),
+            $error ? 'E' : 'S',
+            $struct_messages
+        );
+        return new DT_Shipment_ERP_resp($this->system, $struct_waybill);
+    }
+
+    /**
      * prepare waybill for save
-     * @param $waybill
+     * @param object $waybill
      * @return array
      */
-    protected function prepareWaybill ($waybill) {
+    protected function prepareWaybill (object $waybill): array
+    {
         $waybill = $this->objectToArray($waybill);
 
         $waybill['mark'] = mb_strtolower($waybill['mark']);
@@ -220,7 +233,8 @@ class ShipmentSoapService
      * @param array $arr
      * @return array|array[]
      */
-    protected function wrapAssoc (array $arr) {
+    protected function wrapAssoc (array $arr): array
+    {
         return Arr::isAssoc($arr) ? [$arr] : $arr;
     }
 
@@ -229,16 +243,17 @@ class ShipmentSoapService
      * @param string $date
      * @return string
      */
-    protected function rawDateToIso (string $date) {
+    protected function rawDateToIso (string $date): string
+    {
         return Carbon::parse($date)->toIso8601String();
     }
 
     /**
      * deep convert of an object into an array
-     * @param $data
-     * @return array
+     * @param object|array $data
+     * @return object|array
      */
-    protected function objectToArray($data)
+    protected function objectToArray ($data)
     {
         if (is_array($data) || is_object($data))
         {

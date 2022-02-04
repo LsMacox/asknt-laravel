@@ -52,8 +52,6 @@ class SendShipmentStatus implements ShouldQueue
      */
     public function handle()
     {
-        \Log::channel('jobs')->debug('SendShipmentStatus: '.json_encode($this->dt_shipment_erp_resp));
-
         $login = config('soap-server.wsdl.shipment-status.username');
         $password = config('soap-server.wsdl.shipment-status.password');
 

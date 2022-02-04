@@ -17,7 +17,7 @@ Route::post('/login', [\App\Http\Controllers\Api\Auth\LoginController::class, 't
 
 Route::prefix('avantern')->group(function () {
     Route::name('avantern.shipment_status.wsdl')->get('/shipment-status.wsdl', function () {
-        $wsdl = \Storage::disk('wsdl')->path('avantern/Avantern_ShipmentStatus_Service.wsdl');
+        $wsdl = \Storage::disk('wsdl')->get('avantern/Avantern_ShipmentStatus_Service.wsdl');
         return response($wsdl, 200, config('soap-server.headers.wsdl'));
     });
     Route::name('avantern.shipment.wsdl')->get('/shipment.wsdl', [\App\Http\Controllers\Api\SoapServerAvanternShipmentController::class, 'wsdlProvider']);

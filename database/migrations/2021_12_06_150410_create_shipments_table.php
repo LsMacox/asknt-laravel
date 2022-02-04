@@ -17,6 +17,7 @@ class CreateShipmentsTable extends Migration
         Schema::create('shipments', function (Blueprint $table) {
             $table->unsignedBigInteger('id')->unique();
             $table->enum('status', Shipment::ENUM_STATUS);
+            $table->bigInteger('w_conn_id');
             $table->timestamp('timestamp');
             $table->timestamp('date');
             $table->string('time');

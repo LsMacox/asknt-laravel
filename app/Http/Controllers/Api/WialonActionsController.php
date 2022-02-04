@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api;
 
 
 use Illuminate\Http\Request;
+use App\Models\Wialon\WialonNotification;
 use Wialon;
+use WialonResource;
 
 class WialonActionsController
 {
@@ -15,16 +17,40 @@ class WialonActionsController
     }
 
     public function entranceToGeofence (Request $request) {
-        dd($request->getHttpHost());
-        $params = [
+        $notification = WialonNotification::find($request->unit_id);
+        $shipment = $notification->shipment()->first();
+        $resource = WialonResource::useOnlyHosts($shipment->w_conn_id)
+                                ->firstResource()
+                                ->first();
+        $reportTemplates = WialonResource::useOnlyHosts($shipment->w_conn_id)->getReportTemplates($shipment->w_conn_id, $resource->id);
+
+        \Wialon::useOnlyHosts([$shipment->w_conn_id])->report_cleanup_result();
+
+        $execParams = [
+            'reportResourceId' => $resource->id,
+            'reportTemplateId' => 0,
+            'reportObjectId' => '',
+            'interval' => [
+                'from' => 1623362456,
+                'to' => 1643909456,
+            ],
+            'reportTemplate' => '',
+        ];
+
+        $exportRes = \Wialon::useOnlyHosts([$shipment->w_conn_id])->report_exec_report(
+            json_encode($execParams)
+        );
+
+        $exportParams = [
             'format' => 4,
             'compress' => 1,
             'outputFileName' => '',
         ];
 
-        $wCreate = \Wialon::useOnlyHosts([$host])->resource_update_zone(
-            json_encode($params)
+        $exportRes = \Wialon::useOnlyHosts([$shipment->w_conn_id])->report_export_result(
+            json_encode($exportParams)
         );
+
         \Log::channel('wialon-actions')->debug('entranceToGeofence: '.json_encode($request->all()));
     }
 

@@ -35,6 +35,7 @@ class Shipment extends BaseModel
         'id',
         'status',
         'timestamp',
+        'w_conn_id',
         'date',
         'time',
         'carrier',

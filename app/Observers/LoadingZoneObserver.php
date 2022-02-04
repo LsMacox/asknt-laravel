@@ -32,13 +32,9 @@ class LoadingZoneObserver
             ->orWhere('stock->idsap', $loadingZone->id_sap)
             ->first();
 
-
-        $wObjects = WialonResource::getObjectsWithRegPlate();
-        $objectHost = $wObjects->search(function ($item) use ($shipment) {
-            return $item->contains('registration_plate', \Str::lower($shipment->car))
-                || $item->contains('registration_plate', \Str::lower($shipment->trailer));
-        });
-        $wResource = WialonResource::firstResource()[$objectHost];
+        $wResource = WialonResource::useOnlyHosts($shipment->w_conn_id)
+                                    ->firstResource()
+                                    ->first();
 
         $wialonGeofence = $loadingZone->wialonGeofences()->first();
 
@@ -63,12 +59,12 @@ class LoadingZoneObserver
             ]
         ];
 
-        $wResult = \Wialon::useOnlyHosts([$objectHost])->resource_update_zone(
+        $wResult = \Wialon::useOnlyHosts([$shipment->w_conn_id])->resource_update_zone(
             json_encode($params)
         );
 
         $wialonGeofence = $loadingZone->wialonGeofences()->updateOrCreate(
-            ['id' => $wResult[$objectHost][0]],
+            ['id' => $wResult[$shipment->w_conn_id][0]],
             ['name' => $loadingZone->name]
         );
     }
@@ -96,14 +92,9 @@ class LoadingZoneObserver
             ->orWhere('stock->idsap', $loadingZone->id_sap)
             ->first();
 
-        if (!$shipment) return;
-
-        $wObjects = WialonResource::getObjectsWithRegPlate();
-        $objectHost = $wObjects->search(function ($item) use ($shipment) {
-            return $item->contains('registration_plate', \Str::lower($shipment->car))
-                || $item->contains('registration_plate', \Str::lower($shipment->trailer));
-        });
-        $wResource = WialonResource::firstResource()[$objectHost];
+        $wResource = WialonResource::useOnlyHosts($shipment->w_conn_id)
+                                    ->firstResource()
+                                    ->first();
 
         $wialonGeofence = $loadingZone->wialonGeofences()->first();
 
@@ -114,7 +105,7 @@ class LoadingZoneObserver
                 'callMode' => 'delete',
             ];
 
-            \Wialon::useOnlyHosts([$objectHost])->resource_update_zone(
+            \Wialon::useOnlyHosts([$shipment->w_conn_id])->resource_update_zone(
                 json_encode($params)
             );
 

@@ -161,12 +161,13 @@ class Wialon {
 
         if (!empty($this->only_hosts)) {
             $connections = $connections->filter(function ($conn) {
-                return in_array($conn['host'], $this->only_hosts);
+                return in_array($conn['id'], $this->only_hosts);
             });
         }
 
         foreach ($connections as $connection) {
-            ['scheme' => $scheme,
+            ['id' => $id,
+                'scheme' => $scheme,
                 'host' => $host,
                 'port' => $port,
                 'token' => $token] = $connection;
@@ -175,10 +176,10 @@ class Wialon {
             $loginResult = $wialon->login($token);
 
             if (isset($loginResult['error'])) {
-                $results[$host] = WialonError::error($loginResult['error'], $loginResult['reason']);
+                $results[$id] = WialonError::error($loginResult['error'], $loginResult['reason']);
             } else {
                 $res = call_user_func_array([$wialon, $action], Arr::wrap($args));
-                $results[$host] = $res;
+                $results[$id] = $res;
             }
         }
 

@@ -31,12 +31,9 @@ class RetailOutletObserver
         $shipment = $shipmentRetailOutlet->shipment()->first();
         $wialonGeofence = $shipmentRetailOutlet->wialonGeofences()->first();
 
-        $wObjects = WialonResource::getObjectsWithRegPlate();
-        $objectHost = $wObjects->search(function ($item) use ($shipment) {
-            return $item->contains('registration_plate', \Str::lower($shipment->car))
-                || $item->contains('registration_plate', \Str::lower($shipment->trailer));
-        });
-        $wResource = WialonResource::firstResource()[$objectHost];
+        $wResource = WialonResource::useOnlyHosts($shipment->w_conn_id)
+                                    ->firstResource()
+                                    ->first();
 
         $params = [
             'itemId' => $wResource->id,
@@ -59,12 +56,12 @@ class RetailOutletObserver
             ]
         ];
 
-        $wResult = \Wialon::useOnlyHosts([$objectHost])->resource_update_zone(
+        $wResult = \Wialon::useOnlyHosts([$shipment->w_conn_id])->resource_update_zone(
             json_encode($params)
         );
 
         $wialonGeofence = $shipmentRetailOutlet->wialonGeofences()->updateOrCreate(
-            ['id' => $wResult[$objectHost][0]],
+            ['id' => $wResult[$shipment->w_conn_id][0]],
             ['name' => $retailOutlet->name]
         );
     }
@@ -81,12 +78,9 @@ class RetailOutletObserver
         $shipment = $shipmentRetailOutlet->shipment()->first();
         $wialonGeofence = $shipmentRetailOutlet->wialonGeofences()->first();
 
-        $wObjects = WialonResource::getObjectsWithRegPlate();
-        $objectHost = $wObjects->search(function ($item) use ($shipment) {
-            return $item->contains('registration_plate', \Str::lower($shipment->car))
-                || $item->contains('registration_plate', \Str::lower($shipment->trailer));
-        });
-        $wResource = WialonResource::firstResource()[$objectHost];
+        $wResource = WialonResource::useOnlyHosts($shipment->w_conn_id)
+                                    ->firstResource()
+                                    ->first();
 
         if ($wialonGeofence) {
             $params = [
@@ -95,7 +89,7 @@ class RetailOutletObserver
                 'callMode' => 'delete',
             ];
 
-            \Wialon::useOnlyHosts([$objectHost])->resource_update_zone(
+            \Wialon::useOnlyHosts([$shipment->w_conn_id])->resource_update_zone(
                 json_encode($params)
             );
 

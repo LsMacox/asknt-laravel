@@ -51,52 +51,47 @@ class InitWialon implements ShouldQueue
      */
     public function handle()
     {
-        \Log::channel('jobs')->debug('InitWialon['.$this->shipment->id.']: ' . json_encode($this->shipment));
-
         $shipment = $this->shipment;
         $geofences = $shipment->shipmentRetailOutlets()
             ->whereNotNull(['long', 'lat'])
             ->get();
 
-        $wObjects = WialonResource::getObjectsWithRegPlate();
-        $objectHost = $wObjects->search(function ($item) use ($shipment) {
-            return $item->contains('registration_plate', \Str::lower($shipment->car))
-                || $item->contains('registration_plate', \Str::lower($shipment->trailer));
-        });
+        $wObjects = WialonResource::useOnlyHosts($shipment->w_conn_id)->getObjectsWithRegPlate();
 
-        if ($objectHost) {
-            $wResource = WialonResource::firstResource()[$objectHost];
-            $wObject = $wObjects[$objectHost]
-                ->filter(function ($item) use ($shipment) {
-                    return \Str::is($item->registration_plate, \Str::lower($shipment->car))
-                        || \Str::is($item->registration_plate, \Str::lower($shipment->trailer));
-                })->first();
+        $wResource = WialonResource::useOnlyHosts($shipment->w_conn_id)
+                                    ->firstResource()
+                                    ->first();
 
-            // Creating geofences in wialon
-            $this->createWialonGeofences(
-                $objectHost,
-                $wResource,
-                $geofences,
-                $shipment,
-            );
+        $wObject = $wObjects[$shipment->w_conn_id]
+            ->filter(function ($item) use ($shipment) {
+                return \Str::is($item->registration_plate, \Str::lower($shipment->car))
+                    || \Str::is($item->registration_plate, \Str::lower($shipment->trailer));
+            })->first();
 
-            // Updating notifications in wialon
-            $this->updateWialonNotification(
-                $objectHost,
-                $wResource,
-                $geofences,
-                $wObject,
-                $shipment,
-            );
+        // Creating geofences in wialon
+        $this->createWialonGeofences(
+            $shipment->w_conn_id,
+            $wResource,
+            $geofences,
+            $shipment,
+        );
 
-            // Creating a temperature violation notification in wialon
-            $this->createWialonTempViolationNotification(
-                $objectHost,
-                $wResource,
-                $wObject,
-                $shipment
-            );
-        }
+        // Updating notifications in wialon
+        $this->updateWialonNotification(
+            $shipment->w_conn_id,
+            $wResource,
+            $geofences,
+            $wObject,
+            $shipment,
+        );
+
+        // Creating a temperature violation notification in wialon
+        $this->createWialonTempViolationNotification(
+            $shipment->w_conn_id,
+            $wResource,
+            $wObject,
+            $shipment
+        );
     }
 
     /**

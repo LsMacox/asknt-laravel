@@ -15,6 +15,7 @@ return [
         'stuff_id' => '36fe9b8c34424a68a67a60d1e730704a', // required
         'default' => [
             [
+                'id' => 1,
                 'scheme' => 'https',
                 'host' => 'hst-api.wialon.com',
                 'port' => '',
@@ -22,6 +23,7 @@ return [
 
             ],
             [
+                'id' => 2,
                 'scheme' => 'https',
                 'host' => 'gps.cherkizovo.com',
                 'port' => '',

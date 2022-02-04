@@ -1,13 +1,13 @@
 <wsdl:definitions
     xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
-    xmlns:tns="http://localhost/api/avantern/shipment"
+    xmlns:tns="http://{{$host}}/api/avantern/shipment"
     xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
     name="SoapShipmentServer"
-    targetNamespace="http://localhost/api/avantern/shipment">
+    targetNamespace="http://{{$host}}/api/avantern/shipment">
     <wsdl:documentation />
     <wsdl:types>
-        <xsd:schema targetNamespace="http://localhost/api/avantern/shipment">
+        <xsd:schema targetNamespace="http://{{$host}}/api/avantern/shipment">
             <xsd:element name="saveAvanternShipment" type="tns:shipmentData" />
             <xsd:complexType name="shipmentData">
                 <xsd:sequence>
@@ -327,7 +327,7 @@
     <wsdl:binding name="SoapShipmentServerBinding" type="tns:SoapShipmentServerPort">
         <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
         <wsdl:operation name="saveAvanternShipment">
-            <soap:operation soapAction="http://localhost/api/avantern/shipment#saveAvanternShipment"/>
+            <soap:operation soapAction="http://{{$host}}/api/avantern/shipment#saveAvanternShipment"/>
             <wsdl:input>
                 <soap:body use="literal"/>
             </wsdl:input>
@@ -335,7 +335,7 @@
     </wsdl:binding>
     <wsdl:service name="SoapShipmentServerService">
         <wsdl:port name="SoapShipmentServerPort" binding="tns:SoapShipmentServerBinding">
-            <soap:address location="http://localhost/api/avantern/shipment"/>
+            <soap:address location="http://{{$host}}/api/avantern/shipment"/>
         </wsdl:port>
     </wsdl:service>
     <wsdl:message name="saveAvanternShipmentIn">

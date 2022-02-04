@@ -8,6 +8,21 @@ class WialonResource
 {
 
     /**
+     * @var array $useOnlyHosts
+     */
+    private $useOnlyHosts = [];
+
+    /**
+     * @param array|integer|string $hosts
+     * @return $this
+     */
+    public function useOnlyHosts ($hosts) {
+        $hosts = \Arr::wrap($hosts);
+        $this->useOnlyHosts = $hosts;
+        return $this;
+    }
+
+    /**
      * @param int $flags
      * @param string $propName
      * @return mixed
@@ -40,25 +55,8 @@ class WialonResource
             'to' => 0,
         ));
 
-        return \Wialon::core_search_items($params)->map(function ($resource) {
-            return collect($resource['items']);
-        });
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getObjectsWithRegPlate () {
-        return $this->searchObjects(8388609, '')->map(function ($object) {
-            return $object->map(function ($item) {
-                $item->registration_plate = \Str::lower(
-                    optional(collect($item->pflds)
-                        ->where('n', 'registration_plate')
-                        ->first())
-                    ->v
-                );
-                return $item;
-            });
+        return \Wialon::useOnlyHosts($this->useOnlyHosts)->core_search_items($params)->map(function ($resource) {
+            return !is_string($resource) ? collect($resource['items']) : collect();
         });
     }
 
@@ -83,8 +81,38 @@ class WialonResource
             'to' => 0,
         ));
 
-        return \Wialon::core_search_items($params)->map(function ($object) {
+        return \Wialon::useOnlyHosts($this->useOnlyHosts)->core_search_items($params)->map(function ($object) {
             return !is_string($object) ? collect($object['items']) : collect();
+        });
+    }
+
+    /**
+     * @param int $hostId
+     * @param int $resId
+     * @return mixed
+     */
+    public function getReportTemplates (int $hostId = null, int $resId = null) {
+        if (!$hostId || !$resId) {
+            return $this->searchResources(8193, '');
+        }
+
+        return $this->searchResources(8193, '')[$hostId]->where('id', $resId)->first();
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getObjectsWithRegPlate () {
+        return $this->searchObjects(8388609, '')->map(function ($object) {
+            return $object->map(function ($item) {
+                $item->registration_plate = \Str::lower(
+                    optional(collect($item->pflds)
+                        ->where('n', 'registration_plate')
+                        ->first())
+                        ->v
+                );
+                return $item;
+            });
         });
     }
 
