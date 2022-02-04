@@ -19,7 +19,7 @@ return [
                 'scheme' => 'https',
                 'host' => 'hst-api.wialon.com',
                 'port' => '',
-                'token' => '752dbc1700b13e297ce789f1faa100e2191CE426B494FF0D00DAA90E9D6CDBBF59CA45C2',
+                'token' => '752dbc1700b13e297ce789f1faa100e2C97702C9DD8361EBB1AD297E4BDC503EC19CF195',
 
             ],
             [
