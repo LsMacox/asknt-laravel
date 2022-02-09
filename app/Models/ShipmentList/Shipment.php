@@ -90,7 +90,7 @@ class Shipment extends BaseModel
      */
     public static function markToBoolean (string $mark) {
         $lMark = Str::lower($mark);
-        return Str::is(self::MARK_OWN_STR, $lMark);
+        return Str::is(self::MARK_OWN, $lMark);
     }
 
 }

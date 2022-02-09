@@ -41,6 +41,12 @@ class ShipmentSoapService
     private $waybill;
 
     /**
+     * Маршрутный лист (не преобразованный)
+     * @var array $waybill
+     */
+    private $origWaybill;
+
+    /**
      * Method to call the operation originally named saveAvanternShipment
      * Meta information extracted from the WSDL
      * - documentation: saving data
@@ -51,6 +57,7 @@ class ShipmentSoapService
     public function saveAvanternShipment (string $system, object $waybill)
     {
         $this->system = $system;
+        $this->origWaybill = $waybill;
         $this->waybill = $this->prepareWaybill($waybill);
 
         \Log::channel('soap-server')->debug('Shipment['.$this->waybill['number'].']: '.json_encode($this->waybill));
@@ -212,7 +219,7 @@ class ShipmentSoapService
         $struct_messages = new messages($messages);
         $struct_waybill = new waybill(
             $this->waybill['number'],
-            $this->waybill['timestamp'],
+            $this->origWaybill->timestamp,
             $error ? 'E' : 'S',
             $struct_messages
         );
