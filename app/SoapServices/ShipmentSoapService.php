@@ -161,8 +161,8 @@ class ShipmentSoapService
         return $validator = Validator::make($this->waybill, [
             'number' => $number,
             'status' => ['required', Rule::in(Shipment::ENUM_STATUS)],
-            'timestamp' => 'required|date_format:Y-m-d H:i:s',
-            'date' => 'required|date_format:Y-m-d H:i:s',
+            'timestamp' => 'required',
+            'date' => 'required|date_format:Y-m-d',
             'carrier' => 'string|max:255',
             'car' => 'required|string|max:255',
             'trailer' => 'string|max:255',
@@ -187,9 +187,9 @@ class ShipmentSoapService
             'scores.score.*.name' => 'required|string|max:255',
             'scores.score.*.legal_name' => 'string|max:255',
             'scores.score.*.adres' => 'required|string|max:255',
-            'scores.score.*.long' => 'required|numeric',
-            'scores.score.*.lat' => 'required|numeric',
-            'scores.score.*.date' => 'date_format:Y-m-d H:i:s',
+            'scores.score.*.long' => 'required',
+            'scores.score.*.lat' => 'required',
+            'scores.score.*.date' => 'date_format:Y-m-d',
             'scores.score.*.arrive_from' => 'string|date_format:H:i',
             'scores.score.*.arrive_to' => 'string|date_format:H:i',
             'scores.score.*.turn' => 'required|numeric|min:0',
@@ -197,8 +197,8 @@ class ShipmentSoapService
 
             'scores.score.*.orders.order.*.order' => $orderId,
             'scores.score.*.orders.order.*.product' => 'required|string|max:255',
-            'scores.score.*.orders.order.*.weight' => 'required|numeric',
-            'scores.score.*.orders.order.*.return' => ['required', 'string', Rule::in(ShipmentOrders::ENUM_RETURN_STR)],
+            'scores.score.*.orders.order.*.weight' => 'required',
+//            'scores.score.*.orders.order.*.return' => ['required', 'string', Rule::in(ShipmentOrders::ENUM_RETURN_STR)],
         ]);
     }
 

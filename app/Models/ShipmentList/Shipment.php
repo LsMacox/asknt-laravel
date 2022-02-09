@@ -24,7 +24,7 @@ class Shipment extends BaseModel
 
     const ENUM_STATUS = [self::STATUS_DELETE, self::STATUS_CREATE, self::STATUS_UPDATE];
     const ENUM_MARK = [self::MARK_OWN, self::MARK_HIRED];
-    const ENUM_MARK_STR = [self::MARK_OWN_STR, self::MARK_HIRED_STR];
+    const ENUM_MARK_STR = [self::MARK_OWN, self::MARK_HIRED];
 
     /**
      * The attributes that are mass assignable.
