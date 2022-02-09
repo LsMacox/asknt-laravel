@@ -23,7 +23,9 @@ class BinderServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->app->instance('wialon', $this->app->make(Wialon::class));
+        $this->app->singleton('wialon', function ($app) {
+            return $app->make(Wialon::class);
+        });
         $this->app->instance('wialon-resource', $this->app->make(WialonResource::class));
     }
 }

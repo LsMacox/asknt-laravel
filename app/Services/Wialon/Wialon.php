@@ -9,7 +9,8 @@ use Illuminate\Support\Collection;
  * Class Wialon
  * @package App\Services\Wialon
  */
-class Wialon {
+class Wialon
+{
 
     /**
      * Use only those default hosts that are specified in @var $only_hosts
@@ -21,7 +22,7 @@ class Wialon {
      * Wialon authentication token
      * @var string
      */
-    private $sid = null;
+    private static $sid = null;
 
     /**
      * Base url before wialon api
@@ -34,6 +35,16 @@ class Wialon {
      * @var array
      */
     private $default_params = [];
+
+    /**
+     * @var bool
+     */
+    private $debug = false;
+
+    /**
+     * @var string
+     */
+    public $debug_request = '';
 
 
     /**
@@ -60,22 +71,6 @@ class Wialon {
     }
 
     /**
-     * Sid setter
-     * @param $sid
-     */
-    function set_sid ($sid): void {
-        $this->sid = $sid;
-    }
-
-    /**
-     * Sid getter
-     * @return string
-     */
-    function get_sid (): string {
-        return $this->sid;
-    }
-
-    /**
      * Update extra params
      * @param $extra_params
      * @return void
@@ -99,9 +94,9 @@ class Wialon {
      * args - JSON string with request parameters
      * @param $action
      * @param $args
-     * @return bool|Collection
      */
-    public function call ($action, $args): Collection {
+    public function call ($action, $args)
+    {
         $url = $this->base_api_url;
 
         if (stripos($action, 'unit_group') === 0) {
@@ -114,7 +109,7 @@ class Wialon {
         $params = [
             'svc'=> $svc,
             'params'=> $args,
-            'sid'=> $this->sid
+            'sid'=> static::$sid
         ];
 
         $all_params = array_replace($this->default_params, $params);
@@ -144,6 +139,8 @@ class Wialon {
             $result = '{"error":-1,"message":'.curl_error($ch).'}';
         }
 
+        $this->debug_request = $url . urldecode($params_str);
+
         curl_close($ch);
 
         return collect(json_decode($result));
@@ -153,9 +150,9 @@ class Wialon {
      * Default call (if nothing is specified in the constructor of this class)
      * @param $action
      * @param $args
-     * @return Collection
      */
-    public function call_default ($action, $args): Collection {
+    public function call_default ($action, $args)
+    {
         $results = [];
         $connections = collect(config('wialon.connections.default'));
 
@@ -173,13 +170,21 @@ class Wialon {
                 'token' => $token] = $connection;
 
             $wialon = new self($scheme, $host, $port);
-            $loginResult = $wialon->login($token);
+            $loginResult = [];
+
+            if (empty(static::$sid)) {
+                $loginResult = $wialon->login($token);
+            }
 
             if (isset($loginResult['error'])) {
                 $results[$id] = WialonError::error($loginResult['error'], $loginResult['reason']);
             } else {
                 $res = call_user_func_array([$wialon, $action], Arr::wrap($args));
-                $results[$id] = $res;
+                if ($this->debug) {
+                    $results[$id] = ['request' => $wialon->debug_request, 'response' => $res];
+                } else {
+                    $results[$id] = $res;
+                }
             }
         }
 
@@ -202,7 +207,7 @@ class Wialon {
         $result = $this->token_login($data);
 
         if (isset($result['eid'])) {
-            $this->sid = $result['eid'];
+            static::$sid = $result['eid'];
         }
 
         return $result;
@@ -217,10 +222,15 @@ class Wialon {
         $result = $this->core_logout();
 
         if($result && 0 == $result['error']) {
-            $this->sid = '';
+            static::$sid = '';
         }
 
         return $result;
+    }
+
+    public function debug () {
+        $this->debug = true;
+        return $this;
     }
 
     /**
@@ -236,4 +246,5 @@ class Wialon {
             $this->call($name, $arguments) :
             $this->call_default($name, $arguments);
     }
+
 }

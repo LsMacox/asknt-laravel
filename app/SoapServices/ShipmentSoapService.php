@@ -110,6 +110,8 @@ class ShipmentSoapService
             ['id' => $this->waybill['number']],
             array_merge($this->waybill, ['w_conn_id' => $hostId])
         );
+
+        $statusCreate = \Str::is(Shipment::STATUS_CREATE, $this->waybill['status']);
         $statusDelete = \Str::is(Shipment::STATUS_DELETE, $this->waybill['status']);
 
         if (!$statusDelete) {
@@ -124,12 +126,18 @@ class ShipmentSoapService
             }
         }
 
-        return Bus::chain([
-            new InitWialon($shipment),
-            new SendShipmentStatus(
+        if ($statusCreate) {
+            return Bus::chain([
+                new InitWialon($shipment),
+                new SendShipmentStatus(
+                    $this->structShipmentStatus([])
+                )
+            ])->dispatch();
+        } else {
+            SendShipmentStatus::dispatch(
                 $this->structShipmentStatus([])
-            )
-        ])->dispatch();
+            );
+        }
     }
 
     /**
@@ -138,12 +146,23 @@ class ShipmentSoapService
      */
     protected function validate (): \Illuminate\Contracts\Validation\Validator
     {
+        $statusCreate = \Str::is(Shipment::STATUS_CREATE, $this->waybill['status']);
+
+        $number = ['required', 'string'];
+        $scoreId = ['required','numeric'];
+        $orderId = ['required','numeric'];
+
+        if ($statusCreate) {
+            $number[] = 'unique:shipments,id';
+            $scoreId[] = 'unique:shipment_retail_outlets,id';
+            $orderId[] = 'unique:shipment_orders,id';
+        }
+
         return $validator = Validator::make($this->waybill, [
-            'number' => 'required|string|unique:shipments,id',
+            'number' => $number,
             'status' => ['required', Rule::in(Shipment::ENUM_STATUS)],
             'timestamp' => 'required|date_format:Y-m-d H:i:s',
             'date' => 'required|date_format:Y-m-d H:i:s',
-            'time' => 'required|string|date_format:H:i',
             'carrier' => 'string|max:255',
             'car' => 'required|string|max:255',
             'trailer' => 'string|max:255',
@@ -164,7 +183,7 @@ class ShipmentSoapService
             'stock.idsap' => 'prohibited_unless:stock.id1c,|string|max:255',
             'stock.time' => 'string|date_format:H:i',
 
-            'scores.score.*.score' => 'required|numeric|unique:shipment_retail_outlets,id',
+            'scores.score.*.score' => $scoreId,
             'scores.score.*.name' => 'required|string|max:255',
             'scores.score.*.legal_name' => 'string|max:255',
             'scores.score.*.adres' => 'required|string|max:255',
@@ -176,7 +195,7 @@ class ShipmentSoapService
             'scores.score.*.turn' => 'required|numeric|min:0',
             'scores.score.*.orders' => 'required|array',
 
-            'scores.score.*.orders.order.*.order' => 'required|numeric|unique:shipment_orders,id',
+            'scores.score.*.orders.order.*.order' => $orderId,
             'scores.score.*.orders.order.*.product' => 'required|string|max:255',
             'scores.score.*.orders.order.*.weight' => 'required|numeric',
             'scores.score.*.orders.order.*.return' => ['required', 'string', Rule::in(ShipmentOrders::ENUM_RETURN_STR)],
@@ -190,10 +209,14 @@ class ShipmentSoapService
      */
     protected function structShipmentStatus (array $messages, bool $error = false): DT_Shipment_ERP_resp
     {
+        $format = 'Y-m-d H:i:s';
+        $createdAt = now()->format($format);
+        $timestamp = Carbon::createFromFormat($format, $createdAt)->timestamp;
+
         $struct_messages = new messages($messages);
         $struct_waybill = new waybill(
             $this->waybill['number'],
-            now()->format('Y-m-d H:i:s'),
+            $timestamp,
             $error ? 'E' : 'S',
             $struct_messages
         );

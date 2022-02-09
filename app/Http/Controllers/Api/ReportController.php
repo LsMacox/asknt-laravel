@@ -28,14 +28,13 @@ class ReportController extends Controller
      * @return \Illuminate\Http\JsonResponse
      */
     public function list(ShipmentFilterRequest $request, ShipmentFilter $filter) {
-        dd($request->all());
-
         $shipments = Shipment::filter($filter)->get();
-
-        return response()->json(
-            compact( 'total', 'items'),
-            200
-        );
+//        dd($shipments);
+//
+//        return response()->json(
+//            compact( 'total', 'items'),
+//            200
+//        );
     }
 
 }

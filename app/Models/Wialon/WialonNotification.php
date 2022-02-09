@@ -16,6 +16,7 @@ class WialonNotification extends BaseModel
     protected $fillable = [
         'id',
         'name',
+        'object_id',
         'shipment_id',
         'created_at',
         'updated_at',

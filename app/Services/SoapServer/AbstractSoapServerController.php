@@ -98,7 +98,9 @@ abstract class AbstractSoapServerController extends BaseController
             $service = $container->make($this->getService());
             $server = new Server($this->getWsdlUri());
             $server->setClass(new DocumentLiteralWrapper($service));
-            $server->setDebugMode(true);
+            if (config('app.debug')) {
+                $server->setDebugMode(true);
+            }
             $server->registerFaultException($this->getFaultExceptionsNames());
             $server->setClassmap($this->getClassmap());
             $server->setOptions($this->getOptions());

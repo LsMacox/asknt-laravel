@@ -59,7 +59,13 @@ class SendShipmentStatus implements ShouldQueue
         $wsdl = Storage::disk('wsdl')->path('avantern/Avantern_ShipmentStatus_Service.wsdl');
 
         $client = new \Laminas\Soap\Client($wsdl, ['login' => $login, 'password' => $password]);
-        $client->SI_ShipmentStatus_Avantern_Async_Out($this->dt_shipment_erp_resp);
+
+        if (!config('app.debug')) {
+            $client->SI_ShipmentStatus_Avantern_Async_Out($this->dt_shipment_erp_resp);
+        } else {
+            \Log::channel('my-jobs')
+                ->debug('SendShipmentStatus['.$this->dt_shipment_erp_resp->waybill->number.']: '.json_encode($this->dt_shipment_erp_resp));
+        }
     }
 
 }

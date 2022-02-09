@@ -52,7 +52,7 @@ class InitWialon implements ShouldQueue
     public function handle()
     {
         $shipment = $this->shipment;
-        $geofences = $shipment->shipmentRetailOutlets()
+        $retailOutlets = $shipment->shipmentRetailOutlets()
             ->whereNotNull(['long', 'lat'])
             ->get();
 
@@ -72,15 +72,15 @@ class InitWialon implements ShouldQueue
         $this->createWialonGeofences(
             $shipment->w_conn_id,
             $wResource,
-            $geofences,
+            $retailOutlets,
             $shipment,
         );
 
         // Updating notifications in wialon
-        $this->updateWialonNotification(
+        $this->createWialonNotification(
             $shipment->w_conn_id,
             $wResource,
-            $geofences,
+            $retailOutlets,
             $wObject,
             $shipment,
         );
@@ -97,16 +97,16 @@ class InitWialon implements ShouldQueue
     /**
      * @param string $host
      * @param object $resource
-     * @param Collection $geofences
+     * @param Collection $retailOutlets
      * @param Shipment $shipment
      */
     protected function createWialonGeofences (
         string $host,
         object $resource,
-        Collection $geofences,
+        Collection $retailOutlets,
         Shipment $shipment
     ) {
-        foreach ($geofences as $zone) {
+        foreach ($retailOutlets as $zone) {
             $params = [
                 'itemId' => $resource->id,
                 'id' => 0,
@@ -142,18 +142,18 @@ class InitWialon implements ShouldQueue
     /**
      * @param string $host
      * @param object $resource
-     * @param Collection $geofences
+     * @param Collection $retailOutlets
      * @param object $wObject
      * @param Shipment $shipment
      */
-    protected function updateWialonNotification (
+    protected function createWialonNotification (
         string $host,
         object $resource,
-        Collection $geofences,
+        Collection $retailOutlets,
         object $wObject,
         Shipment $shipment
     ) {
-        $geofences = $geofences->load('wialonGeofences')
+        $wialonGeofences = $retailOutlets->load('wialonGeofences')
             ->pluck('wialonGeofences')
             ->map(function ($geofence) {
                 return $geofence->first();
@@ -195,7 +195,7 @@ class InitWialon implements ShouldQueue
             $updateNotificationParams = array_merge(
                 $params,
                 $this->genWialonNotification($name, [
-                    'geofences' => $geofences,
+                    'geofences' => $wialonGeofences,
                     'shipment' => $shipment,
                 ])
             );
@@ -206,7 +206,8 @@ class InitWialon implements ShouldQueue
 
             $shipment->wialonNotifications()->create([
                 'id' => $wCreate[$host][0],
-                'name' => $wCreate[$host][1]->n
+                'name' => $wCreate[$host][1]->n,
+                'object_id' => $wObject->id,
             ]);
 
         }
@@ -285,6 +286,12 @@ class InitWialon implements ShouldQueue
         $wCreate = \Wialon::useOnlyHosts([$host])->resource_update_notification(
             json_encode($params)
         );
+
+        $shipment->wialonNotifications()->create([
+            'id' => $wCreate[$host][0],
+            'name' => $wCreate[$host][1]->n,
+            'object_id' => $wObject->id,
+        ]);
     }
 
     /**

@@ -19,6 +19,12 @@ class SoapServerAvanternShipmentController extends AbstractSoapServerController
      */
     protected function getWsdlUri(): string
     {
+        $this->compileWsdl();
+
+        if (config('app.debug')) {
+            return Storage::disk('wsdl')->path('avantern/Avantern_Shipment_Service.wsdl');
+        }
+
         return route('avantern.shipment.wsdl');
     }
 
@@ -33,7 +39,7 @@ class SoapServerAvanternShipmentController extends AbstractSoapServerController
     public function wsdlProvider(ResponseFactory $responseFactory)
     {
         return $responseFactory->make(
-            $this->getDynamicWsdl(),
+            $this->compileWsdl(),
             200,
             $this->getWsdlHeaders()
         );
@@ -43,10 +49,12 @@ class SoapServerAvanternShipmentController extends AbstractSoapServerController
      * @return string
      * @throws \Illuminate\Contracts\Filesystem\FileNotFoundException
      */
-    protected function getDynamicWsdl (): string
+    protected function compileWsdl (): string
     {
         $wsdl = Storage::disk('wsdl')->get('avantern/Avantern_Shipment_Service.wsdl.blade.php');
-        return view(['template' => $wsdl], ['host' => \Request::getHttpHost()])
-            ->render();
+        $compiledWsdl = view(['template' => $wsdl], ['host' => \Request::getHttpHost()])
+                        ->render();
+        Storage::disk('wsdl')->put('avantern/Avantern_Shipment_Service.wsdl', $compiledWsdl);
+        return $compiledWsdl;
     }
 }
