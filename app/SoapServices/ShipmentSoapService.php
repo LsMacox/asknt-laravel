@@ -216,7 +216,7 @@ class ShipmentSoapService
         $struct_messages = new messages($messages);
         $struct_waybill = new waybill(
             $this->waybill['number'],
-            $timestamp,
+            $this->waybill['timestamp'],
             $error ? 'E' : 'S',
             $struct_messages
         );
