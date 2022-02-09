@@ -211,7 +211,7 @@ class ShipmentSoapService
     {
         $format = 'Y-m-d H:i:s';
         $createdAt = now()->format($format);
-        $timestamp = Carbon::createFromFormat($format, $createdAt)->timestamp;
+        $timestamp = (string) Carbon::createFromFormat($format, $createdAt)->timestamp;
 
         $struct_messages = new messages($messages);
         $struct_waybill = new waybill(
