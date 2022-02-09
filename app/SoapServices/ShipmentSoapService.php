@@ -209,10 +209,6 @@ class ShipmentSoapService
      */
     protected function structShipmentStatus (array $messages, bool $error = false): DT_Shipment_ERP_resp
     {
-        $format = 'Y-m-d H:i:s';
-        $createdAt = now()->format($format);
-        $timestamp = (string) Carbon::createFromFormat($format, $createdAt)->timestamp;
-
         $struct_messages = new messages($messages);
         $struct_waybill = new waybill(
             $this->waybill['number'],
