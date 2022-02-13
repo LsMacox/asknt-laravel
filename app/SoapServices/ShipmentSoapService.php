@@ -175,7 +175,7 @@ class ShipmentSoapService
             'timestamp' => 'required',
             'date' => 'required|date_format:Ymd',
             'carrier' => 'string|max:255',
-            'car' => 'required|string|max:255',
+            'car' => 'required_without:trailer|string|max:255',
             'trailer' => 'string|max:255',
             'weight' => 'string|max:255',
             'mark' => ['required', 'string', Rule::in(Shipment::ENUM_MARK_STR)],

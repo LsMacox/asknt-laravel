@@ -32,10 +32,13 @@ class ViolationController extends Controller
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
      */
     public function repaidViolation (Request $request) {
-        $violation = Violation::findOrFail($request->id);
-        $violation->repaid = true;
-        $violation->repaid_description = $request->repaid_description;
-        $violation->save();
+        $violations = Violation::whereIn('id', $request->ids)->get();
+
+        $violations->each(function ($v) use ($request) {
+            $v->repaid = true;
+            $v->repaid_description = $request->repaid_description;
+            $v->save();
+        });
 
         return response('', Response::HTTP_NO_CONTENT);
     }

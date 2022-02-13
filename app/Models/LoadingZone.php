@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Models\BaseModel;
 use App\Filters\Filterable;
 use App\Models\ShipmentList\Shipment;
+use App\Models\Wialon\Action\ActionWialonGeofence;
 use App\Models\Wialon\WialonGeofence;
 
 class LoadingZone extends BaseModel
@@ -42,5 +43,14 @@ class LoadingZone extends BaseModel
     {
         return $this->belongsTo(Shipment::class);
     }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
+     */
+    public function actionWialonGeofences()
+    {
+        return $this->morphMany(ActionWialonGeofence::class, 'pointable');
+    }
+
 
 }

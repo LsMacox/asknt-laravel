@@ -21,12 +21,16 @@ class ActionWialonGeofence extends BaseModel
     protected $fillable = [
         'id',
         'wialon_notification_id',
+        'point_id',
+        'point_type',
         'name',
         'temp',
         'temp_type',
-        'door_type',
+        'door',
         'lat',
         'long',
+        'duration',
+        'mileage',
         'is_entrance',
         'created_at',
         'updated_at',
@@ -42,6 +46,14 @@ class ActionWialonGeofence extends BaseModel
     public function wialonNotification()
     {
         return $this->belongsTo(WialonNotification::class);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\MorphTo
+     */
+    public function pointable()
+    {
+        return $this->morphTo();
     }
 
 }

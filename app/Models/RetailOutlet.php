@@ -6,6 +6,8 @@ use App\Models\BaseModel;
 use App\Filters\Filterable;
 use App\Models\ShipmentList\Shipment;
 use App\Models\ShipmentList\ShipmentOrders;
+use App\Models\ShipmentList\ShipmentRetailOutlet;
+use App\Models\Wialon\Action\ActionWialonGeofence;
 
 class RetailOutlet extends BaseModel
 {
@@ -24,6 +26,7 @@ class RetailOutlet extends BaseModel
         'shipment_id',
         'lng',
         'lat',
+        'turn',
         'radius'
     ];
 
@@ -36,10 +39,25 @@ class RetailOutlet extends BaseModel
     }
 
     /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function shipmentRetailOutlet() {
+        return $this->hasOne(ShipmentRetailOutlet::class, 'id', 'code');
+    }
+
+    /**
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function shipmentOrders() {
         return $this->hasMany(ShipmentOrders::class, 'shipment_retail_outlet_id', 'code');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
+     */
+    public function actionWialonGeofences()
+    {
+        return $this->morphMany(ActionWialonGeofence::class, 'pointable');
     }
 
 }

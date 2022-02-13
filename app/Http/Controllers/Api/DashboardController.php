@@ -50,6 +50,10 @@ class DashboardController extends Controller
         );
     }
 
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function getDetailByShipmentId (Request $request) {
         $shipment = Shipment::where('id', $request->shipment_id)
             ->with(['loadingZone', 'retailOutlets.shipmentOrders', 'wialonNotifications.actionGeofences'])

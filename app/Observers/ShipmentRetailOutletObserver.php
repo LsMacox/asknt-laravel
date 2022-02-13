@@ -72,6 +72,7 @@ class ShipmentRetailOutletObserver
             'address' => $shipmentRetailOutlet->adres,
             'lng' => $shipmentRetailOutlet->long,
             'lat' => $shipmentRetailOutlet->lat,
+            'turn' => $shipmentRetailOutlet->turn,
             'radius' => $shipmentRetailOutlet->radius ?? 100
         ];
 

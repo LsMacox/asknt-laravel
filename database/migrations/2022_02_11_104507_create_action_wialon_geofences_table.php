@@ -18,12 +18,15 @@ class CreateActionWialonGeofencesTable extends Migration
         Schema::create('action_wialon_geofences', function (Blueprint $table) {
             $table->id();
             $table->foreignId('wialon_notification_id')->constrained()->onDelete('cascade');
+            $table->morphs('pointable');
             $table->string('name');
             $table->string('temp');
             $table->enum('temp_type', ActionWialonTempViolation::ENUM_TEMP);
-            $table->enum('door_type', ActionWialonGeofence::ENUM_DOOR);
+            $table->enum('door', ActionWialonGeofence::ENUM_DOOR);
             $table->double('lat');
             $table->double('long');
+            $table->string('duration')->nullable();
+            $table->string('mileage')->nullable();
             $table->boolean('is_entrance');
             $table->timestamps();
         });

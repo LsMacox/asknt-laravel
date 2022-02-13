@@ -17,13 +17,6 @@ class InitWialon implements ShouldQueue
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
-     * The number of times the job may be attempted.
-     *
-     * @var int
-     */
-    public $tries = 1;
-
-    /**
      * @var Shipment $shipment
      */
     protected $shipment;

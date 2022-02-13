@@ -16,6 +16,7 @@ class Violation extends BaseModel
         'shipment_id',
         'text',
         'repaid',
+        'created_at',
         'repaid_description',
     ];
 
@@ -26,5 +27,6 @@ class Violation extends BaseModel
     {
         return $this->belongsTo(Shipment::class);
     }
+
 
 }

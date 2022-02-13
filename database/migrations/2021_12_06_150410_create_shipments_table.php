@@ -22,7 +22,7 @@ class CreateShipmentsTable extends Migration
             $table->timestamp('date');
             $table->string('time');
             $table->string('carrier')->nullable();
-            $table->string('car');
+            $table->string('car')->nullable();
             $table->string('trailer')->nullable();
             $table->string('weight')->nullable();
             $table->enum('mark', Shipment::ENUM_MARK);

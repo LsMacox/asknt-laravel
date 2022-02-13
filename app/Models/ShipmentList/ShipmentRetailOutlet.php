@@ -3,6 +3,7 @@
 namespace App\Models\ShipmentList;
 
 use App\Models\BaseModel;
+use App\Models\RetailOutlet;
 use App\Models\ShipmentList\ShipmentOrders;
 use App\Models\Wialon\WialonGeofence;
 
@@ -34,6 +35,13 @@ class ShipmentRetailOutlet extends BaseModel
     public function shipment()
     {
         return $this->belongsTo(Shipment::class);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function retailOutlet() {
+        return $this->belongsTo(RetailOutlet::class);
     }
 
     /**

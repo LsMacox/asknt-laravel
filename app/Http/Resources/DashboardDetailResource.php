@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Wialon\Action\ActionWialonGeofence;
 use App\Models\Wialon\WialonNotification;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Carbon;
@@ -33,6 +34,9 @@ class DashboardDetailResource extends JsonResource
             $todayTemps[$time] = $tg->temp;
         })->toArray();
 
+        $curr_temp = optional($actionGeofences->last())->temp;
+        $avg_temp = $actionGeofences->avg('temp');
+
         return [
             'id' => $this->id,
             'car' => $this->car,
@@ -40,13 +44,15 @@ class DashboardDetailResource extends JsonResource
             'trailer' => $this->trailer,
             'driver' => $this->driver,
             'phone' => $this->phone,
-            'loading_zone' => $this->loadingZone,
-            'retail_outlets' => $this->retailOutlets,
+            'loading_zone' => new MorePointResource($this->loadingZone),
+            'retail_outlets' => MorePointResource::collection($this->retailOutlets->sortBy('turn')),
             'stock' => $this->stock,
             'today_temps' => $todayTemps,
             'temperature' => $this->temperature,
-            'curr_temp' => (integer) optional($actionGeofences->last())->temp,
-            'avg_temp' => (integer) $actionGeofences->avg('temp'),
+            'duration' => optional($actionGeofences->last())->duration,
+            'mileage' => optional($actionGeofences->last())->mileage,
+            'curr_temp' => !empty($curr_temp) ? (integer) $curr_temp : '?',
+            'avg_temp' => !empty($avg_temp) ? (integer) $avg_temp : '?',
             'weight' => $this->weight,
         ];
     }

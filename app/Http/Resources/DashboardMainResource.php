@@ -3,7 +3,6 @@
 namespace App\Http\Resources;
 
 use App\Models\Wialon\WialonNotification;
-use App\Repositories\LoadingZoneRepository;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class DashboardMainResource extends JsonResource
@@ -24,6 +23,7 @@ class DashboardMainResource extends JsonResource
             ->flatten(1)
             ->sortBy('created_at');
 
+        $curr_temp = optional($actionGeofences->last())->temp;
 
         return [
             'id' => $this->id,
@@ -33,9 +33,9 @@ class DashboardMainResource extends JsonResource
             'loading_warehouse' => optional($this->loadingZone()->first())->name,
             'violations' => $this->violations,
             'weight' => $this->weight,
-            'curr_temp' => (integer) optional($actionGeofences->last())->temp,
+            'curr_temp' => !empty($curr_temp) ? (integer) $curr_temp : '?',
             'points_total' => $this->retailOutlets->count() + 1,
-            'points_completed' => 0,
+            'points_completed' => $actionGeofences->where('is_entrance', true)->count(),
         ];
     }
 }
