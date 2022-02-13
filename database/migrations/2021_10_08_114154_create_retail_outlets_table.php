@@ -16,6 +16,7 @@ class CreateRetailOutletsTable extends Migration
         Schema::create('retail_outlets', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->foreignId('shipment_id')->nullable();
             $table->integer('code')->unique();
             $table->string('address');
             $table->double('lng');

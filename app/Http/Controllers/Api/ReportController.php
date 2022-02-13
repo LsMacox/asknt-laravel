@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exports\CompletedRoutesExport;
 use App\Filters\ShipmentFilter;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\ShipmentList\ShipmentFilterRequest;
@@ -28,7 +29,9 @@ class ReportController extends Controller
      * @return \Illuminate\Http\JsonResponse
      */
     public function list(ShipmentFilterRequest $request, ShipmentFilter $filter) {
-        $shipments = Shipment::filter($filter)->get();
+        $shipmentFilter = Shipment::filter($filter);
+
+        return \Excel::download(new CompletedRoutesExport($shipmentFilter), 'completed-routes.xls');
 //        dd($shipments);
 //
 //        return response()->json(

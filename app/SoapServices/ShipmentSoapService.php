@@ -99,9 +99,13 @@ class ShipmentSoapService
         $this->waybill['mark'] = Shipment::markToBoolean($this->waybill['mark']);
 
         $wObjects = \WialonResource::getObjectsWithRegPlate();
-        $hostId = $wObjects->search(function ($item) {
-            return $item->contains('registration_plate', \Str::lower($this->waybill['car']))
-                || $item->contains('registration_plate', \Str::lower($this->waybill['trailer']));
+        $hostId = $wObjects->search(function ($host) {
+            return $host->contains(function ($item) {
+                    return \WialonResource::equalObjectRegPlate($item, $this->waybill['car']);
+                })
+                || $host->contains(function ($item) {
+                    return \WialonResource::equalObjectRegPlate($item, $this->waybill['trailer']);
+                });
         });
 
         if (!$hostId) {
@@ -134,7 +138,7 @@ class ShipmentSoapService
         }
 
         if ($statusCreate) {
-            return Bus::chain([
+            Bus::batch([
                 new InitWialon($shipment),
                 new SendShipmentStatus(
                     $this->structShipmentStatus([])
@@ -194,8 +198,8 @@ class ShipmentSoapService
             'scores.score.*.name' => 'required|string|max:255',
             'scores.score.*.legal_name' => 'string|max:255',
             'scores.score.*.adres' => 'required|string|max:255',
-            'scores.score.*.long' => 'required',
-            'scores.score.*.lat' => 'required',
+            'scores.score.*.long' => 'required|regex:/^\s*\d+(\.\d+)?\s*$/',
+            'scores.score.*.lat' => 'required|regex:/^\s*\d+(\.\d+)?\s*$/',
             'scores.score.*.date' => 'date_format:Ymd',
             'scores.score.*.arrive_from' => 'string|date_format:H:i',
             'scores.score.*.arrive_to' => 'string|date_format:H:i',
@@ -204,8 +208,8 @@ class ShipmentSoapService
 
             'scores.score.*.orders.order.*.order' => $orderId,
             'scores.score.*.orders.order.*.product' => 'required|string|max:255',
-            'scores.score.*.orders.order.*.weight' => 'required',
-//            'scores.score.*.orders.order.*.return' => ['required', 'string', Rule::in(ShipmentOrders::ENUM_RETURN_STR)],
+            'scores.score.*.orders.order.*.weight' => 'required|regex:/^\s*\d+(\.\d+)?\s*$/',
+            'scores.score.*.orders.order.*.return' => ['required', 'string', Rule::in(ShipmentOrders::ENUM_RETURN)],
         ]);
     }
 
@@ -241,11 +245,13 @@ class ShipmentSoapService
         $scores = $this->wrapAssoc($scores);
 
         $waybill['scores']['score'] = collect($scores)->map(function ($score) {
+            $score['long'] = (double) $score['long'];
+            $score['lat'] = (double) $score['lat'];
             $orders = $score['orders']['order'];
             $orders = $this->wrapAssoc($orders);
 
             $score['orders']['order'] = collect($orders)->map(function ($order) {
-                $order['return'] = mb_strtolower($order['return']);
+                $order['weight'] = (double) $order['weight'];
                 return $order;
             })->toArray();
             return $score;

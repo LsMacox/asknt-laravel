@@ -105,15 +105,42 @@ class WialonResource
     public function getObjectsWithRegPlate () {
         return $this->searchObjects(8388609, '')->map(function ($object) {
             return $object->map(function ($item) {
-                $item->registration_plate = \Str::lower(
+                $item->registration_plate = (string) \Str::of(
                     optional(collect($item->pflds)
                         ->where('n', 'registration_plate')
                         ->first())
                         ->v
-                );
+                )->upper()->trim()->replaceMatches('/\s+/', '');
                 return $item;
             });
         });
     }
 
+    public function getObjectByRegPlate ($objects, $plates) {
+        $plates = \Arr::wrap($plates);
+        $idx = $objects
+            ->search(function ($item) use ($plates) {
+                $check = false;
+                foreach ($plates as $plate) {
+                    $check = $this->equalObjectRegPlate($item, $plate);
+                    if ($check) break;
+                }
+                return $check;
+            });
+
+        return $idx ? $objects[$idx] : $idx;
+    }
+
+    public function equalObjectRegPlate ($objectItem, $plate) {
+        return isset($objectItem->registration_plate) &&
+                !empty($objectItem->registration_plate) &&
+                $this->prepareRegPlate($plate) === $this->prepareRegPlate($objectItem->registration_plate);
+    }
+
+    public function prepareRegPlate ($plate) {
+        return (string) \Str::of($plate)
+            ->upper()
+            ->trim()
+            ->replaceMatches('/\s+/', '');
+    }
 }

@@ -98,7 +98,7 @@ class LoadingZonesController extends Controller
      */
     public function destroy(int $id)
     {
-        LoadingZone::find($id)->delete();
+        LoadingZone::findOrFail($id)->delete();
 
         return response('', Response::HTTP_NO_CONTENT);
     }

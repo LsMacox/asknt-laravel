@@ -68,6 +68,7 @@ class ShipmentRetailOutletObserver
     protected function updateOrCreateRetailOutlet (ShipmentRetailOutlet $shipmentRetailOutlet) {
         $data = [
             'name' => $shipmentRetailOutlet->name,
+            'shipment_id' => $shipmentRetailOutlet->shipment_id,
             'address' => $shipmentRetailOutlet->adres,
             'lng' => $shipmentRetailOutlet->long,
             'lat' => $shipmentRetailOutlet->lat,

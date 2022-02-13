@@ -31,7 +31,6 @@ class ShipmentController extends Controller
         return response()->json(
             ShipmentMainResource::collection($items),
             200
-
         );
     }
 

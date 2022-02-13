@@ -5,7 +5,9 @@ namespace App\Models\ShipmentList;
 use App\Filters\Filterable;
 use App\Models\BaseModel;
 use App\Models\LoadingZone;
+use App\Models\RetailOutlet;
 use App\Models\ShipmentList\ShipmentRetailOutlet;
+use App\Models\Violation;
 use App\Models\Wialon\WialonNotification;
 use Str;
 
@@ -72,9 +74,25 @@ class Shipment extends BaseModel
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    public function loadingZones()
+    public function loadingZone()
     {
-        return $this->hasMany(LoadingZone::class);
+        return $this->hasOne(LoadingZone::class);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function violations()
+    {
+        return $this->hasMany(Violation::class);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function retailOutlets()
+    {
+        return $this->hasMany(RetailOutlet::class);
     }
 
     /**
@@ -89,8 +107,7 @@ class Shipment extends BaseModel
      * @param ENUM_MARK_STR $mark
      */
     public static function markToBoolean (string $mark) {
-        $lMark = Str::lower($mark);
-        return Str::is(self::MARK_OWN, $lMark);
+        return Str::is(self::MARK_OWN, $mark);
     }
 
 }

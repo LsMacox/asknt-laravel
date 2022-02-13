@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Filters\ShipmentFilter;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\ShipmentList\ShipmentFilterRequest;
+use App\Http\Resources\DashboardDetailResource;
 use App\Http\Resources\DashboardMainResource;
 use App\Models\ShipmentList\Shipment;
 use App\Repositories\ShipmentRepository;
+use Illuminate\Http\Request;
 
 
 class DashboardController extends Controller
@@ -38,12 +40,27 @@ class DashboardController extends Controller
             $inp('limit'),
             $inp('sortBy'),
             $inp('sortByDesc') || false,
-            Shipment::filter($filter)
+            Shipment::filter($filter)->with(['retailOutlets', 'violations', 'wialonNotifications.actionGeofences'])
         );
         $items = DashboardMainResource::collection($items);
 
         return response()->json(
             compact( 'total', 'items'),
+            200
+        );
+    }
+
+    public function getDetailByShipmentId (Request $request) {
+        $shipment = Shipment::where('id', $request->shipment_id)
+            ->with(['loadingZone', 'retailOutlets.shipmentOrders', 'wialonNotifications.actionGeofences'])
+            ->first();
+
+        if (!$shipment) {
+            abort(404);
+        }
+
+        return response()->json(
+            new DashboardDetailResource($shipment),
             200
         );
     }

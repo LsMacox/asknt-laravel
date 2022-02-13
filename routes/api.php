@@ -34,8 +34,12 @@ Route::middleware('auth:sanctum')->namespace('Api')->group(function () {
     Route::get('user-role', [\App\Http\Controllers\Api\Auth\LoginController::class, 'getRole']);
     /* DashboardController */
     Route::post('dashboard/list', 'DashboardController@list');
+    Route::get('dashboard/detail-by-shipment/{shipment_id}', 'DashboardController@getDetailByShipmentId');
+    /* ViolationController */
+    Route::get('violation/list/{shipment_id}', 'ViolationController@listViolationByShipment');
+    Route::post('violation/repaid', 'ViolationController@repaidViolation');
     /* ShipmentController */
-    Route::get('shipment/list', 'ShipmentController@list');
+    Route::get('shipment/list/{shipment_id}', 'ShipmentController@listViolationByShipment');
 
     Route::middleware('level:1')->group(function () {
         Route::post('report/list', 'ReportController@list');

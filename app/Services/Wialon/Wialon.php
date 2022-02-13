@@ -20,9 +20,9 @@ class Wialon
 
     /**
      * Wialon authentication token
-     * @var string
+     * @var array
      */
-    private static $sid = null;
+    private static $sids = [];
 
     /**
      * Base url before wialon api
@@ -35,6 +35,8 @@ class Wialon
      * @var array
      */
     private $default_params = [];
+
+    private $host_id = 0;
 
     /**
      * @var bool
@@ -52,22 +54,24 @@ class Wialon
      * @param string $scheme
      * @param string $host
      * @param string $port
-     * @param string $sid
      * @param array $extra_params
      */
     function __construct (
         string $scheme = 'http',
         string $host = '',
         string $port = '',
-        string $sid = '',
         array $extra_params = []
     ) {
-        $this->default_params = array_replace(array(), (array)$extra_params);
+        $this->default_params = array_replace([], (array) $extra_params);
 
         if (!empty($host)) {
             $this->base_api_url =
                 sprintf('%s://%s%s/wialon/ajax.html?', $scheme, $host, mb_strlen($port)>0?':'.$port:'');
         }
+    }
+
+    public function setHostId ($hostId) {
+        $this->host_id = $hostId;
     }
 
     /**
@@ -99,6 +103,8 @@ class Wialon
     {
         $url = $this->base_api_url;
 
+        $args = (array) json_decode($args);
+
         if (stripos($action, 'unit_group') === 0) {
             $svc = $action;
             $svc[mb_strlen('unit_group')] = '/';
@@ -107,9 +113,9 @@ class Wialon
         }
 
         $params = [
-            'svc'=> $svc,
-            'params'=> $args,
-            'sid'=> static::$sid
+            'svc' => $svc,
+            'params' => $args,
+            'sid' => static::$sids[$this->host_id ?? 0] ?? ''
         ];
 
         $all_params = array_replace($this->default_params, $params);
@@ -172,13 +178,14 @@ class Wialon
             $wialon = new self($scheme, $host, $port);
             $loginResult = [];
 
-            if (empty(static::$sid)) {
-                $loginResult = $wialon->login($token);
+            if (!isset(static::$sids[$id]) || (isset(static::$sids[$id]) && empty(static::$sids[$id]))) {
+                $loginResult = $wialon->login($token, $id);
             }
 
             if (isset($loginResult['error'])) {
                 $results[$id] = WialonError::error($loginResult['error'], $loginResult['reason']);
             } else {
+                $wialon->setHostId($id);
                 $res = call_user_func_array([$wialon, $action], Arr::wrap($args));
                 if ($this->debug) {
                     $results[$id] = ['request' => $wialon->debug_request, 'response' => $res];
@@ -197,17 +204,22 @@ class Wialon
      * password - password
      * return - server response
      * @param $token
+     * @param $id
      * @return mixed
      */
-    public function login ($token) {
+    public function login ($token, $id = null) {
         $data = json_encode([
             'token' => urlencode($token),
         ]);
 
+        if (empty($id)) {
+            $id = count(static::$sids);
+        }
+
         $result = $this->token_login($data);
 
         if (isset($result['eid'])) {
-            static::$sid = $result['eid'];
+            static::$sids[$id] = $result['eid'];
         }
 
         return $result;
@@ -218,11 +230,15 @@ class Wialon
      * return - server response
      * @return mixed
      */
-    public function logout () {
+    public function logout ($id = null) {
         $result = $this->core_logout();
 
+        if (empty($id)) {
+            $id = count(static::$sids);
+        }
+
         if($result && 0 == $result['error']) {
-            static::$sid = '';
+            static::$sids[$id] = '';
         }
 
         return $result;

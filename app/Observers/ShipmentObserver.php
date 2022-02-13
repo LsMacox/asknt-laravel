@@ -23,7 +23,7 @@ class ShipmentObserver
             'id_1c' => $shipment->stock['id1c'],
             'id_sap' => $shipment->stock['idsap'],
         ];
-        $shipment->loadingZones()->create($data);
+        $shipment->loadingZone()->create($data);
     }
 
     /**
@@ -39,7 +39,7 @@ class ShipmentObserver
             'id_1c' => $shipment->stock['id1c'],
             'id_sap' => $shipment->stock['idsap'],
         ];
-        $shipment->loadingZones()->update($data);
+        $shipment->loadingZone()->update($data);
 
         if ($shipment->completed) {
             $wResource = WialonResource::useOnlyHosts($shipment->w_conn_id)

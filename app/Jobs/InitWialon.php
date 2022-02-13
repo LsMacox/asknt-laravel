@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\ShipmentList\Shipment;
+use App\Models\Wialon\WialonNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Bus\Batchable;
@@ -10,29 +11,22 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Collection;
-use WialonResource;
 
 class InitWialon implements ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
-     * @var Shipment $shipment
-     */
-    protected $shipment;
-
-    /**
      * The number of times the job may be attempted.
      *
      * @var int
      */
-    public $tries = 5;
+    public $tries = 1;
 
-    const WIALON_NOTIFICATION_NAMES = [
-        'вход в геозону',
-        'выход из геозоны',
-    ];
+    /**
+     * @var Shipment $shipment
+     */
+    protected $shipment;
 
     /**
      * Create a new job instance.
@@ -51,38 +45,24 @@ class InitWialon implements ShouldQueue
      */
     public function handle()
     {
+        if ($this->batch()->cancelled()) {
+            return;
+        }
+
         $shipment = $this->shipment;
         $retailOutlets = $shipment->shipmentRetailOutlets()
             ->whereNotNull(['long', 'lat'])
             ->get();
 
-        $wObjects = WialonResource::useOnlyHosts($shipment->w_conn_id)->getObjectsWithRegPlate();
+        $wObjects = \WialonResource::useOnlyHosts($shipment->w_conn_id)->getObjectsWithRegPlate();
 
-        $wResource = WialonResource::useOnlyHosts($shipment->w_conn_id)
+        $wResource = \WialonResource::useOnlyHosts($shipment->w_conn_id)
                                     ->firstResource()
                                     ->first();
 
-        $wObject = $wObjects[$shipment->w_conn_id]
-            ->filter(function ($item) use ($shipment) {
-                return \Str::is($item->registration_plate, \Str::lower($shipment->car))
-                    || \Str::is($item->registration_plate, \Str::lower($shipment->trailer));
-            })->first();
-
-        // Creating geofences in wialon
-        $this->createWialonGeofences(
-            $shipment->w_conn_id,
-            $wResource,
-            $retailOutlets,
-            $shipment,
-        );
-
-        // Updating notifications in wialon
-        $this->createWialonNotification(
-            $shipment->w_conn_id,
-            $wResource,
-            $retailOutlets,
-            $wObject,
-            $shipment,
+        $wObject = \WialonResource::getObjectByRegPlate(
+            $wObjects[$shipment->w_conn_id],
+            [$shipment->car, $shipment->trailer]
         );
 
         // Creating a temperature violation notification in wialon
@@ -92,125 +72,11 @@ class InitWialon implements ShouldQueue
             $wObject,
             $shipment
         );
-    }
 
-    /**
-     * @param string $host
-     * @param object $resource
-     * @param Collection $retailOutlets
-     * @param Shipment $shipment
-     */
-    protected function createWialonGeofences (
-        string $host,
-        object $resource,
-        Collection $retailOutlets,
-        Shipment $shipment
-    ) {
-        foreach ($retailOutlets as $zone) {
-            $params = [
-                'itemId' => $resource->id,
-                'id' => 0,
-                'callMode' => 'create',
-                'w' => $zone->radius ?? 100,
-                'f' => 112,
-                'n' => $zone->name,
-                'd' => 'Геозона создана веб-сервисом',
-                't' => 3,
-                'c' => 13458524,
-                'min' => 1,
-                'max' => 19,
-                'p' => [
-                    [
-                        'x' => $zone->long ?? $zone->lng,
-                        'y' => $zone->lat,
-                        'r' => $zone->radius ?? 100
-                    ]
-                ]
-            ];
-
-            $wCreate = \Wialon::useOnlyHosts([$host])->resource_update_zone(
-                json_encode($params)
-            );
-
-            $zone->wialonGeofences()->create([
-                'id' => $wCreate[$host][0],
-                'name' => $wCreate[$host][1]->n
-            ]);
-        }
-    }
-
-    /**
-     * @param string $host
-     * @param object $resource
-     * @param Collection $retailOutlets
-     * @param object $wObject
-     * @param Shipment $shipment
-     */
-    protected function createWialonNotification (
-        string $host,
-        object $resource,
-        Collection $retailOutlets,
-        object $wObject,
-        Shipment $shipment
-    ) {
-        $wialonGeofences = $retailOutlets->load('wialonGeofences')
-            ->pluck('wialonGeofences')
-            ->map(function ($geofence) {
-                return $geofence->first();
-            });
-
-        foreach (self::WIALON_NOTIFICATION_NAMES as $name) {
-            $params = [
-                'itemId' => $resource->id,
-                'id' => 0,
-                'callMode' => 'create',
-                'e' => 1,
-                'n' => '['.$wObject->nm.']: '.$name,
-                'txt' =>
-                    'unit_id=%UNIT_ID%&sensor_door=%SENSOR(*дверь*)%&sensor_temp=%SENSOR(*средняя темп*)%&msg_time=%MSG_TIME%&zone=%ZONE%&zones_min=%ZONES_MIN%&lat=%LAT%&long=%LON%&notification=%NOTIFICATION%&stuff_id='
-                    .config('wialon.connections.stuff_id'),
-                'ta' => 0,
-                'td' => 0,
-                'ma' => 0,
-                'mmtd' => 3600,
-                'cdt' => 0,
-                'mast' => 0,
-                'mpst' => 0,
-                'cp' => 3600,
-                'fl' => 1,
-                'tz' => 3,
-                'la' => 'RU',
-                'un' => [$wObject->id],
-                'sch' => [
-                    'f1' => 0,
-                    'f2' => 0,
-                    't1' => 0,
-                    't2' => 0,
-                    'm' => 1,
-                    'y' => 2,
-                    'w' => 2
-                ],
-            ];
-
-            $updateNotificationParams = array_merge(
-                $params,
-                $this->genWialonNotification($name, [
-                    'geofences' => $wialonGeofences,
-                    'shipment' => $shipment,
-                ])
-            );
-
-            $wCreate = \Wialon::useOnlyHosts([$host])->resource_update_notification(
-                json_encode($updateNotificationParams)
-            );
-
-            $shipment->wialonNotifications()->create([
-                'id' => $wCreate[$host][0],
-                'name' => $wCreate[$host][1]->n,
-                'object_id' => $wObject->id,
-            ]);
-
-        }
+        $this->batch()->add([
+            new InitWialonGeofences($shipment->w_conn_id, $retailOutlets, $wResource),
+            new InitWialonNotifications($shipment->w_conn_id, $retailOutlets, $wResource, $shipment, $wObject)
+        ]);
     }
 
     /**
@@ -237,12 +103,12 @@ class InitWialon implements ShouldQueue
             'ta' => 0,
             'td' => 0,
             'ma' => 0,
-            'mmtd' => 3600,
+            'mmtd' => 0,
             'cdt' => 0,
             'mast' => 0,
             'mpst' => 0,
-            'cp' => 3600,
-            'fl' => 1,
+            'cp' => 0,
+            'fl' => 0,
             'tz' => 3,
             'la' => 'RU',
             'un' => [$wObject->id],
@@ -251,9 +117,9 @@ class InitWialon implements ShouldQueue
                 'f2' => 0,
                 't1' => 0,
                 't2' => 0,
-                'm' => 1,
-                'y' => 2,
-                'w' => 2
+                'm' => 0,
+                'y' => 0,
+                'w' => 0
             ],
             'act' => [
                 [
@@ -290,69 +156,9 @@ class InitWialon implements ShouldQueue
         $shipment->wialonNotifications()->create([
             'id' => $wCreate[$host][0],
             'name' => $wCreate[$host][1]->n,
+            'action_type' => WialonNotification::ACTION_TEMP_VIOLATION,
             'object_id' => $wObject->id,
         ]);
     }
 
-    /**
-     * @param string $name
-     * @param array $args
-     * @return array
-     */
-    protected function genWialonNotification (string $name, array $args) {
-        switch ($name) {
-            case 'вход в геозону':
-                return [
-                    'act' => [
-                        [
-                            't' => 'push_messages',
-                            'p' => [
-                                'url' => route('wialon.entrance-to-geofence'),
-                                'get' => 0
-                            ]
-                        ],
-                        [
-                            't' => 'event',
-                            'p' => [
-                                'flags' => '0',
-                            ]
-                        ]
-                    ],
-                    'trg' => [
-                        't' => 'geozone',
-                        'p' => [
-                            'type' => 0,
-                            'lo' => 'OR',
-                            'geozone_ids' => $args['geofences']->implode('id', ','),
-                        ]
-                    ],
-                ];
-            case 'выход из геозоны':
-                return [
-                    'act' => [
-                        [
-                            't' => 'push_messages',
-                            'p' => [
-                                'url' => route('wialon.departure-from-geofence'),
-                                'get' => 0
-                            ]
-                        ],
-                        [
-                            't' => 'event',
-                            'p' => [
-                                'flags' => '0',
-                            ]
-                        ]
-                    ],
-                    'trg' => [
-                        't' => 'geozone',
-                        'p' => [
-                            'type' => 1,
-                            'lo' => 'OR',
-                            'geozone_ids' => $args['geofences']->implode('id', ','),
-                        ]
-                    ],
-                ];
-        }
-    }
 }

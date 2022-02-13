@@ -20,7 +20,6 @@ return [
                 'host' => 'hst-api.wialon.com',
                 'port' => '',
                 'token' => '752dbc1700b13e297ce789f1faa100e2C97702C9DD8361EBB1AD297E4BDC503EC19CF195',
-
             ],
             [
                 'id' => 2,

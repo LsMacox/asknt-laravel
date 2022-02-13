@@ -3,16 +3,16 @@
 namespace App\Models\ShipmentList;
 
 use App\Models\BaseModel;
-use Str;
+use App\Models\RetailOutlet;
 use App\Models\ShipmentList\ShipmentRetailOutlet;
 
 class ShipmentOrders extends BaseModel
 {
 
 
-    const RETURN_1_STR = 'возврат';
-    const RETURN_2_STR = 'не возврат';
-    const ENUM_RETURN_STR = [self::RETURN_1_STR, self::RETURN_2_STR];
+    const RETURN_1 = '1';
+    const RETURN_2 = '0';
+    const ENUM_RETURN = [self::RETURN_1, self::RETURN_2];
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -20,6 +20,14 @@ class ShipmentOrders extends BaseModel
     public function shipmentRetailOutlet () {
         return $this->belongsTo(ShipmentRetailOutlet::class);
     }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function retailOutlet () {
+        return $this->belongsTo(RetailOutlet::class);
+    }
+
 
     /**
      * The attributes that are mass assignable.
@@ -38,8 +46,7 @@ class ShipmentOrders extends BaseModel
      * @param ENUM_RETURN_STR $return
      */
     public static function returnToBoolean (string $return) {
-        $lReturn = Str::lower($return);
-        return Str::is(self::RETURN_1_STR, $lReturn);
+        return \Str::is(self::ENUM_RETURN, $return);
     }
 
 }
