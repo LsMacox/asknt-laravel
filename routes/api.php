@@ -39,7 +39,7 @@ Route::middleware('auth:sanctum')->namespace('Api')->group(function () {
     Route::get('violation/list/{shipment_id}', 'ViolationController@listViolationByShipment');
     Route::post('violation/repaid', 'ViolationController@repaidViolation');
     /* ShipmentController */
-    Route::get('shipment/list/{shipment_id}', 'ShipmentController@listViolationByShipment');
+    Route::get('shipment/list', 'ShipmentController@list');
 
     Route::middleware('level:1')->group(function () {
         Route::post('report/list', 'ReportController@list');
