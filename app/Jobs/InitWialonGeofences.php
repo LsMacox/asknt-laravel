@@ -78,6 +78,7 @@ class InitWialonGeofences implements ShouldQueue
 
             $zone->wialonGeofences()->create([
                 'id' => $wCreate[$this->hostId][0],
+                'w_conn_id' => $this->hostId,
                 'name' => $wCreate[$this->hostId][1]->n
             ]);
         }

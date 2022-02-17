@@ -14,6 +14,7 @@ class WialonGeofence extends BaseModel
      */
     protected $fillable = [
         'id',
+        'w_conn_id',
         'name',
         'geofence_id',
         'geofence_type',
