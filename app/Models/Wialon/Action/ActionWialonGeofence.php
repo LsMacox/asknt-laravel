@@ -36,6 +36,8 @@ class ActionWialonGeofence extends BaseModel
         'updated_at',
     ];
 
+    protected $dates = ['created_at', 'updated_at'];
+
     protected $casts = [
         'temp' => 'double',
     ];

@@ -40,7 +40,9 @@ class DashboardController extends Controller
             $inp('limit'),
             $inp('sortBy'),
             $inp('sortByDesc') || false,
-            Shipment::filter($filter)->with(['retailOutlets', 'violations', 'wialonNotifications.actionGeofences'])
+            Shipment::filter($filter)->with(['retailOutlets', 'violations' => function ($query) {
+                $query->where('repaid', false);
+            }, 'wialonNotifications.actionGeofences'])
         );
         $items = DashboardMainResource::collection($items);
 

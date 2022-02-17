@@ -30,7 +30,7 @@ class DashboardDetailResource extends JsonResource
 
         $todayTemps = [];
         $todayGeofences->each(function ($tg) use (&$todayTemps) {
-            $time = Carbon::parse($tg->created_at)->format('H:i');
+            $time = $tg->created_at->format('H:i');
             $todayTemps[$time] = $tg->temp;
         })->toArray();
 

@@ -4,6 +4,8 @@ namespace App\Exports;
 
 
 use App\Models\ShipmentList\Shipment;
+use App\Models\Wialon\WialonNotification;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithEvents;
@@ -16,7 +18,7 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithCustomStartCell;
 use Maatwebsite\Excel\Concerns\WithStyles;
 
-class CompletedRoutesExport implements WithHeadings, WithMapping, WithCustomStartCell, WithStyles, WithEvents, FromCollection
+class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles, WithCustomStartCell, WithEvents, WithMapping
 {
     protected $shipments;
 
@@ -27,12 +29,11 @@ class CompletedRoutesExport implements WithHeadings, WithMapping, WithCustomStar
 
     public function collection()
     {
-        $shipments = $this->shipments->with(['loadingZone', 'retailOutlets'])->get();
+        $shipments = $this->shipments->with(['loadingZone' , 'retailOutlets', 'wialonNotifications'])->get();
         $res = collect();
         $shipments->each(function ($shipment) use ($res) {
-            $shipment->loadingZone->shipment = $shipment;
-            $res->add($shipment->loadingZone);
-            $shipment->retailOutlets->each(function ($retailOutlet) use ($shipment, $res) {
+            $res->add($shipment);
+            $shipment->retailOutlets()->each(function ($retailOutlet) use ($shipment, $res) {
                 $retailOutlet->shipment = $shipment;
                 $res->add($retailOutlet);
             });
@@ -42,26 +43,149 @@ class CompletedRoutesExport implements WithHeadings, WithMapping, WithCustomStar
 
     public function map($data): array
     {
+        $shipment = $data->shipment ?? $data;
+
+        $wNotifications = $shipment->wialonNotifications;
+
+        $actionGeofences = $wNotifications ? $wNotifications->where('action_type', WialonNotification::ACTION_GEOFENCE)
+            ->map(function ($n) {
+                return $n->actionGeofences;
+            })
+            ->flatten(1)
+            ->sortBy('created_at') : null;
+
+        $avgTemp =  (integer) $actionGeofences->avg('temp');
+        $temperatureNorm =  $shipment->temperature;
+        $isTempNormal = $avgTemp >= $shipment->temperature['from'] && $avgTemp <= $shipment->temperature['to'];
+
+        if ($data instanceof Shipment) {
+            return [
+                $shipment->carrier ?? '',
+                $shipment->id ?? '',
+                '',
+                $shipment->loadingZone->name ?? '',
+                Shipment::markToString($shipment->mark),
+                !empty($shipment->car) ? $shipment->wialonNotifications()->first()->object_id : '',
+                empty($shipment->car) ? $shipment->wialonNotifications()->first()->object_id : '',
+                $shipment->car ?? '',
+                $shipment->trailer ?? '',
+                $shipment->weight,
+                $shipment->driver,
+                '',
+                '',
+                '',
+                '',
+                $shipment->retailOutlets->count() ?? '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                $actionGeofences->where('is_entrance', false)->first()->temp ?? '',
+                $actionGeofences->where('is_entrance', true)->first()->temp ?? '',
+                $avgTemp ?? '',
+                $isTempNormal ? 'да' : 'нет',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '1',
+            ];
+        }
+
+        $actEntranceDate = optional($data->actionWialonGeofences()->where('is_entrance', true)->first())->created_at;
+        $actDepartureDate = optional($data->actionWialonGeofences()->where('is_entrance', false)->first())->created_at;
+
         return [
-            [
-                $data->name,
-                $data->shipment->id,
-            ]
+            $shipment->carrier ?? '',
+            $shipment->id ?? '',
+            '',
+            $shipment->loadingZone->name ?? '',
+            Shipment::markToString($shipment->mark),
+            !empty($shipment->car) ? $shipment->wialonNotifications()->first()->object_id : '',
+            empty($shipment->car) ? $shipment->wialonNotifications()->first()->object_id : '',
+            $shipment->car ?? '',
+            $shipment->trailer ?? '',
+            $shipment->weight,
+            $shipment->driver,
+            '',
+            $data->turn ?? '',
+            '',
+            $data->code ?? '',
+            $shipment->retailOutlets->count() ?? '',
+            $data->name ?? '',
+            '',
+            $data->address ?? '',
+            '',
+            '',
+            '',
+            optional($actEntranceDate)->format('d.m.Y') ?? '',
+            optional($actEntranceDate)->format('H:i') ?? '',
+            optional($actDepartureDate)->format('d.m.Y') ?? '',
+            optional($actDepartureDate)->format('H:i') ?? '',
+            optional($actEntranceDate)->diffInMinutes($actDepartureDate) ?? '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            $data->shipmentOrders()->get()->implode('product', ', '),
+            '',
+            '',
+            $actionGeofences->where('is_entrance', false)->first()->temp ?? '',
+            $actionGeofences->where('is_entrance', true)->first()->temp ?? '',
+            $avgTemp ?? '',
+            $isTempNormal ? 'да' : 'нет',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            '1',
         ];
     }
 
-
     public function headings(): array
     {
-        $headingFirst = collect()
-            ->pad(20, '')
-            ->add('Точка загрузки')
-            ->pad(30, '')
-            ->add('Точка выгрузки')
-            ->pad(40, '')
-            ->add('Техническая информация')
-            ->toArray();
-
         $pointHead = ['Дата', 'Время', 'Дата', 'Время', 'Дата', 'Время', 'мин', 'мин', ''];
         $technicalHead = ['мин', 'км', 'кг', '', '°C'];
         $tempHead = ['°C', '°C', '°C', 'в норме'];
@@ -78,7 +202,7 @@ class CompletedRoutesExport implements WithHeadings, WithMapping, WithCustomStar
             ->merge($countHead)->toArray();
 
         return [
-            $headingFirst,
+            [' '],
             [
                 'Склад загрузки',
                 '№ транспортировки',
@@ -148,16 +272,25 @@ class CompletedRoutesExport implements WithHeadings, WithMapping, WithCustomStar
         return [
             AfterSheet::class    => function(AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
+                $shipmentStartDate = $this->shipments->first()->created_at;
+                $shipmentEndDate = $this->shipments->get()->last()->created_at;
+                $event->sheet->setCellValue('A1', 'Температурный отчет по уровню сервиса сформирован '.now()->format('d.m.Y H:i').' за период с '.
+                    $shipmentStartDate->format('d.m.Y').' по '.
+                    $shipmentEndDate->format('d.m.Y')
+                );
+                $event->sheet->setCellValue('U2', 'Точка загрузки');
+                $event->sheet->setCellValue('AE2', 'Точка выгрузки');
+                $event->sheet->setCellValue('AO2', 'Техническая информация');
                 // Cell sizes
                 $sheet->getRowDimension('1')->setRowHeight(53);
                 $sheet->getRowDimension('2')->setRowHeight(23);
                 $sheet->getRowDimension('3')->setRowHeight(113);
-//                $sheet->getRowDimension('5')->setRowHeight(42);
-//                $sheet->getRowDimension('6')->setRowHeight(60);
-//                $sheet->getRowDimension('7')->setRowHeight(29);
-//                $sheet->getRowDimension('8')->setRowHeight(43);
-//                $sheet->getRowDimension('9')->setRowHeight(43);
-//                $sheet->getRowDimension('10')->setRowHeight(58);
+                // Set content cells row height
+                $contentCellStart = 5;
+                $this->collection()->each(function ($row) use ($sheet, &$contentCellStart) {
+                    $sheet->getRowDimension($contentCellStart)->setRowHeight(45);
+                    $contentCellStart++;
+                });
                 # Columns sizes
                 $event->sheet->getDelegate()->getColumnDimension('A')->setWidth(10);
                 $event->sheet->getDelegate()->getColumnDimension('T')->setWidth(1.63);
@@ -216,6 +349,7 @@ class CompletedRoutesExport implements WithHeadings, WithMapping, WithCustomStar
                 $event->sheet->getDelegate()->getColumnDimension('BE')->setWidth(13.50);
                 // Merge cells
                 # first headings merge
+                $sheet->mergeCells('A1:G1');
                 $sheet->mergeCells('U2:AC2');
                 $sheet->mergeCells('AE2:AM2');
                 $sheet->mergeCells('AO2:AS2');
@@ -255,7 +389,6 @@ class CompletedRoutesExport implements WithHeadings, WithMapping, WithCustomStar
     {
         $baseFill = $this->fillSolid('FFFF00');
 
-
         $firstHeading = array_merge($baseFill, [
             'font' => [
                 'name' => 'Calibri',
@@ -289,8 +422,19 @@ class CompletedRoutesExport implements WithHeadings, WithMapping, WithCustomStar
             ]
         ]);
 
-
-        return [
+        $res = [
+            'A1'  => [
+                'font' => [
+                    'name' => 'Calibri',
+                    'bold' => false,
+                    'size' => 18,
+                ],
+                'alignment' => [
+                    'vertical' => 'center',
+                    'horizontal' => 'center',
+                    'wrapText' => true,
+                ],
+            ],
             'U2'  => $firstHeading,
             'AE2' => $firstHeading,
             'AO2' => $firstHeading,
@@ -315,6 +459,56 @@ class CompletedRoutesExport implements WithHeadings, WithMapping, WithCustomStar
             'AY4' => $this->clearCell(),
             'BC4' => $this->clearCell(),
         ];
+
+        $contentCellStart = 5;
+        $this->collection()->each(function ($row) use ($sheet, &$res, &$contentCellStart) {
+            if ($row instanceof Shipment) {
+                $res[$contentCellStart] = array_merge($this->fillSolid('A6A6A6'), [
+                    'font' => [
+                        'name' => 'Arial',
+                        'bold' => true,
+                        'size' => 11,
+                    ],
+                    'alignment' => [
+                        'vertical' => 'center',
+                        'horizontal' => 'center',
+                        'wrapText' => true,
+                    ],
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => [
+                                'rgb' => '000000'
+                            ]
+                        ]
+                    ]
+                ]);
+            } else {
+                $res[$contentCellStart] = [
+                    'font' => [
+                        'name' => 'Arial',
+                        'bold' => false,
+                        'size' => 11,
+                    ],
+                    'alignment' => [
+                        'vertical' => 'center',
+                        'horizontal' => 'center',
+                        'wrapText' => true,
+                    ],
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => [
+                                'rgb' => '000000'
+                            ]
+                        ]
+                    ]
+                ];
+            }
+            $contentCellStart++;
+        });
+
+        return $res;
     }
 
     protected function clearCell () {

@@ -43,6 +43,7 @@ Route::middleware('auth:sanctum')->namespace('Api')->group(function () {
 
     Route::middleware('level:1')->group(function () {
         Route::post('report/list', 'ReportController@list');
+        Route::get('report/download', 'ReportController@downloadReport');
     });
 
     Route::middleware('level:3')->group(function () {

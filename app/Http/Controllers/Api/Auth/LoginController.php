@@ -52,16 +52,16 @@ class LoginController extends Controller
             return Auth::user()->currentAccessToken();
         }
 
-//        if ($this->hasTooManyRequests($request)) {
-//            throw ValidationException::withMessages([
-//                'login' => [__('auth.throttle', ['time' =>
-//                    (int) now()->parse(
-//                        RateLimiter::
-//                        availableIn($this->throttleKey($request)) + 1
-//                    )->format('i') . ' минут.'
-//                ])],
-//            ]);
-//        }
+        if ($this->hasTooManyRequests($request)) {
+            throw ValidationException::withMessages([
+                'login' => [__('auth.throttle', ['time' =>
+                    (int) now()->parse(
+                        RateLimiter::
+                        availableIn($this->throttleKey($request)) + 1
+                    )->format('i') . ' минут.'
+                ])],
+            ]);
+        }
 
         RateLimiter::hit($this->throttleKey($request), $this->decayMinutes * 60);
 

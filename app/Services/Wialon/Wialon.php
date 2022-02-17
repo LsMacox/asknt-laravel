@@ -19,6 +19,11 @@ class Wialon
     private $only_hosts = [];
 
     /**
+     * @var bool
+     */
+    protected $return_raw = false;
+
+    /**
      * Wialon authentication token
      * @var array
      */
@@ -93,6 +98,15 @@ class Wialon
     }
 
     /**
+     * @param bool $return_raw
+     * @return $this
+     */
+    public function returnRaw (bool $return_raw = true) {
+        $this->return_raw = $return_raw;
+        return $this;
+    }
+
+    /**
      * RemoteAPI request performer
      * action - RemoteAPI command name
      * args - JSON string with request parameters
@@ -149,7 +163,7 @@ class Wialon
 
         curl_close($ch);
 
-        return collect(json_decode($result));
+        return $this->return_raw ? $result : collect(json_decode($result));
     }
 
     /**
@@ -180,6 +194,10 @@ class Wialon
 
             if (!isset(static::$sids[$id]) || (isset(static::$sids[$id]) && empty(static::$sids[$id]))) {
                 $loginResult = $wialon->login($token, $id);
+            }
+
+            if ($this->return_raw) {
+                $wialon->returnRaw();
             }
 
             if (isset($loginResult['error'])) {

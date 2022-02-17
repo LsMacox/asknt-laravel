@@ -50,8 +50,11 @@ class Shipment extends BaseModel
         'temperature',
         'completed',
         'not_completed',
+        'created_at',
         'stock',
     ];
+
+    protected $dates = ['created_at', 'updated_at'];
 
     /**
      * The attributes that should be cast.
@@ -108,6 +111,13 @@ class Shipment extends BaseModel
      */
     public static function markToBoolean (string $mark) {
         return Str::is(self::MARK_OWN, $mark);
+    }
+
+    /**
+     * @param ENUM_MARK_STR $mark
+     */
+    public static function markToString (string $mark) {
+        return Str::is(self::MARK_OWN, $mark) ? self::MARK_OWN_STR : self::MARK_HIRED_STR;
     }
 
 }

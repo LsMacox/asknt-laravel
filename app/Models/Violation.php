@@ -20,6 +20,8 @@ class Violation extends BaseModel
         'repaid_description',
     ];
 
+    protected $dates = ['created_at', 'updated_at'];
+
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */

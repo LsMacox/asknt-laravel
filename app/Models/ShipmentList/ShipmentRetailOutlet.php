@@ -29,6 +29,8 @@ class ShipmentRetailOutlet extends BaseModel
         'turn',
     ];
 
+    protected $dates = ['arrive_from', 'arrive_to'];
+
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */

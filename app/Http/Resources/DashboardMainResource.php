@@ -31,7 +31,7 @@ class DashboardMainResource extends JsonResource
             'car' => $this->car ?? $this->trailer,
             'driver' => $this->driver,
             'loading_warehouse' => optional($this->loadingZone()->first())->name,
-            'violations' => $this->violations,
+            'violations' => ViolationResource::collection($this->violations),
             'weight' => $this->weight,
             'curr_temp' => !empty($curr_temp) ? (integer) $curr_temp : '?',
             'points_total' => $this->retailOutlets->count() + 1,

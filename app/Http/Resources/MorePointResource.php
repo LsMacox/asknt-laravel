@@ -27,7 +27,7 @@ class MorePointResource extends JsonResource
             ->where('door', ActionWialonGeofence::DOOR_CLOSE)->first();
 
         if (method_exists($this->resource, 'shipmentRetailOutlet')) {
-            $shipmentRetailOutlets = $this->shipmentRetailOutlet()->first();
+            $shipmentRetailOutlet = $this->shipmentRetailOutlet()->first();
         }
 
         $timeOnPoint = '';
@@ -41,12 +41,12 @@ class MorePointResource extends JsonResource
             $doorOpen = $this->getTimeBetween($actionGeofenceDoorOpen->created_at, $actionGeofenceDoorClose->created_at);
         }
 
-        $arrive_from_actual = $actionGeofenceEntrance ? Carbon::parse($actionGeofenceEntrance->created_at)->format('H:i') : null;
-        $arrive_to_actual = $actionGeofenceDeparture ? Carbon::parse($actionGeofenceDeparture->created_at)->format('H:i') : null;
-        $arrive_from_plan = isset($shipmentRetailOutlets) && $shipmentRetailOutlets->arrive_from ?
-            Carbon::parse($shipmentRetailOutlets->arrive_from)->format('H:i') : null;
-        $arrive_to_plan = isset($shipmentRetailOutlets) && $shipmentRetailOutlets->arrive_to ?
-            Carbon::parse($shipmentRetailOutlets->arrive_to)->format('H:i') : null;
+        $arrive_from_actual = $actionGeofenceEntrance ? $actionGeofenceEntrance->created_at->format('H:i') : null;
+        $arrive_to_actual = $actionGeofenceDeparture ? $actionGeofenceDeparture->created_at->format('H:i') : null;
+        $arrive_from_plan = isset($shipmentRetailOutlet) && $shipmentRetailOutlet->arrive_from ?
+            $shipmentRetailOutlet->arrive_from->format('H:i') : null;
+        $arrive_to_plan = isset($shipmentRetailOutlet) && $shipmentRetailOutlet->arrive_to ?
+            $shipmentRetailOutlet->arrive_to->format('H:i') : null;
         $late = false;
 
         if ($arrive_from_actual && $arrive_from_plan && $arrive_to_plan) {
@@ -88,11 +88,8 @@ class MorePointResource extends JsonResource
     {
         $timeStr = '';
 
-        $date1 = Carbon::parse($time1);
-        $date2 = Carbon::parse($time2);
-
-        $diffInHours = $date2->diffInHours($date1);
-        $diffInMins = $date2->diffInMinutes($date1);
+        $diffInHours = $time2->diffInHours($time1);
+        $diffInMins = $time2->diffInMinutes($time1);
         $diffInMins = $diffInMins - ($diffInHours * 60);
 
         $hoursTrans = trans_choice('час|часа|часов', $diffInHours);

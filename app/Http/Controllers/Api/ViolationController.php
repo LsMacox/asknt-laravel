@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\DashboardDetailResource;
+use App\Http\Resources\ViolationResource;
 use App\Models\Violation;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -22,7 +23,7 @@ class ViolationController extends Controller
             ->get();
 
         return response()->json(
-            $violations,
+            ViolationResource::collection($violations),
             200
         );
     }
