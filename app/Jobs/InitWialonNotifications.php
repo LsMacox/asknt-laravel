@@ -124,6 +124,7 @@ class InitWialonNotifications implements ShouldQueue
 
             $this->shipment->wialonNotifications()->create([
                 'id' => $wCreate[$this->hostId][0],
+                'w_conn_id' => $this->hostId,
                 'name' => $wCreate[$this->hostId][1]->n,
                 'action_type' => WialonNotification::ACTION_GEOFENCE,
                 'object_id' => $this->wObject->id,

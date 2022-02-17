@@ -148,6 +148,7 @@ class InitWialon implements ShouldQueue
 
         $shipment->wialonNotifications()->create([
             'id' => $wCreate[$host][0],
+            'w_conn_id' => $host,
             'name' => $wCreate[$host][1]->n,
             'action_type' => WialonNotification::ACTION_TEMP_VIOLATION,
             'object_id' => $wObject->id,

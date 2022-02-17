@@ -112,11 +112,11 @@
     </wsdl:binding>
     <wsdl:service name="SI_ShipmentStatus_Avantern_Async_OutService">
         <wsdl:port name="HTTP_Port" binding="p1:SI_ShipmentStatus_Avantern_Async_OutBinding">
-            <soapbind:address location="http://mow03-pip01l.cherkizovsky.net:50000/XISOAPAdapter/MessageServlet?senderParty=&amp;senderService=BC_Avantern&amp;receiverParty=&amp;receiverService=&amp;interface=SI_ShipmentStatus_Avantern_Async_Out&amp;interfaceNamespace=http%3A%2F%2Fcherkizovo-group.ru%2FERP%2FAvanternShipment"
+            <soapbind:address location="http://mow03-pip01tl.cherkizovsky.net:50000/XISOAPAdapter/MessageServlet?senderParty=&amp;senderService=BC_Avantern&amp;receiverParty=&amp;receiverService=&amp;interface=SI_ShipmentStatus_Avantern_Async_Out&amp;interfaceNamespace=http%3A%2F%2Fcherkizovo-group.ru%2FERP%2FAvanternShipment"
                               xmlns:soapbind="http://schemas.xmlsoap.org/wsdl/soap/"/>
         </wsdl:port>
         <wsdl:port name="HTTPS_Port" binding="p1:SI_ShipmentStatus_Avantern_Async_OutBinding">
-            <soapbind:address location="https://mow03-pip01l.cherkizovsky.net:50001/XISOAPAdapter/MessageServlet?senderParty=&amp;senderService=BC_Avantern&amp;receiverParty=&amp;receiverService=&amp;interface=SI_ShipmentStatus_Avantern_Async_Out&amp;interfaceNamespace=http%3A%2F%2Fcherkizovo-group.ru%2FERP%2FAvanternShipment"
+            <soapbind:address location="https://mow03-pip01tl.cherkizovsky.net:50001/XISOAPAdapter/MessageServlet?senderParty=&amp;senderService=BC_Avantern&amp;receiverParty=&amp;receiverService=&amp;interface=SI_ShipmentStatus_Avantern_Async_Out&amp;interfaceNamespace=http%3A%2F%2Fcherkizovo-group.ru%2FERP%2FAvanternShipment"
                               xmlns:soapbind="http://schemas.xmlsoap.org/wsdl/soap/"/>
         </wsdl:port>
     </wsdl:service>

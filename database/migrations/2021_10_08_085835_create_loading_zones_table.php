@@ -17,8 +17,8 @@ class CreateLoadingZonesTable extends Migration
             $table->id();
             $table->string('name');
             $table->foreignId('shipment_id')->nullable();
-            $table->string('id_sap')->unique()->nullable();
-            $table->string('id_1c')->unique()->nullable();
+            $table->string('id_sap')->nullable();
+            $table->string('id_1c')->nullable();
             $table->double('lng')->nullable();
             $table->double('lat')->nullable();
             $table->smallInteger('radius')->default(500);

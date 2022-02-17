@@ -22,6 +22,7 @@ class WialonNotification extends BaseModel
      */
     protected $fillable = [
         'id',
+        'w_conn_id',
         'name',
         'object_id',
         'action_type',

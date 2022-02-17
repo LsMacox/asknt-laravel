@@ -16,7 +16,7 @@ class CreateActionWialonTempViolationsTable extends Migration
     {
         Schema::create('action_wialon_temp_violations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('wialon_notification_id')->constrained()->onDelete('cascade');
+            $table->foreignId('wialon_notification_id');
             $table->string('temp');
             $table->enum('temp_type', ActionWialonTempViolation::ENUM_TEMP);
             $table->double('lat');

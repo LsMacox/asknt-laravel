@@ -17,7 +17,7 @@ class CreateActionWialonGeofencesTable extends Migration
     {
         Schema::create('action_wialon_geofences', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('wialon_notification_id')->constrained()->onDelete('cascade');
+            $table->foreignId('wialon_notification_id');
             $table->morphs('pointable');
             $table->string('name');
             $table->string('temp');
