@@ -12,7 +12,7 @@ use Illuminate\Queue\SerializesModels;
 use App\SoapServices\Struct\ShipmentStatus\DT_Shipment_ERP_resp;
 use Illuminate\Support\Facades\Storage;
 
-class SendShipmentStatus implements ShouldQueue
+class SendShipmentStatus implements ShouldQueue, ShouldBeUnique
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 

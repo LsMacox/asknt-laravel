@@ -29,11 +29,14 @@ class ReportController extends Controller
      * @return \Illuminate\Http\JsonResponse
      */
     public function list(ShipmentFilterRequest $request, ShipmentFilter $filter) {
-        $shipmentFilter = Shipment::filter($filter)->where('completed', true)->orWhere('not_completed', true);
+        $shipmentFilter = Shipment::filter($filter)
+            ->where('completed', true)
+            ->orWhere('not_completed', true)
+            ->orderBy('created_at')->get();
 
         if ($shipmentFilter->count() > 0) {
             $shipmentStartDate = $shipmentFilter->first()->created_at;
-            $shipmentEndDate = $shipmentFilter->get()->last()->created_at;
+            $shipmentEndDate = $shipmentFilter->last()->created_at;
         }
 
         return response()->json(
@@ -48,9 +51,12 @@ class ReportController extends Controller
      * @return mixed
      */
     public function downloadReport (ShipmentFilterRequest $request, ShipmentFilter $filter) {
-        $shipmentFilter = Shipment::filter($filter);
+        $shipmentFilter = Shipment::filter($filter)
+            ->where('completed', true)
+            ->orWhere('not_completed', true)
+            ->orderBy('created_at');
 
-        $shipmentStartDate = $shipmentFilter->first()->created_at;
+        $shipmentStartDate = $shipmentFilter->get()->first()->created_at;
         $shipmentEndDate = $shipmentFilter->get()->last()->created_at;
 
         return \Excel::download(

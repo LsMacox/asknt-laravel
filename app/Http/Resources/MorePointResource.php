@@ -82,10 +82,12 @@ class MorePointResource extends JsonResource
     /**
      * @param $time1
      * @param $time2
-     * @return string
+     * @return string|null
      */
-    public function getTimeBetween($time1, $time2): string
+    public function getTimeBetween($time1, $time2)
     {
+        if (empty($time1) && empty($time2)) return null;
+
         $timeStr = '';
 
         $diffInHours = $time2->diffInHours($time1);

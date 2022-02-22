@@ -49,7 +49,10 @@ class DashboardDetailResource extends JsonResource
             'stock' => $this->stock,
             'today_temps' => $todayTemps,
             'temperature' => $this->temperature,
-            'duration' => optional($actionGeofences->last())->duration,
+            'duration' => MorePointResource::getTimeBetween(
+                optional($actionGeofences->where('is_entrance', false)->first())->created_at,
+                optional($actionGeofences->last())->created_at
+            ),
             'mileage' => optional($actionGeofences->last())->mileage,
             'curr_temp' => !empty($curr_temp) ? (integer) $curr_temp : '?',
             'avg_temp' => !empty($avg_temp) ? (integer) $avg_temp : '?',

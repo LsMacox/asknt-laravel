@@ -272,7 +272,7 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
         return [
             AfterSheet::class    => function(AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
-                $shipmentStartDate = $this->shipments->first()->created_at;
+                $shipmentStartDate = $this->shipments->get()->first()->created_at;
                 $shipmentEndDate = $this->shipments->get()->last()->created_at;
                 $event->sheet->setCellValue('A1', 'Температурный отчет по уровню сервиса сформирован '.now()->format('d.m.Y H:i').' за период с '.
                     $shipmentStartDate->format('d.m.Y').' по '.
