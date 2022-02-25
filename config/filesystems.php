@@ -40,6 +40,11 @@ return [
             'root' => storage_path('wsdl'),
         ],
 
+        'completed-routes' => [
+            'driver' => 'local',
+            'root' => storage_path('completed-routes'),
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

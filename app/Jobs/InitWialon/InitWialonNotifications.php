@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\InitWialon;
 
 use App\Models\ShipmentList\Shipment;
 use App\Models\Wialon\WialonNotification;
@@ -20,6 +20,7 @@ class InitWialonNotifications implements ShouldQueue
     const WIALON_NOTIFICATION_NAMES = [
         'вход в геозону',
         'выход из геозоны',
+        'температура'
     ];
 
     /**
@@ -85,7 +86,7 @@ class InitWialonNotifications implements ShouldQueue
                 'e' => 1,
                 'n' => '['.$this->wObject->nm.']: '.$name,
                 'txt' =>
-                    'unit_id=%UNIT_ID%&sensor_door=%SENSOR(*дверь*)%&sensor_temp=%SENSOR(*средняя темп*)%&msg_time=%MSG_TIME%&zone=%ZONE%&zone_min=%ZONE_MIN%&lat=%LAT%&long=%LON%&notification=%NOTIFICATION%&stuff_id='
+                    'unit_id=%UNIT_ID%&sensor_door=%SENSOR(*дверь*)%&mileage=%MILEAGE%&sensor_temp=%SENSOR(*Средняя темп*)%&msg_time=%MSG_TIME%&zone=%ZONE%&zone_min=%ZONE_MIN%&lat=%LAT%&long=%LON%&notification=%NOTIFICATION%&stuff_id='
                     .config('wialon.connections.stuff_id'),
                 'ta' => 0,
                 'td' => 0,
@@ -126,7 +127,7 @@ class InitWialonNotifications implements ShouldQueue
                 'id' => $wCreate[$this->hostId][0],
                 'w_conn_id' => $this->hostId,
                 'name' => $wCreate[$this->hostId][1]->n,
-                'action_type' => WialonNotification::ACTION_GEOFENCE,
+                'action_type' => $name === 'температура' ? WialonNotification::ACTION_TEMP : WialonNotification::ACTION_GEOFENCE,
                 'object_id' => $this->wObject->id,
             ]);
         }
@@ -188,6 +189,35 @@ class InitWialonNotifications implements ShouldQueue
                             'type' => 1,
                             'lo' => 'OR',
                             'geozone_ids' => $args['geofences']->implode('id', ','),
+                        ]
+                    ],
+                ];
+            case 'температура':
+                return [
+                    'act' => [
+                        [
+                            't' => 'push_messages',
+                            'p' => [
+                                'url' => route('wialon.temp'),
+                                'get' => 0
+                            ]
+                        ],
+                        [
+                            't' => 'event',
+                            'p' => [
+                                'flags' => '0',
+                            ]
+                        ]
+                    ],
+                    'trg' => [
+                        't' => 'sensor_value',
+                        'p' => [
+//                            'lower_bound' => 1,
+                            'merge' => 0,
+                            'prev_msg_diff' => 0,
+                            'sensor_name_mask' => '*Средняя темп*',
+                            'sensor_type' => 'temperature',
+                            'upper_bound' => 2,
                         ]
                     ],
                 ];

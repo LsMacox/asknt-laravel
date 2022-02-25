@@ -19,8 +19,8 @@ return [
     'wsdl' => [
         'shipment-status' => [
             'url' => 'http://mow03-piq01tl.cherkizovsky.net:50000/dir/wsdl?p=ic/4f796a90f909319ca7911b253838ad03',
-            'username' => 'Avanterna',
-            'password' => 'PIQ123456'
+            'username' => env('SHIPMENT_STATUS_LOGIN', 'Avanterna'),
+            'password' => env('SHIPMENT_STATUS_PASSWORD', 'PIQ123456')
         ],
     ],
 ];

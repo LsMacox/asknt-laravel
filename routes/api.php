@@ -28,6 +28,7 @@ Route::prefix('wialon')->middleware('wialon.initiator')->namespace('Api')->group
     Route::post('temp-violation', 'WialonActionsController@tempViolation')->name('wialon.temp-violation');
     Route::post('entrance-to-geofence', 'WialonActionsController@entranceToGeofence')->name('wialon.entrance-to-geofence');
     Route::post('departure-from-geofence', 'WialonActionsController@departureFromGeofence')->name('wialon.departure-from-geofence');
+    Route::post('temp', 'WialonActionsController@temp')->name('wialon.temp');
 });
 
 Route::middleware('auth:sanctum')->namespace('Api')->group(function () {
@@ -44,6 +45,12 @@ Route::middleware('auth:sanctum')->namespace('Api')->group(function () {
     Route::middleware('level:1')->group(function () {
         Route::post('report/list', 'ReportController@list');
         Route::get('report/download', 'ReportController@downloadReport');
+    });
+
+    Route::middleware('level:2')->group(function () {
+        /* CompletedRoutesController */
+        Route::post('completed-routes/list', 'CompletedRoutesController@list');
+        Route::get('completed-routes/download-files/{shipment_id}', 'CompletedRoutesController@downloadShipmentFiles');
     });
 
     Route::middleware('level:3')->group(function () {

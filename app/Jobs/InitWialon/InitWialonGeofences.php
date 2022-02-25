@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\InitWialon;
 
+use App\Models\ShipmentList\Shipment;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -31,16 +32,22 @@ class InitWialonGeofences implements ShouldQueue
     protected $resource;
 
     /**
+     * @var Shipment $shipment
+     */
+    protected $shipment;
+
+    /**
      * Create a new job instance.
      * @param string|number $hostId
      * @param Collection $retailOutlets
      * @param object $resource
      */
-    public function __construct($hostId, Collection $retailOutlets, object $resource)
+    public function __construct($hostId, Collection $retailOutlets, object $resource, Shipment $shipment)
     {
         $this->hostId = $hostId;
         $this->retailOutlets = $retailOutlets;
         $this->resource = $resource;
+        $this->shipment = $shipment;
     }
 
     /**
@@ -78,6 +85,7 @@ class InitWialonGeofences implements ShouldQueue
 
             $zone->wialonGeofences()->create([
                 'id' => $wCreate[$this->hostId][0],
+                'shipment_id' => $this->shipment->id,
                 'w_conn_id' => $this->hostId,
                 'name' => $wCreate[$this->hostId][1]->n
             ]);

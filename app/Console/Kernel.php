@@ -2,10 +2,10 @@
 
 namespace App\Console;
 
+use App\Jobs\CompletionShipments;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
-use App\Jobs\GrabWialonData;
-use App\Jobs\GrabADGroups;
+use Illuminate\Support\Facades\Bus;
 
 class Kernel extends ConsoleKernel
 {
@@ -26,7 +26,9 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        //
+        $schedule->call(function () {
+            Bus::batch([new CompletionShipments()])->dispatch();
+        })->dailyAt('00:00');
     }
 
     /**

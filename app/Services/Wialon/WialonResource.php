@@ -56,7 +56,7 @@ class WialonResource
         ));
 
         return \Wialon::useOnlyHosts($this->useOnlyHosts)->core_search_items($params)->map(function ($resource) {
-            return !is_string($resource) ? collect($resource['items']) : collect();
+            return !is_string($resource) && isset($resource['items']) ? collect($resource['items']) : collect();
         });
     }
 
@@ -82,7 +82,7 @@ class WialonResource
         ));
 
         return \Wialon::useOnlyHosts($this->useOnlyHosts)->core_search_items($params)->map(function ($object) {
-            return !is_string($object) ? collect($object['items']) : collect();
+            return !is_string($object) && isset($object['items']) ? collect($object['items']) : collect();
         });
     }
 

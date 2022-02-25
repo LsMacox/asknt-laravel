@@ -3,9 +3,12 @@
 namespace App\Models\Wialon;
 
 use App\Models\BaseModel;
+use App\Models\ShipmentList\Shipment;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class WialonGeofence extends BaseModel
 {
+    use SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -15,6 +18,7 @@ class WialonGeofence extends BaseModel
     protected $fillable = [
         'id',
         'w_conn_id',
+        'shipment_id',
         'name',
         'geofence_id',
         'geofence_type',
@@ -28,6 +32,14 @@ class WialonGeofence extends BaseModel
     public function geofenceable()
     {
         return $this->morphTo();
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function shipment()
+    {
+        return $this->belongsTo(Shipment::class);
     }
 
 }

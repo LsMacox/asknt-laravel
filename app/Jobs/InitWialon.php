@@ -2,6 +2,8 @@
 
 namespace App\Jobs;
 
+use App\Jobs\InitWialon\InitWialonGeofences;
+use App\Jobs\InitWialon\InitWialonNotifications;
 use App\Models\ShipmentList\Shipment;
 use App\Models\Wialon\WialonNotification;
 use Illuminate\Bus\Queueable;
@@ -67,7 +69,7 @@ class InitWialon implements ShouldQueue, ShouldBeUnique
         );
 
         $this->batch()->add([
-            new InitWialonGeofences($shipment->w_conn_id, $retailOutlets, $wResource),
+            new InitWialonGeofences($shipment->w_conn_id, $retailOutlets, $wResource, $shipment),
             new InitWialonNotifications($shipment->w_conn_id, $retailOutlets, $wResource, $shipment, $wObject)
         ]);
     }
@@ -91,7 +93,7 @@ class InitWialon implements ShouldQueue, ShouldBeUnique
             'e' => 1,
             'n' => '['.$wObject->nm.']: Температурное нарушение',
             'txt' =>
-                'unit_id=%UNIT_ID%&sensor_temp=%SENSOR(*средняя темп*)%&msg_time=%MSG_TIME%&lat=%LAT%&long=%LON%&notification=%NOTIFICATION%&stuff_id='
+                'unit_id=%UNIT_ID%&sensor_temp=%SENSOR(*Средняя темп*)%&msg_time=%MSG_TIME%&lat=%LAT%&long=%LON%&notification=%NOTIFICATION%&stuff_id='
                 .config('wialon.connections.stuff_id'),
             'ta' => 0,
             'td' => 0,

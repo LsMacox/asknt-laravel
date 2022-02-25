@@ -29,7 +29,9 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
 
     public function collection()
     {
-        $shipments = $this->shipments->with(['loadingZone' , 'retailOutlets', 'wialonNotifications'])->get();
+        $shipments = $this->shipments->with(['loadingZone' , 'retailOutlets', 'wialonNotifications' => function ($query) {
+            $query->withTrashed();
+        }])->get();
         $res = collect();
         $shipments->each(function ($shipment) use ($res) {
             $res->add($shipment);
@@ -55,7 +57,6 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
             ->sortBy('created_at') : null;
 
         $avgTemp =  (integer) $actionGeofences->avg('temp');
-        $temperatureNorm =  $shipment->temperature;
         $isTempNormal = $avgTemp >= $shipment->temperature['from'] && $avgTemp <= $shipment->temperature['to'];
 
         if ($data instanceof Shipment) {
@@ -65,8 +66,8 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
                 '',
                 $shipment->loadingZone->name ?? '',
                 Shipment::markToString($shipment->mark),
-                !empty($shipment->car) ? $shipment->wialonNotifications()->first()->object_id : '',
-                empty($shipment->car) ? $shipment->wialonNotifications()->first()->object_id : '',
+                !empty($shipment->car) ? $wNotifications->first()->object_id : '',
+                empty($shipment->car) ? $wNotifications->first()->object_id : '',
                 $shipment->car ?? '',
                 $shipment->trailer ?? '',
                 $shipment->weight,
@@ -129,8 +130,8 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
             '',
             $shipment->loadingZone->name ?? '',
             Shipment::markToString($shipment->mark),
-            !empty($shipment->car) ? $shipment->wialonNotifications()->first()->object_id : '',
-            empty($shipment->car) ? $shipment->wialonNotifications()->first()->object_id : '',
+            !empty($shipment->car) ? $wNotifications->first()->object_id : '',
+            empty($shipment->car) ? $wNotifications->first()->object_id : '',
             $shipment->car ?? '',
             $shipment->trailer ?? '',
             $shipment->weight,

@@ -5,15 +5,19 @@ namespace App\Models\Wialon;
 use App\Models\BaseModel;
 use App\Models\ShipmentList\Shipment;
 use App\Models\Wialon\Action\ActionWialonGeofence;
+use App\Models\Wialon\Action\ActionWialonTemp;
 use App\Models\Wialon\Action\ActionWialonTempViolation;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class WialonNotification extends BaseModel
 {
+    use SoftDeletes;
 
     const ACTION_GEOFENCE = 'geofence';
+    const ACTION_TEMP = 'temp';
     const ACTION_TEMP_VIOLATION = 'temp_violation';
 
-    const ENUM_ACTION = [self::ACTION_GEOFENCE, self::ACTION_TEMP_VIOLATION];
+    const ENUM_ACTION = [self::ACTION_GEOFENCE, self::ACTION_TEMP, self::ACTION_TEMP_VIOLATION];
 
     /**
      * The attributes that are mass assignable.
@@ -53,6 +57,13 @@ class WialonNotification extends BaseModel
     public function actionTempViolations()
     {
         return $this->hasMany(ActionWialonTempViolation::class);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function actionTemps() {
+        return $this->hasMany(ActionWialonTemp::class);
     }
 
 

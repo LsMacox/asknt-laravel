@@ -18,6 +18,8 @@ class MorePointResource extends JsonResource
      */
     public function toArray($request)
     {
+        $shipment = $this->shipment()->first();
+
         $actionGeofenceEntrance = $this->actionWialonGeofences()->where('is_entrance', true)->first();
         $actionGeofenceDeparture = $this->actionWialonGeofences()->where('is_entrance', false)->first();
 
@@ -26,12 +28,13 @@ class MorePointResource extends JsonResource
         $actionGeofenceDoorClose = $this->actionWialonGeofences()->where('is_entrance', false)
             ->where('door', ActionWialonGeofence::DOOR_CLOSE)->first();
 
-        if (method_exists($this->resource, 'shipmentRetailOutlet')) {
-            $shipmentRetailOutlet = $this->shipmentRetailOutlet()->first();
-        }
-
         $timeOnPoint = '';
         $doorOpen = '';
+        $actualStart = optional($actionGeofenceEntrance)->created_at;
+        $actualFinish = optional($actionGeofenceDeparture)->created_at;
+        $planStart = null;
+        $planFinish = null;
+        $late = false;
 
         if ($actionGeofenceEntrance && $actionGeofenceDeparture) {
             $timeOnPoint = $this->getTimeBetween($actionGeofenceEntrance->created_at, $actionGeofenceDeparture->created_at);
@@ -41,20 +44,17 @@ class MorePointResource extends JsonResource
             $doorOpen = $this->getTimeBetween($actionGeofenceDoorOpen->created_at, $actionGeofenceDoorClose->created_at);
         }
 
-        $arrive_from_actual = $actionGeofenceEntrance ? $actionGeofenceEntrance->created_at->format('H:i') : null;
-        $arrive_to_actual = $actionGeofenceDeparture ? $actionGeofenceDeparture->created_at->format('H:i') : null;
-        $arrive_from_plan = isset($shipmentRetailOutlet) && $shipmentRetailOutlet->arrive_from ?
-            $shipmentRetailOutlet->arrive_from->format('H:i') : null;
-        $arrive_to_plan = isset($shipmentRetailOutlet) && $shipmentRetailOutlet->arrive_to ?
-            $shipmentRetailOutlet->arrive_to->format('H:i') : null;
-        $late = false;
+        if (method_exists($this->resource, 'shipmentRetailOutlet')) {
+            $shipmentRetailOutlet = $this->shipmentRetailOutlet()->first();
 
-        if ($arrive_from_actual && $arrive_from_plan && $arrive_to_plan) {
-            $planStart = Carbon::parse($arrive_from_plan);
-            $planFinish = Carbon::parse($arrive_to_plan);
-            $actualFinish = Carbon::parse($arrive_from_actual);
+            $planStart = optional($shipmentRetailOutlet)->arrive_from;
+            $planFinish = optional($shipmentRetailOutlet)->arrive_to;
 
-            $late = !$actualFinish->between($planStart, $planFinish);
+            if ($actualStart && $planFinish) {
+                $planFinish = Carbon::parse($shipment->date->format('d.m.Y') . ' ' . $planFinish->format('H:i'));
+
+                $late = $actualStart->gt($planFinish);
+            }
         }
 
         return [
@@ -68,10 +68,10 @@ class MorePointResource extends JsonResource
             'turn' => $this->turn,
             'temp_from' => optional($actionGeofenceEntrance)->temp,
             'temp_to' => optional($actionGeofenceDeparture)->temp,
-            'arrive_from_plan' => $arrive_from_plan,
-            'arrive_to_plan' => $arrive_to_plan,
-            'arrive_from_actual' => $arrive_from_actual,
-            'arrive_to_actual' => $arrive_to_actual,
+            'arrive_from_plan' => optional($planStart)->format('H:i'),
+            'arrive_to_plan' => optional($planFinish)->format('H:i'),
+            'arrive_from_actual' => optional($actualStart)->format('H:i'),
+            'arrive_to_actual' => optional($actualFinish)->format('H:i'),
             'time_on_point' => $timeOnPoint,
             'passed' => !!$actionGeofenceEntrance,
             'late' => $late,

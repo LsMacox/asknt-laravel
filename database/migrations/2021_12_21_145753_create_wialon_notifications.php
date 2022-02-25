@@ -21,6 +21,7 @@ class CreateWialonNotifications extends Migration
             $table->bigInteger('object_id')->nullable();
             $table->enum('action_type', WialonNotification::ENUM_ACTION)->nullable();
             $table->string('name');
+            $table->softDeletes();
             $table->timestamps();
         });
     }

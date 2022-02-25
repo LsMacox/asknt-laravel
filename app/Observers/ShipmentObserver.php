@@ -41,11 +41,12 @@ class ShipmentObserver
         ];
         $shipment->loadingZone()->update($data);
 
-        if ($shipment->completed) {
+        if ($shipment->completed || $shipment->not_completed) {
             $wResource = WialonResource::useOnlyHosts($shipment->w_conn_id)
                                         ->firstResource()
                                         ->first();
             $wialonNotifications = $shipment->wialonNotifications()->get();
+            $wialonGeofences = $shipment->wialonGeofences()->get();
 
             foreach ($wialonNotifications as $notification) {
                 $params = [
@@ -54,11 +55,25 @@ class ShipmentObserver
                     'callMode' => 'delete',
                 ];
 
-                \Wialon::useOnlyHosts([$shipment->w_conn_id])->resource_update_zone(
+                \Wialon::useOnlyHosts([$shipment->w_conn_id])->resource_update_notification(
                     json_encode($params)
                 );
 
                 $notification->delete();
+            }
+
+            foreach ($wialonGeofences as $geofence) {
+                $params = [
+                    'itemId' => $wResource->id,
+                    'id' => $geofence->id,
+                    'callMode' => 'delete',
+                ];
+
+                \Wialon::useOnlyHosts([$shipment->w_conn_id])->resource_update_zone(
+                    json_encode($params)
+                );
+
+                $geofence->delete();
             }
         }
     }
@@ -86,7 +101,7 @@ class ShipmentObserver
     }
 
     /**
-     * Handle the Shipment "force deleted' event.
+     * Handle the Shipment "force deleted" event.
      *
      * @param Shipment $shipment
      * @return void

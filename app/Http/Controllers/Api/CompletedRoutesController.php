@@ -5,20 +5,18 @@ namespace App\Http\Controllers\Api;
 use App\Filters\ShipmentFilter;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\ShipmentList\ShipmentFilterRequest;
-use App\Http\Resources\DashboardDetailResource;
-use App\Http\Resources\DashboardMainResource;
+use App\Http\Resources\CompletedRoutesResource;
 use App\Models\ShipmentList\Shipment;
 use App\Repositories\ShipmentRepository;
 use Illuminate\Http\Request;
 
-
-class DashboardController extends Controller
+class CompletedRoutesController extends Controller
 {
 
     private $shipmentRepository;
 
     /**
-     * DashboardController constructor.
+     * CompletedRoutesController constructor.
      */
     public function __construct()
     {
@@ -41,13 +39,10 @@ class DashboardController extends Controller
             $inp('sortBy'),
             $inp('sortByDesc') || false,
             Shipment::filter($filter)
-                ->where('completed', false)
-                ->where('not_completed', false)
-            ->with(['retailOutlets', 'violations' => function ($query) {
-                $query->where('repaid', false);
-            }, 'wialonNotifications.actionGeofences'])
+                ->where('completed', true)
+                ->orWhere('not_completed', true)
         );
-        $items = DashboardMainResource::collection($items);
+        $items = CompletedRoutesResource::collection($items);
 
         return response()->json(
             compact( 'total', 'items'),
@@ -57,9 +52,9 @@ class DashboardController extends Controller
 
     /**
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
      */
-    public function getDetailByShipmentId (Request $request) {
+    public function downloadShipmentFiles (Request $request) {
         $shipment = Shipment::where('id', $request->shipment_id)
             ->with(['loadingZone', 'retailOutlets.shipmentOrders', 'wialonNotifications.actionGeofences', 'wialonNotifications.actionTemps'])
             ->first();
@@ -68,10 +63,19 @@ class DashboardController extends Controller
             abort(404);
         }
 
-        return response()->json(
-            new DashboardDetailResource($shipment),
-            200
-        );
+        $zipFile = 'asknt-files.zip';
+
+        $zip = new \ZipArchive();
+        $zip->open($zipFile, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+
+        $files = \Storage::disk('completed-routes')->files($shipment->date->format('d.m.Y').'/'.$shipment->id);
+        foreach ($files as $file) {
+            $path = \Storage::disk('completed-routes')->path($file);
+            $zip->addFile($path, $file);
+        }
+        $zip->close();
+
+        return response()->download($zipFile);
     }
 
 }

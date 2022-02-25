@@ -16,8 +16,10 @@ class CreateWialonGeofences extends Migration
         Schema::create('wialon_geofences', function (Blueprint $table) {
             $table->unsignedBigInteger('id');
             $table->string('w_conn_id');
+            $table->foreignId('shipment_id')->constrained()->onDelete('cascade');
             $table->string('name');
             $table->morphs('geofenceable');
+            $table->softDeletes();
             $table->timestamps();
         });
     }

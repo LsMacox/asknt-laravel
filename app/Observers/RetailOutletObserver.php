@@ -62,7 +62,7 @@ class RetailOutletObserver
 
         $wialonGeofence = $shipmentRetailOutlet->wialonGeofences()->updateOrCreate(
             ['id' => $wResult[$shipment->w_conn_id][0]],
-            ['name' => $retailOutlet->name]
+            ['name' => $retailOutlet->name, 'shipment_id' => $shipment->id]
         );
     }
 

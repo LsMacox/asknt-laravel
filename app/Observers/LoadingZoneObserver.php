@@ -65,7 +65,7 @@ class LoadingZoneObserver
 
         $wialonGeofence = $loadingZone->wialonGeofences()->updateOrCreate(
             ['id' => $wResult[$shipment->w_conn_id][0]],
-            ['name' => $loadingZone->name]
+            ['name' => $loadingZone->name, 'shipment_id' => $shipment->id]
         );
     }
 

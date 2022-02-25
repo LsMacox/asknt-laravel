@@ -4,9 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use App\Models\Wialon\Action\ActionWialonTempViolation;
-use App\Models\Wialon\Action\ActionWialonGeofence;
 
-class CreateActionWialonGeofencesTable extends Migration
+class CreateActionWialonTempsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -15,18 +14,11 @@ class CreateActionWialonGeofencesTable extends Migration
      */
     public function up()
     {
-        Schema::create('action_wialon_geofences', function (Blueprint $table) {
+        Schema::create('action_wialon_temps', function (Blueprint $table) {
             $table->id();
             $table->foreignId('wialon_notification_id');
-            $table->morphs('pointable');
-            $table->string('name');
-            $table->string('temp');
+            $table->string('temp')->nullable();
             $table->enum('temp_type', ActionWialonTempViolation::ENUM_TEMP);
-            $table->enum('door', ActionWialonGeofence::ENUM_DOOR);
-            $table->double('lat');
-            $table->double('long');
-            $table->string('mileage')->nullable();
-            $table->boolean('is_entrance');
             $table->timestamps();
         });
     }
@@ -38,6 +30,6 @@ class CreateActionWialonGeofencesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('action_wialon_geofences');
+        Schema::dropIfExists('action_wialon_temps');
     }
 }

@@ -4,6 +4,9 @@
 namespace App\Http\Controllers\Api;
 
 
+use App\Jobs\CompleteShipment\GenReportsForShipment;
+use App\Jobs\CompleteShipment\SaveKmlForShipment;
+use App\Jobs\CompleteShipment\SaveWlnForShipment;
 use App\Models\LoadingZone;
 use App\Models\RetailOutlet;
 use App\Models\Wialon\Action\ActionWialonGeofence;
@@ -11,11 +14,10 @@ use App\Models\Wialon\Action\ActionWialonTempViolation;
 use Illuminate\Http\Request;
 use App\Models\Wialon\WialonNotification;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Bus;
 
 class WialonActionsController
 {
-
-    protected $shipment;
 
     /**
      * @param Request $request
@@ -49,37 +51,39 @@ class WialonActionsController
      * @param Request $request
      * @return void
      */
+    public function temp (Request $request) {
+        \Log::channel('wialon-actions')->debug('temp: '.json_encode($request->all()));
+
+        $data = $this->normalizeRequest($request);
+
+        $notification = WialonNotification::where('name', $request->notification)->first();
+
+        $notification->actionTemps()->create([
+            'temp' => $data['sensor_temp'],
+            'temp_type' => $data['sensor_temp_type'],
+            'created_at' => $data['msg_time'],
+        ]);
+    }
+
+    /**
+     * @param Request $request
+     * @return void
+     */
     public function entranceToGeofence (Request $request) {
         \Log::channel('wialon-actions')->debug('entranceToGeofence: '.json_encode($request->all()));
 
         $data = $this->normalizeRequest($request);
 
-        $notification = WialonNotification::where('name', $request->notification)->first();
+        $notification = WialonNotification::where('name', $request->notification)->firstOrFail();
         $shipment = $notification->shipment()->first();
-
-        $this->shipment = $shipment;
 
         $loadingCount = $notification->actionGeofences()
             ->where('pointable_type', LoadingZone::getMorphClass())
             ->count();
 
         $retailCount = $notification->actionGeofences()
-            ->where('is_entrance', true)
             ->where('pointable_type', RetailOutlet::getMorphClass())
             ->count();
-
-        $wialonTotal = [];
-
-        if ($retailCount > 0) {
-            $loadingType = $notification->actionGeofences()
-                                        ->where('pointable_type', LoadingZone::getMorphClass())->first();
-
-            $retailType = $notification->actionGeofences()
-                ->where('pointable_type', RetailOutlet::getMorphClass())
-                ->orderBy('created_at','desc')->first();
-
-            $wialonTotal = $this->getWialonTotal($request->notification, $loadingType->created_at, $retailType->created_at);
-        }
 
         if ($loadingCount == 0) {
             $point = $shipment->loadingZone()->first();
@@ -87,7 +91,7 @@ class WialonActionsController
             $point = $shipment->retailOutlets()->where('turn', $retailCount + 1)->first();
         }
 
-        $actGeofence = $point->actionWialonGeofences()->create(array_merge([
+        $actGeofence = $point->actionWialonGeofences()->create([
             'wialon_notification_id' => $notification->id,
             'name' => $data['zone'],
             'temp' => $data['sensor_temp'],
@@ -97,25 +101,26 @@ class WialonActionsController
             'long' => $data['long'],
             'is_entrance' => true,
             'created_at' => $data['msg_time'],
-        ], $wialonTotal));
+            'mileage' => $data['mileage'],
+        ]);
 
 
         if ($point instanceof RetailOutlet) {
+            // Create violation
             $shipmentRetailOutlet = $point->shipmentRetailOutlet()->first();
-            $arrive_from_plan = Carbon::parse($shipmentRetailOutlet->arrive_from)->format('H:i');
-            $arrive_to_plan = Carbon::parse($shipmentRetailOutlet->arrive_from)->format('H:i');
+            $arriveFrom = optional($shipmentRetailOutlet)->arrive_from;
+            $arriveTo = optional($shipmentRetailOutlet)->arrive_to;
 
-            if ($arrive_from_plan && $arrive_to_plan) {
-                $planStart = Carbon::parse($arrive_from_plan);
-                $planFinish = Carbon::parse($arrive_to_plan);
+            if ($shipmentRetailOutlet && $arriveTo) {
+                $planFinish = Carbon::parse($shipment->date->format('d.m.Y') . ' ' . $arriveTo->format('H:i'));
                 $actualFinish = Carbon::parse($actGeofence->created_at);
 
-                $late = !$actualFinish->between($planStart, $planFinish);
+                $late = $actualFinish->gt($planFinish);
 
                 if ($late) {
                     $shipment->violations()->create([
                         'name' => 'Опоздание на ТТ',
-                        'text' => 'Прибытие в '. $actualFinish->format('H:i').', норма  '.$arrive_from_plan.'-'.$arrive_to_plan,
+                        'text' => 'Прибытие в '.$actualFinish->format('H:i').', норма  '.$arriveFrom->format('H:i').'-'.$arriveTo->format('H:i'),
                         'created_at' => $data['msg_time'],
                     ]);
                 }
@@ -134,39 +139,22 @@ class WialonActionsController
 
         $notification = WialonNotification::where('name', $request->notification)->first();
         $shipment = $notification->shipment()->first();
-        $this->shipment = $shipment;
-//        $this->genReports($request);
 
         $loadingCount = $notification->actionGeofences()
             ->where('pointable_type', LoadingZone::getMorphClass())
-            ->where('is_entrance', false)
             ->count();
 
         $retailCount = $notification->actionGeofences()
-            ->where('is_entrance', true)
             ->where('pointable_type', RetailOutlet::getMorphClass())
             ->count();
-
-        $wialonTotal = [];
-
-        if ($retailCount > 0) {
-            $loadingType = $notification->actionGeofences()
-                ->where('pointable_type', LoadingZone::getMorphClass())->first();
-
-            $retailType = $notification->actionGeofences()
-                ->where('pointable_type', RetailOutlet::getMorphClass())
-                ->orderBy('created_at','desc')->first();
-
-            $wialonTotal = $this->getWialonTotal($request->notification, $loadingType->created_at, $retailType->created_at);
-        }
 
         if ($loadingCount == 0) {
             $point = $shipment->loadingZone()->first();
         } else {
-            $point = $shipment->retailOutlets()->where('turn', $retailCount == 0 ? 1 : $retailCount)->first();
+            $point = $shipment->retailOutlets()->where('turn', $retailCount + 1)->first();
         }
 
-        $point->actionWialonGeofences()->create(array_merge([
+        $point->actionWialonGeofences()->create([
             'wialon_notification_id' => $notification->id,
             'name' => $data['zone'],
             'temp' => $data['sensor_temp'],
@@ -176,7 +164,30 @@ class WialonActionsController
             'long' => $data['long'],
             'is_entrance' => false,
             'created_at' => $data['msg_time'],
-        ], $wialonTotal));
+            'mileage' => $data['mileage'],
+        ]);
+
+        // Completed shipment, if the entrance to the last point
+        $lastRetailOutlet = $shipment->retailOutlets()->get()->sortBy('turn')->last();
+
+        if ($point->id === $lastRetailOutlet->id) {
+            $actionGeofences = $notification->actionGeofences()->orderBy('created_at')->get();
+
+            $resource = \WialonResource::useOnlyHosts($shipment->w_conn_id)
+                ->firstResource()
+                ->first();
+
+            $path = $shipment->date->format('d.m.Y').'/'.$shipment->id.'/';
+
+            Bus::batch([
+                new SaveWlnForShipment($shipment, $path),
+                new SaveKmlForShipment($shipment, $path, $resource),
+                new GenReportsForShipment($shipment, $path, $notification, $resource, $actionGeofences),
+//                    new SaveWlpForShipment($shipment, $path)
+            ])->dispatch();
+
+            $shipment->update(['completed' => true]);
+        }
     }
 
     /**
@@ -217,118 +228,6 @@ class WialonActionsController
         }
 
         return $data;
-    }
-
-    public function getWialonTotal ($notificationName, Carbon $from, Carbon $to) {
-        $notification = WialonNotification::where('name', $notificationName)->first();
-
-        $resource = \WialonResource::useOnlyHosts($this->shipment->w_conn_id)
-            ->firstResource()
-            ->first();
-
-        $reportTemplates = collect(optional(
-            \WialonResource::useOnlyHosts($this->shipment->w_conn_id)
-                ->getReportTemplates($this->shipment->w_conn_id, $resource->id))->rep
-        );
-
-        \Wialon::useOnlyHosts([$this->shipment->w_conn_id])->report_cleanup_result();
-
-        $execParams = [
-            'reportResourceId' => $resource->id,
-            'reportTemplateId' => $reportTemplates[3]->id,
-            'reportObjectId' => $notification->object_id,
-            'reportObjectSecId' => 0,
-            'remoteExec' => 0,
-            'reportTemplate' => null,
-            'interval' => [
-                'from' => strtotime($from->toIso8601String()),
-                'to' => strtotime($to->toIso8601String()),
-                'flags' => 16777216,
-            ],
-        ];
-
-        $execRes = \Wialon::useOnlyHosts([$this->shipment->w_conn_id])->report_exec_report(
-            json_encode($execParams)
-        );
-
-        $duration = optional(optional($execRes->first()->first()->tables[0])->total)[8];
-        $mileage = optional(optional($execRes->first()->first()->tables[0])->total)[9];
-
-        return compact('duration', 'mileage');
-    }
-
-    public function genReports (Request $request) {
-        $notification = WialonNotification::where('name', $request->notification)->first();
-        $actionGeofences = $notification->actionGeofences()->orderBy('created_at')->get();
-
-        $retailOutlets = $this->shipment->retailOutlets()->orderBy('turn')->get();
-
-        $isDepartureLastGeofence = $actionGeofences->where('pointable_type', RetailOutlet::getMorphClass())
-                ->where('pointable_id', $retailOutlets->last()->id)->where('is_entrance', false)->isNotEmpty();
-
-//        if ($isDepartureLastGeofence) {
-
-            $shipment = $notification->shipment()->first();
-            $resource = \WialonResource::useOnlyHosts($this->shipment->w_conn_id)
-                ->firstResource()
-                ->first();
-
-            $firstEntrance = $actionGeofences->first();
-            $lastDeparture = $actionGeofences->last();
-
-            $reports = [];
-
-            $reportTemplates = collect(optional(
-                \WialonResource::useOnlyHosts($this->shipment->w_conn_id)
-                    ->getReportTemplates($this->shipment->w_conn_id, $resource->id))->rep
-            );
-
-            $reportTemplates->each(function ($template) use ($notification, &$reports, $shipment, $resource, $firstEntrance, $lastDeparture) {
-                $cleanup = \Wialon::useOnlyHosts([$shipment->w_conn_id])->report_cleanup_result();
-
-                $intFrom = strtotime($firstEntrance->created_at);
-                $intTo = strtotime($lastDeparture->created_at);
-
-                $execParams = [
-                    'reportResourceId' => $resource->id,
-                    'reportTemplateId' => $template->id,
-                    'reportObjectId' => $notification->object_id,
-                    'reportObjectSecId' => 0,
-                    'remoteExec' => 0,
-                    'reportTemplate' => null,
-                    'interval' => [
-                        'from' => $intFrom,
-                        'to' => $intTo,
-                        'flags' => 16777216,
-                    ],
-                ];
-
-                $execRes = \Wialon::useOnlyHosts([$shipment->w_conn_id])->report_exec_report(
-                    json_encode($execParams)
-                );
-
-//                dd($execRes);
-
-                if ($execRes->first()) {
-                    $duration = optional(optional($execRes->first()->first()->tables[0])->total)[8];
-                    $mileage = optional(optional($execRes->first()->first()->tables[0])->total)[9];
-                }
-
-                $exportParams = [
-                    'format' => 4,
-                    'compress' => 1,
-                    'outputFileName' => 'hazanYbiyza',
-                ];
-
-                $exportRes = \Wialon::useOnlyHosts([$shipment->w_conn_id])->returnRaw()->report_export_result(
-                    json_encode($exportParams)
-                );
-
-                $reports[] = $exportRes[$shipment->w_conn_id];
-            });
-
-            dd($reports);
-//        }
     }
 
 }

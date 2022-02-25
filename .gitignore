@@ -18,3 +18,4 @@ yarn-error.log
 /public/favicon.ico
 worker.log
 horizon.log
+storage/completed-routes

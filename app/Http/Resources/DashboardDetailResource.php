@@ -25,17 +25,22 @@ class DashboardDetailResource extends JsonResource
                                                     ->flatten(1)
                                                     ->sortBy('created_at');
 
-        $todayGeofences = $actionGeofences->where('created_at', '>=', date('Y-m-d').' 00:00:00')
-                                            ->where('created_at', '<=', date('Y-m-d').' 24:59:59');
+        $actionsTemps = $this->wialonNotifications->where('action_type', WialonNotification::ACTION_TEMP)
+            ->first()
+            ->actionTemps
+            ->sortBy('created_at');;
 
-        $todayTemps = [];
-        $todayGeofences->each(function ($tg) use (&$todayTemps) {
-            $time = $tg->created_at->format('H:i');
-            $todayTemps[$time] = $tg->temp;
-        })->toArray();
+        $temps = $actionsTemps->groupBy(function($date) {
+            return Carbon::parse($date->created_at)->format('Y.m.d');
+        })->map(function($group) {
+            return $group->mapWithKeys(function ($at) {
+                $time = $at->created_at->format('H:i');
+                return [$time => $at->temp];
+            });
+        })->sort();
 
-        $curr_temp = optional($actionGeofences->last())->temp;
-        $avg_temp = $actionGeofences->avg('temp');
+        $curr_temp = optional($actionsTemps->last())->temp;
+        $avg_temp = $actionsTemps->avg('temp');
 
         return [
             'id' => $this->id,
@@ -47,7 +52,7 @@ class DashboardDetailResource extends JsonResource
             'loading_zone' => new MorePointResource($this->loadingZone),
             'retail_outlets' => MorePointResource::collection($this->retailOutlets->sortBy('turn')),
             'stock' => $this->stock,
-            'today_temps' => $todayTemps,
+            'temps' => $temps,
             'temperature' => $this->temperature,
             'duration' => MorePointResource::getTimeBetween(
                 optional($actionGeofences->where('is_entrance', false)->first())->created_at,
