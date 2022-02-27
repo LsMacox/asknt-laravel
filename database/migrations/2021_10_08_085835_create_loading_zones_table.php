@@ -22,6 +22,7 @@ class CreateLoadingZonesTable extends Migration
             $table->double('lng')->nullable();
             $table->double('lat')->nullable();
             $table->smallInteger('radius')->default(500);
+            $table->softDeletes();
             $table->timestamps();
         });
     }

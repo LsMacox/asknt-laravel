@@ -21,7 +21,7 @@ class CompletedRoutesResource extends JsonResource
             'date_shipping' => $this->date,
             'car' => $this->car ?? $this->trailer,
             'carrier' => $this->carrier,
-            'loading_warehouse' => optional($this->loadingZone()->first())->name,
+            'loading_warehouse' => optional($this->loadingZone()->withTrashed()->first())->name,
             'created_at' => $this->created_at,
         ];
     }

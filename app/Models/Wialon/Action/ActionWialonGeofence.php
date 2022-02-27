@@ -3,6 +3,7 @@
 namespace App\Models\Wialon\Action;
 
 use App\Models\BaseModel;
+use App\Models\ShipmentList\Shipment;
 use App\Models\Wialon\WialonNotification;
 
 class ActionWialonGeofence extends BaseModel
@@ -20,6 +21,7 @@ class ActionWialonGeofence extends BaseModel
      */
     protected $fillable = [
         'id',
+        'shipment_id',
         'wialon_notification_id',
         'point_id',
         'point_type',
@@ -40,6 +42,14 @@ class ActionWialonGeofence extends BaseModel
     protected $casts = [
         'temp' => 'double',
     ];
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function shipment()
+    {
+        return $this->belongsTo(Shipment::class);
+    }
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo

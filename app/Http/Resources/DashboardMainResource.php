@@ -23,7 +23,23 @@ class DashboardMainResource extends JsonResource
             ->flatten(1)
             ->sortBy('created_at');
 
-        $curr_temp = optional($actionGeofences->last())->temp;
+        $notificationTemp = $this->wialonNotifications->where('action_type', WialonNotification::ACTION_TEMP)
+            ->first();
+
+        $curr_temp = null;
+        $is_temp_violation = null;
+
+        if ($notificationTemp && $notificationTemp->actionTemps()->get()->isNotEmpty()) {
+            $actionsTemps = $notificationTemp
+                ->actionTemps()
+                ->get()
+                ->sortBy('created_at');
+
+            $curr_temp = optional($actionsTemps->last())->temp;
+            $tempFrom = $this->temperature['from'];
+            $tempTo = $this->temperature['to'];
+            $is_temp_violation = !($curr_temp < $tempTo && $curr_temp > $tempFrom);
+        }
 
         return [
             'id' => $this->id,
@@ -34,6 +50,7 @@ class DashboardMainResource extends JsonResource
             'violations' => ViolationResource::collection($this->violations),
             'weight' => $this->weight,
             'curr_temp' => !empty($curr_temp) ? (integer) $curr_temp : '?',
+            'is_temp_violation' => $is_temp_violation,
             'points_total' => $this->retailOutlets->count() + 1,
             'points_completed' => $actionGeofences->where('is_entrance', true)->count(),
         ];

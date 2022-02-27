@@ -26,21 +26,30 @@ class DashboardDetailResource extends JsonResource
                                                     ->sortBy('created_at');
 
         $actionsTemps = $this->wialonNotifications->where('action_type', WialonNotification::ACTION_TEMP)
-            ->first()
-            ->actionTemps
-            ->sortBy('created_at');;
+            ->first();
 
-        $temps = $actionsTemps->groupBy(function($date) {
-            return Carbon::parse($date->created_at)->format('Y.m.d');
-        })->map(function($group) {
-            return $group->mapWithKeys(function ($at) {
-                $time = $at->created_at->format('H:i');
-                return [$time => $at->temp];
-            });
-        })->sort();
+        $temps = null;
+        $curr_temp = null;
+        $avg_temp = null;
 
-        $curr_temp = optional($actionsTemps->last())->temp;
-        $avg_temp = $actionsTemps->avg('temp');
+        if ($actionsTemps) {
+            $actionsTemps = $actionsTemps
+                ->actionTemps()
+                ->get()
+                ->sortBy('created_at');
+
+            $temps = $actionsTemps->groupBy(function ($date) {
+                return Carbon::parse($date->created_at)->format('Y.m.d');
+            })->map(function ($group) {
+                return $group->mapWithKeys(function ($at) {
+                    $time = $at->created_at->format('H:i');
+                    return [$time => $at->temp];
+                });
+            })->sort();
+
+            $curr_temp = optional($actionsTemps->last())->temp;
+            $avg_temp = $actionsTemps->avg('temp');
+        }
 
         return [
             'id' => $this->id,
@@ -58,7 +67,7 @@ class DashboardDetailResource extends JsonResource
                 optional($actionGeofences->where('is_entrance', false)->first())->created_at,
                 optional($actionGeofences->last())->created_at
             ),
-            'mileage' => optional($actionGeofences->last())->mileage,
+            'mileage' => optional($actionGeofences)->sum('mileage'),
             'curr_temp' => !empty($curr_temp) ? (integer) $curr_temp : '?',
             'avg_temp' => !empty($avg_temp) ? (integer) $avg_temp : '?',
             'weight' => $this->weight,

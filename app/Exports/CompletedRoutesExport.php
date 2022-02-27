@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 
+use App\Models\LoadingZone;
 use App\Models\ShipmentList\Shipment;
 use App\Models\Wialon\WialonNotification;
 use Illuminate\Support\Carbon;
@@ -29,17 +30,24 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
 
     public function collection()
     {
-        $shipments = $this->shipments->with(['loadingZone' , 'retailOutlets', 'wialonNotifications' => function ($query) {
+        $shipments = $this->shipments->with(['loadingZone' => function ($query) {
+            $query->withTrashed();
+        }, 'retailOutlets' => function ($query) {
+            $query->withTrashed()->with('shipmentOrders');
+        }, 'wialonNotifications' => function ($query) {
             $query->withTrashed();
         }])->get();
+
         $res = collect();
+
         $shipments->each(function ($shipment) use ($res) {
             $res->add($shipment);
-            $shipment->retailOutlets()->each(function ($retailOutlet) use ($shipment, $res) {
+            $shipment->retailOutlets()->withTrashed()->each(function ($retailOutlet) use ($shipment, $res) {
                 $retailOutlet->shipment = $shipment;
                 $res->add($retailOutlet);
             });
         });
+
         return $res;
     }
 
@@ -49,22 +57,26 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
 
         $wNotifications = $shipment->wialonNotifications;
 
-        $actionGeofences = $wNotifications ? $wNotifications->where('action_type', WialonNotification::ACTION_GEOFENCE)
-            ->map(function ($n) {
-                return $n->actionGeofences;
-            })
-            ->flatten(1)
-            ->sortBy('created_at') : null;
+        $actionGeofences = $shipment->actionGeofences()
+            ->get()
+            ->sortBy('created_at');
 
-        $avgTemp =  (integer) $actionGeofences->avg('temp');
-        $isTempNormal = $avgTemp >= $shipment->temperature['from'] && $avgTemp <= $shipment->temperature['to'];
+        $firstGeofence = $actionGeofences->where('is_entrance', true)->first();
+        $lastGeofence = $actionGeofences->where('is_entrance', false)->last();
+
+        $loadingType = $shipment->actionGeofences()->where('pointable_type', LoadingZone::getMorphClass())->get();
+        $loadingEntranceDate = optional($loadingType->where('is_entrance', true)->first())->created_at;
+        $loadingDepartureDate = optional($loadingType->where('is_entrance', false)->first())->created_at;
+
+        $lPlanDate = Carbon::parse($shipment->date->format('d.m.Y').' '.$shipment->time->format('H:i'));
+        $allWeights = $shipment->retailOutlets->pluck('shipmentOrders')->flatten(1)->sum('weight');
 
         if ($data instanceof Shipment) {
             return [
-                $shipment->carrier ?? '',
+                $shipment->loadingZone->name ?? '',
                 $shipment->id ?? '',
                 '',
-                $shipment->loadingZone->name ?? '',
+                '',
                 Shipment::markToString($shipment->mark),
                 !empty($shipment->car) ? $wNotifications->first()->object_id : '',
                 empty($shipment->car) ? $wNotifications->first()->object_id : '',
@@ -72,7 +84,7 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
                 $shipment->trailer ?? '',
                 $shipment->weight,
                 $shipment->driver,
-                '',
+                $shipment->carrier,
                 '',
                 '',
                 '',
@@ -101,34 +113,89 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
                 '',
                 '',
                 '',
+                $lastGeofence->created_at->diffInMinutes($firstGeofence->created_at),
+                $actionGeofences->sum('mileage'),
+                $allWeights,
+                '',
+                $shipment->temperature['from'].'-'.$shipment->temperature['to'],
+                '',
+                $loadingType->where('is_entrance', false)->first()->temp ?? '',
                 '',
                 '',
                 '',
                 '',
                 '',
                 '',
-                $actionGeofences->where('is_entrance', false)->first()->temp ?? '',
-                $actionGeofences->where('is_entrance', true)->first()->temp ?? '',
-                $avgTemp ?? '',
-                $isTempNormal ? 'да' : 'нет',
                 '',
                 '',
                 '',
-                '',
-                '',
-                '',
-                '1',
+                ' ',
             ];
         }
 
+        $retailOutletActionGeofences = $data->actionWialonGeofences()->get();
+
+        $shipmentRetailOutlet = $data->shipmentRetailOutlet()->first();
+
+        $actDeparture = $data->actionWialonGeofences()->where('is_entrance', false)->first();
+        $pointable = $actDeparture->pointable()->withTrashed()->first();
+        $actNextEntrance = $shipment->retailOutlets->where('turn',
+            $pointable->turn + 1 <= $shipment->retailOutlets->count()
+            ? $pointable->turn + 1
+            : $pointable->turn
+        )->first()
+            ->actionWialonGeofences()->where('is_entrance', true)->first();
+
         $actEntranceDate = optional($data->actionWialonGeofences()->where('is_entrance', true)->first())->created_at;
-        $actDepartureDate = optional($data->actionWialonGeofences()->where('is_entrance', false)->first())->created_at;
+        $actDepartureDate = optional($actDeparture)->created_at;
+
+        $actTemps = $wNotifications->where('action_type', WialonNotification::ACTION_TEMP)
+            ->first()
+            ->actionTemps()->get();
+
+        $actBetweenPointsTemps = $wNotifications
+            ->where('action_type', WialonNotification::ACTION_TEMP)
+            ->first()
+            ->actionTemps()
+            ->whereBetween(
+                'created_at',
+                [
+                    $actEntranceDate,
+                    $actDepartureDate
+                ]
+            )
+            ->get()
+            ->sortBy('created_at');
+
+        $avgTemp = $actBetweenPointsTemps->avg('temp');
+        $isTempNormal = $avgTemp > $shipment->temperature['from'] && $avgTemp < $shipment->temperature['to'];
+
+        $actTempsCount = $actTemps->count();
+        $normTemp = $actTemps->where('temp', '>=', $shipment->temperature['from'] - 2)->where('temp', '<=', $shipment->temperature['to'] + 2)
+            ->count();
+        $warnTemp = $actTemps->filter(function ($act) use ($shipment) {
+            $from = (double) $shipment->temperature['from'] - 2.1;
+            $to = (double) $shipment->temperature['to'] + 4;
+            return $act->temp <= $from || $act->temp >= $to;
+        })->count();
+        $criticalTemp = $actTemps->filter(function ($act) use ($shipment) {
+            $from = (double) $shipment->temperature['from'] - 4.1;
+            $to = (double) $shipment->temperature['to'] + 4.1;
+            return $act->temp <= $from || $act->temp >= $to;
+        })->count();
+
+        $tempPercent = function ($count) use ($actTempsCount) {
+            return $count ? round(100 * ($count / $actTempsCount)) . '%' : null;
+        };
+
+        $planDateFrom = Carbon::parse($shipmentRetailOutlet->date->format('d.m.Y').' '.$shipmentRetailOutlet->arrive_from->format('H:i'));
+        $planDateTo = Carbon::parse($shipmentRetailOutlet->date->format('d.m.Y').' '.$shipmentRetailOutlet->arrive_to->format('H:i'));
 
         return [
-            $shipment->carrier ?? '',
-            $shipment->id ?? '',
-            '',
             $shipment->loadingZone->name ?? '',
+            $shipment->id ?? '',
+            $data->shipmentOrders->pluck('id')->implode(', '),
+            '',
             Shipment::markToString($shipment->mark),
             !empty($shipment->car) ? $wNotifications->first()->object_id : '',
             empty($shipment->car) ? $wNotifications->first()->object_id : '',
@@ -136,52 +203,52 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
             $shipment->trailer ?? '',
             $shipment->weight,
             $shipment->driver,
-            '',
+            $shipment->carrier,
             $data->turn ?? '',
-            '',
+            $data->turn ?? '',
             $data->code ?? '',
-            $shipment->retailOutlets->count() ?? '',
-            $data->name ?? '',
             '',
+            $data->name ?? '',
+            $data->name ?? '',
             $data->address ?? '',
             '',
+            $shipment->date->format('d.m.Y'),
+            $shipment->time->format('H:i'),
+            optional($loadingEntranceDate)->format('d.m.Y') ?? '',
+            optional($loadingEntranceDate)->format('H:i') ?? '',
+            optional($loadingDepartureDate)->format('d.m.Y') ?? '',
+            optional($loadingDepartureDate)->format('H:i') ?? '',
+            optional($loadingEntranceDate)->diffInMinutes($loadingDepartureDate) ?? '',
+            optional($loadingEntranceDate)->diffInMinutes($lPlanDate) ?? '',
+            optional($loadingEntranceDate) ? $loadingEntranceDate->between($lPlanDate->subMinutes(5), $lPlanDate->addMinutes(5)) ? 'Вовремя' : 'Опоздал' : '',
             '',
-            '',
+            $planDateFrom->format('d.m.Y'),
+            $shipmentRetailOutlet->arrive_from->format('H:i') . '-' . $shipmentRetailOutlet->arrive_to->format('H:i'),
             optional($actEntranceDate)->format('d.m.Y') ?? '',
             optional($actEntranceDate)->format('H:i') ?? '',
             optional($actDepartureDate)->format('d.m.Y') ?? '',
             optional($actDepartureDate)->format('H:i') ?? '',
             optional($actEntranceDate)->diffInMinutes($actDepartureDate) ?? '',
+            optional($actEntranceDate)->diffInMinutes($planDateFrom) ?? '',
+            optional($actEntranceDate) ? $actEntranceDate->between($planDateFrom, $planDateTo) ? 'Вовремя' : 'Опоздал' : '',
             '',
+            optional($actDepartureDate)->diffInMinutes($actNextEntrance->created_at) ?? '',
             '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
-            '',
+            $data->shipmentOrders()->get()->implode('weight', ', '),
             $data->shipmentOrders()->get()->implode('product', ', '),
+            $shipment->temperature['from'].'-'.$shipment->temperature['to'],
             '',
-            '',
-            $actionGeofences->where('is_entrance', false)->first()->temp ?? '',
-            $actionGeofences->where('is_entrance', true)->first()->temp ?? '',
+            $loadingType->where('is_entrance', false)->first()->temp ?? '',
+            $retailOutletActionGeofences->where('is_entrance', true)->first()->temp,
             $avgTemp ?? '',
             $isTempNormal ? 'да' : 'нет',
             '',
+            $tempPercent($normTemp) ?? '' ,
+            $tempPercent($warnTemp) ?? '',
+            $tempPercent($criticalTemp) ?? '',
             '',
             '',
-            '',
-            '',
-            '',
-            '1',
+            ' ',
         ];
     }
 

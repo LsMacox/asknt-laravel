@@ -7,11 +7,12 @@ use App\Filters\Filterable;
 use App\Models\ShipmentList\Shipment;
 use App\Models\Wialon\Action\ActionWialonGeofence;
 use App\Models\Wialon\WialonGeofence;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class LoadingZone extends BaseModel
 {
 
-    use Filterable;
+    use Filterable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.

@@ -9,6 +9,7 @@ use App\Jobs\CompleteShipment\SaveKmlForShipment;
 use App\Jobs\CompleteShipment\SaveWlnForShipment;
 use App\Models\LoadingZone;
 use App\Models\RetailOutlet;
+use App\Models\ShipmentList\Shipment;
 use App\Models\Wialon\Action\ActionWialonGeofence;
 use App\Models\Wialon\Action\ActionWialonTempViolation;
 use Illuminate\Http\Request;
@@ -28,7 +29,7 @@ class WialonActionsController
 
         $data = $this->normalizeRequest($request);
 
-        $notification = WialonNotification::where('name', $request->notification)->first();
+        $notification = WialonNotification::where('name', $request->notification)->firstOrFail();
         $shipment = $notification->shipment()->first();
         $temperature = $shipment->temperature;
 
@@ -56,7 +57,7 @@ class WialonActionsController
 
         $data = $this->normalizeRequest($request);
 
-        $notification = WialonNotification::where('name', $request->notification)->first();
+        $notification = WialonNotification::where('name', $request->notification)->firstOrFail();
 
         $notification->actionTemps()->create([
             'temp' => $data['sensor_temp'],
@@ -77,22 +78,11 @@ class WialonActionsController
         $notification = WialonNotification::where('name', $request->notification)->firstOrFail();
         $shipment = $notification->shipment()->first();
 
-        $loadingCount = $notification->actionGeofences()
-            ->where('pointable_type', LoadingZone::getMorphClass())
-            ->count();
-
-        $retailCount = $notification->actionGeofences()
-            ->where('pointable_type', RetailOutlet::getMorphClass())
-            ->count();
-
-        if ($loadingCount == 0) {
-            $point = $shipment->loadingZone()->first();
-        } else {
-            $point = $shipment->retailOutlets()->where('turn', $retailCount + 1)->first();
-        }
+        $point = $this->getPoint($notification, $shipment);
 
         $actGeofence = $point->actionWialonGeofences()->create([
             'wialon_notification_id' => $notification->id,
+            'shipment_id' => $shipment->id,
             'name' => $data['zone'],
             'temp' => $data['sensor_temp'],
             'temp_type' => $data['sensor_temp_type'],
@@ -112,10 +102,11 @@ class WialonActionsController
             $arriveTo = optional($shipmentRetailOutlet)->arrive_to;
 
             if ($shipmentRetailOutlet && $arriveTo) {
-                $planFinish = Carbon::parse($shipment->date->format('d.m.Y') . ' ' . $arriveTo->format('H:i'));
+                $planStart = Carbon::parse($shipmentRetailOutlet->date->format('d.m.Y') . ' ' . $arriveFrom->format('H:i'));
+                $planFinish = Carbon::parse($shipmentRetailOutlet->date->format('d.m.Y') . ' ' . $arriveTo->format('H:i'));
                 $actualFinish = Carbon::parse($actGeofence->created_at);
 
-                $late = $actualFinish->gt($planFinish);
+                $late = !($actualFinish->gt($planStart) && $actualFinish->lt($planFinish));
 
                 if ($late) {
                     $shipment->violations()->create([
@@ -137,25 +128,14 @@ class WialonActionsController
 
         $data = $this->normalizeRequest($request);
 
-        $notification = WialonNotification::where('name', $request->notification)->first();
+        $notification = WialonNotification::where('name', $request->notification)->firstOrFail();
         $shipment = $notification->shipment()->first();
 
-        $loadingCount = $notification->actionGeofences()
-            ->where('pointable_type', LoadingZone::getMorphClass())
-            ->count();
-
-        $retailCount = $notification->actionGeofences()
-            ->where('pointable_type', RetailOutlet::getMorphClass())
-            ->count();
-
-        if ($loadingCount == 0) {
-            $point = $shipment->loadingZone()->first();
-        } else {
-            $point = $shipment->retailOutlets()->where('turn', $retailCount + 1)->first();
-        }
+        $point = $this->getPoint($notification, $shipment);
 
         $point->actionWialonGeofences()->create([
             'wialon_notification_id' => $notification->id,
+            'shipment_id' => $shipment->id,
             'name' => $data['zone'],
             'temp' => $data['sensor_temp'],
             'temp_type' => $data['sensor_temp_type'],
@@ -212,6 +192,12 @@ class WialonActionsController
             $data['msg_time'] = Carbon::parse($data['msg_time'])->toIso8601String();
         }
 
+        if ($request->has('mileage')) {
+            $data['mileage'] = (string) \Str::of($data['mileage'])
+                ->replaceMatches('/(км|km)/', '')
+                ->trim();
+        }
+
         if ($request->has('lat')) {
             $data['lat'] = (string) \Str::of($data['lat'])->match('/\d+\.\d*/', '')->trim();
         }
@@ -228,6 +214,30 @@ class WialonActionsController
         }
 
         return $data;
+    }
+
+    /**
+     * @param WialonNotification $notification
+     * @param Shipment $shipment
+     * @return mixed
+     */
+    public function getPoint(WialonNotification $notification, Shipment $shipment)
+    {
+        $loadingCount = $shipment->actionGeofences()
+            ->where('pointable_type', LoadingZone::getMorphClass())
+            ->where('is_entrance', false)
+            ->count();
+
+        $retailCount = $notification->actionGeofences()
+            ->where('pointable_type', RetailOutlet::getMorphClass())
+            ->count();
+
+        if ($loadingCount == 0) {
+            $point = $shipment->loadingZone()->first();
+        } else {
+            $point = $shipment->retailOutlets()->where('turn', $retailCount + 1)->first();
+        }
+        return $point;
     }
 
 }

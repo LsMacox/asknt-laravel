@@ -107,6 +107,14 @@ class Wialon
     }
 
     /**
+     * @return $this
+     */
+    public function debug () {
+        $this->debug = true;
+        return $this;
+    }
+
+    /**
      * RemoteAPI request performer
      * action - RemoteAPI command name
      * args - JSON string with request parameters
@@ -260,11 +268,6 @@ class Wialon
         }
 
         return $result;
-    }
-
-    public function debug () {
-        $this->debug = true;
-        return $this;
     }
 
     /**

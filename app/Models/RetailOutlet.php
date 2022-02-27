@@ -8,11 +8,12 @@ use App\Models\ShipmentList\Shipment;
 use App\Models\ShipmentList\ShipmentOrders;
 use App\Models\ShipmentList\ShipmentRetailOutlet;
 use App\Models\Wialon\Action\ActionWialonGeofence;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class RetailOutlet extends BaseModel
 {
 
-    use Filterable;
+    use Filterable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.

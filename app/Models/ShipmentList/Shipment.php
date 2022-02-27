@@ -8,6 +8,7 @@ use App\Models\LoadingZone;
 use App\Models\RetailOutlet;
 use App\Models\ShipmentList\ShipmentRetailOutlet;
 use App\Models\Violation;
+use App\Models\Wialon\Action\ActionWialonGeofence;
 use App\Models\Wialon\WialonGeofence;
 use App\Models\Wialon\WialonNotification;
 use Illuminate\Support\Carbon;
@@ -56,7 +57,12 @@ class Shipment extends BaseModel
         'stock',
     ];
 
-    protected $dates = ['date', 'created_at', 'updated_at'];
+    protected $dates = [
+        'date',
+        'time',
+        'created_at',
+        'updated_at'
+    ];
 
     /**
      * The attributes that should be cast.
@@ -117,6 +123,14 @@ class Shipment extends BaseModel
     }
 
     /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function actionGeofences()
+    {
+        return $this->hasMany(ActionWialonGeofence::class);
+    }
+
+    /**
      * @param ENUM_MARK_STR $mark
      */
     public static function markToBoolean (string $mark) {
@@ -133,7 +147,7 @@ class Shipment extends BaseModel
     public function getLastArriveDateAttribute ($value) {
         return Carbon::parse(
             $this->date->format('d.m.Y').' '.
-            $this->shipmentRetailOutlets()->get()->last()->arrive_to->format('H:i')
+            $this->shipmentRetailOutlets()->get()->last()->arrive_to
         );
     }
 

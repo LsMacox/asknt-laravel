@@ -48,6 +48,9 @@ class ShipmentObserver
             $wialonNotifications = $shipment->wialonNotifications()->get();
             $wialonGeofences = $shipment->wialonGeofences()->get();
 
+            $shipment->retailOutlets()->delete();
+            $shipment->loadingZone()->delete();
+
             foreach ($wialonNotifications as $notification) {
                 $params = [
                     'itemId' => $wResource->id,

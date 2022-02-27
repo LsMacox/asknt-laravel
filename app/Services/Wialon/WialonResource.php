@@ -116,6 +116,11 @@ class WialonResource
         });
     }
 
+    /**
+     * @param $objects
+     * @param $plates
+     * @return mixed|null
+     */
     public function getObjectByRegPlate ($objects, $plates) {
         $plates = \Arr::wrap($plates);
         $idx = $objects
@@ -131,12 +136,21 @@ class WialonResource
         return $idx ? $objects[$idx] : $idx;
     }
 
+    /**
+     * @param $objectItem
+     * @param $plate
+     * @return bool
+     */
     public function equalObjectRegPlate ($objectItem, $plate) {
         return isset($objectItem->registration_plate) &&
                 !empty($objectItem->registration_plate) &&
                 $this->prepareRegPlate($plate) === $this->prepareRegPlate($objectItem->registration_plate);
     }
 
+    /**
+     * @param $plate
+     * @return string
+     */
     public function prepareRegPlate ($plate) {
         return (string) \Str::of($plate)
             ->upper()

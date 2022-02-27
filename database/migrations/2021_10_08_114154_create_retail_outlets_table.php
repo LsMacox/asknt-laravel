@@ -23,6 +23,7 @@ class CreateRetailOutletsTable extends Migration
             $table->double('lat');
             $table->integer('turn')->nullable();
             $table->smallInteger('radius')->default(100);
+            $table->softDeletes();
             $table->timestamps();
         });
     }

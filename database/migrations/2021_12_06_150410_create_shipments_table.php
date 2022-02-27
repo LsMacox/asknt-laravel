@@ -20,7 +20,7 @@ class CreateShipmentsTable extends Migration
             $table->bigInteger('w_conn_id');
             $table->timestamp('timestamp');
             $table->timestamp('date');
-            $table->string('time');
+            $table->timestamp('time');
             $table->string('carrier')->nullable();
             $table->string('car')->nullable();
             $table->string('trailer')->nullable();

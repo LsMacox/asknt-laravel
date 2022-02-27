@@ -61,7 +61,7 @@ class DashboardController extends Controller
      */
     public function getDetailByShipmentId (Request $request) {
         $shipment = Shipment::where('id', $request->shipment_id)
-            ->with(['loadingZone', 'retailOutlets.shipmentOrders', 'wialonNotifications.actionGeofences', 'wialonNotifications.actionTemps'])
+            ->with(['loadingZone', 'retailOutlets.shipmentOrders', 'wialonNotifications.actionGeofences', 'wialonNotifications'])
             ->first();
 
         if (!$shipment) {

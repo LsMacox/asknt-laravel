@@ -17,6 +17,7 @@ class CreateActionWialonGeofencesTable extends Migration
     {
         Schema::create('action_wialon_geofences', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('shipment_id');
             $table->foreignId('wialon_notification_id');
             $table->morphs('pointable');
             $table->string('name');
@@ -25,7 +26,7 @@ class CreateActionWialonGeofencesTable extends Migration
             $table->enum('door', ActionWialonGeofence::ENUM_DOOR);
             $table->double('lat');
             $table->double('long');
-            $table->string('mileage')->nullable();
+            $table->double('mileage')->nullable();
             $table->boolean('is_entrance');
             $table->timestamps();
         });

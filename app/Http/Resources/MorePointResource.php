@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources;
 
+use App\Models\LoadingZone;
+use App\Models\RetailOutlet;
 use App\Models\Wialon\Action\ActionWialonGeofence;
 use App\Models\Wialon\WialonNotification;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -23,10 +25,20 @@ class MorePointResource extends JsonResource
         $actionGeofenceEntrance = $this->actionWialonGeofences()->where('is_entrance', true)->first();
         $actionGeofenceDeparture = $this->actionWialonGeofences()->where('is_entrance', false)->first();
 
-        $actionGeofenceDoorOpen = $this->actionWialonGeofences()->where('is_entrance', true)
-            ->where('door', ActionWialonGeofence::DOOR_OPEN)->first();
-        $actionGeofenceDoorClose = $this->actionWialonGeofences()->where('is_entrance', false)
-            ->where('door', ActionWialonGeofence::DOOR_CLOSE)->first();
+        $retailOutletTurn = $this->turn;
+        $actionGeofenceDoorOpen = $shipment->actionGeofences()
+            ->where('door', ActionWialonGeofence::DOOR_OPEN)
+            ->when($retailOutletTurn, function ($query, $turn) {
+                $query->whereHasMorph('pointable', [RetailOutlet::class], function ($subQuery) use ($turn) {
+                    $subQuery->where('turn', '>=', $turn);
+                });
+            })->get()->last();
+
+        $actionGeofenceDoorClose = $actionGeofenceEntrance ?? $actionGeofenceDeparture;
+
+        if (!$actionGeofenceDoorOpen) {
+            $actionGeofenceDoorOpen = $shipment->actionGeofences()->where('door', ActionWialonGeofence::DOOR_OPEN)->get()->last();
+        }
 
         $timeOnPoint = '';
         $doorOpen = '';
@@ -40,20 +52,21 @@ class MorePointResource extends JsonResource
             $timeOnPoint = $this->getTimeBetween($actionGeofenceEntrance->created_at, $actionGeofenceDeparture->created_at);
         }
 
-        if ($actionGeofenceDoorOpen && $actionGeofenceDoorClose) {
+        if ($actionGeofenceDoorOpen && $actionGeofenceDoorClose && $this->resource instanceof RetailOutlet) {
             $doorOpen = $this->getTimeBetween($actionGeofenceDoorOpen->created_at, $actionGeofenceDoorClose->created_at);
         }
 
         if (method_exists($this->resource, 'shipmentRetailOutlet')) {
             $shipmentRetailOutlet = $this->shipmentRetailOutlet()->first();
 
-            $planStart = optional($shipmentRetailOutlet)->arrive_from;
-            $planFinish = optional($shipmentRetailOutlet)->arrive_to;
+            $arriveFrom = optional($shipmentRetailOutlet)->arrive_from;
+            $arriveTo = optional($shipmentRetailOutlet)->arrive_to;
 
-            if ($actualStart && $planFinish) {
-                $planFinish = Carbon::parse($shipment->date->format('d.m.Y') . ' ' . $planFinish->format('H:i'));
+            if ($actualStart) {
+                $planStart = Carbon::parse($shipmentRetailOutlet->date->format('d.m.Y') . ' ' . $arriveFrom->format('H:i'));
+                $planFinish = Carbon::parse($shipmentRetailOutlet->date->format('d.m.Y') . ' ' . $arriveTo->format('H:i'));
 
-                $late = $actualStart->gt($planFinish);
+                $late = !($actualStart->gt($planStart) && $actualStart->lt($planFinish));
             }
         }
 
@@ -73,7 +86,9 @@ class MorePointResource extends JsonResource
             'arrive_from_actual' => optional($actualStart)->format('H:i'),
             'arrive_to_actual' => optional($actualFinish)->format('H:i'),
             'time_on_point' => $timeOnPoint,
-            'passed' => !!$actionGeofenceEntrance,
+            'passed' => optional($actionGeofenceDeparture)->pointable_type === LoadingZone::getMorphClass()
+                ? !!$actionGeofenceDeparture
+                : !!$actionGeofenceEntrance,
             'late' => $late,
             'door_open' => $doorOpen,
         ];
