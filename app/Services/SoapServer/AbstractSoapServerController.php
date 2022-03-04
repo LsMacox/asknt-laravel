@@ -13,6 +13,11 @@ use Illuminate\Routing\Controller as BaseController;
 abstract class AbstractSoapServerController extends BaseController
 {
     /**
+     * @var bool
+     */
+    public $faultResponse = true;
+
+    /**
      * @return string Server host class name
      */
     abstract protected function getService(): string;
@@ -112,10 +117,9 @@ abstract class AbstractSoapServerController extends BaseController
 
             // Deal with a thrown exception that was converted into a SoapFault.
             // SoapFault thrown directly in a service class bypasses this code.
-            if ($response instanceof SoapFault) {
+            if ($response instanceof SoapFault && $this->faultResponse) {
                 return $responseFactory->make(self::serverFault($response), 500, $this->getHeaders());
             } else {
-
                 return $responseFactory->make($response, 200, $this->getHeaders());
             }
 
