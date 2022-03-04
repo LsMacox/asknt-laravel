@@ -133,17 +133,12 @@ class ShipmentSoapService
         }
 
         if ($statusCreate) {
-            Bus::batch([
-                new InitWialon($shipment),
-                new SendShipmentStatus(
-                    $this->structShipmentStatus([])
-                )
-            ])->dispatch();
-        } else {
-            SendShipmentStatus::dispatch(
-                $this->structShipmentStatus([])
-            );
+            InitWialon::dispatch($shipment);
         }
+
+        SendShipmentStatus::dispatch(
+            $this->structShipmentStatus([])
+        );
     }
 
     /**
