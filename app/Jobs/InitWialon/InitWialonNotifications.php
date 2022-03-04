@@ -84,7 +84,7 @@ class InitWialonNotifications implements ShouldQueue
                 'id' => 0,
                 'callMode' => 'create',
                 'e' => 1,
-                'n' => '['.$this->wObject->nm.']: '.$name,
+                'n' => '['.$this->wObject->name.']: '.$name,
                 'txt' =>
                     'unit_id=%UNIT_ID%&sensor_door=%SENSOR(*дверь*)%&mileage=%MILEAGE%&sensor_temp=%SENSOR(*Средняя темп*)%&msg_time=%MSG_TIME%&zone=%ZONE%&zone_min=%ZONE_MIN%&lat=%LAT%&long=%LON%&notification=%NOTIFICATION%&stuff_id='
                     .config('wialon.connections.stuff_id'),

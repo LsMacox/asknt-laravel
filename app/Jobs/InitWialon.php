@@ -6,6 +6,7 @@ use App\Jobs\InitWialon\InitWialonGeofences;
 use App\Jobs\InitWialon\InitWialonNotifications;
 use App\Models\ShipmentList\Shipment;
 use App\Models\Wialon\WialonNotification;
+use App\Models\Wialon\WialonObjects;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Bus\Batchable;
@@ -49,14 +50,14 @@ class InitWialon implements ShouldQueue, ShouldBeUnique
             ->whereNotNull(['long', 'lat'])
             ->get();
 
-        $wObjects = \WialonResource::useOnlyHosts($shipment->w_conn_id)->getObjectsWithRegPlate();
+        $wObjects = WialonObjects::where('w_conn_id', $shipment->w_conn_id)->get();
 
         $wResource = \WialonResource::useOnlyHosts($shipment->w_conn_id)
                                     ->firstResource()
                                     ->first();
 
         $wObject = \WialonResource::getObjectByRegPlate(
-            $wObjects[$shipment->w_conn_id],
+            $wObjects,
             [$shipment->car, $shipment->trailer]
         );
 
@@ -91,7 +92,7 @@ class InitWialon implements ShouldQueue, ShouldBeUnique
             'id' => 0,
             'callMode' => 'create',
             'e' => 1,
-            'n' => '['.$wObject->nm.']: Температурное нарушение',
+            'n' => '['.$wObject->name.']: Температурное нарушение',
             'txt' =>
                 'unit_id=%UNIT_ID%&sensor_temp=%SENSOR(*Средняя темп*)%&msg_time=%MSG_TIME%&lat=%LAT%&long=%LON%&notification=%NOTIFICATION%&stuff_id='
                 .config('wialon.connections.stuff_id'),
