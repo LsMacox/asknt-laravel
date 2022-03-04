@@ -18,6 +18,9 @@ class Shipment extends BaseModel
 {
     use Filterable;
 
+    public $incrementing = false;
+    protected $keyType = 'string';
+
     const STATUS_DELETE = '-1';
     const STATUS_CREATE = '0';
     const STATUS_UPDATE = '1';
@@ -83,11 +86,11 @@ class Shipment extends BaseModel
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
-    public function loadingZone()
+    public function loadingZones()
     {
-        return $this->hasOne(LoadingZone::class);
+        return $this->belongsToMany(LoadingZone::class);
     }
 
     /**

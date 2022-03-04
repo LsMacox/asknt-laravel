@@ -38,11 +38,11 @@ class LoadingZone extends BaseModel
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
-    public function shipment()
+    public function shipments()
     {
-        return $this->belongsTo(Shipment::class);
+        return $this->belongsToMany(Shipment::class);
     }
 
     /**

@@ -16,6 +16,7 @@ yarn-error.log
 /public/assets
 /public/index.html
 /public/favicon.ico
+/public/asknt-files.zip
 worker.log
 horizon.log
 storage/completed-routes

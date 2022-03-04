@@ -9,6 +9,8 @@ use App\Models\ShipmentList\ShipmentRetailOutlet;
 class ShipmentOrders extends BaseModel
 {
 
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     const RETURN_1 = '1';
     const RETURN_2 = '0';

@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateViolationsTable extends Migration
+class CreateLoadingZoneShipmentTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,15 +13,11 @@ class CreateViolationsTable extends Migration
      */
     public function up()
     {
-        Schema::create('violations', function (Blueprint $table) {
+        Schema::create('loading_zone_shipment', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('loading_zone_id')->constrained()->onDelete('cascade');
             $table->string('shipment_id');
             $table->foreign('shipment_id')->references('id')->on('shipments')->onDelete('cascade');
-            $table->string('name');
-            $table->string('text');
-            $table->boolean('repaid')->default(false);
-            $table->text('repaid_description')->nullable();
-            $table->timestamps();
         });
     }
 
@@ -32,6 +28,6 @@ class CreateViolationsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('violations');
+        Schema::dropIfExists('loading_zone_shipment');
     }
 }

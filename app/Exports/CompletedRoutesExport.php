@@ -30,7 +30,7 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
 
     public function collection()
     {
-        $shipments = $this->shipments->with(['loadingZone' => function ($query) {
+        $shipments = $this->shipments->with(['loadingZones' => function ($query) {
             $query->withTrashed();
         }, 'retailOutlets' => function ($query) {
             $query->withTrashed()->with('shipmentOrders');
@@ -73,7 +73,7 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
 
         if ($data instanceof Shipment) {
             return [
-                $shipment->loadingZone->name ?? '',
+                $shipment->loadingZones->first()->name ?? '',
                 $shipment->id ?? '',
                 '',
                 '',
@@ -192,7 +192,7 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
         $planDateTo = Carbon::parse($shipmentRetailOutlet->date->format('d.m.Y').' '.$shipmentRetailOutlet->arrive_to->format('H:i'));
 
         return [
-            $shipment->loadingZone->name ?? '',
+            $shipment->loadingZones->first()->name ?? '',
             $shipment->id ?? '',
             $data->shipmentOrders->pluck('id')->implode(', '),
             '',
@@ -206,7 +206,7 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
             $shipment->carrier,
             $data->turn ?? '',
             $data->turn ?? '',
-            $data->code ?? '',
+            $data->shipment_retail_outlet_id ?? '',
             '',
             $data->name ?? '',
             $data->name ?? '',

@@ -29,7 +29,7 @@ class DashboardMainResource extends JsonResource
         $curr_temp = null;
         $is_temp_violation = null;
 
-        if ($notificationTemp && $notificationTemp->actionTemps()->get()->isNotEmpty()) {
+        if ($notificationTemp && $notificationTemp->actionTemps->isNotEmpty()) {
             $actionsTemps = $notificationTemp
                 ->actionTemps()
                 ->get()
@@ -46,7 +46,7 @@ class DashboardMainResource extends JsonResource
             'date_shipping' => $this->date,
             'car' => $this->car ?? $this->trailer,
             'driver' => $this->driver,
-            'loading_warehouse' => optional($this->loadingZone()->first())->name,
+            'loading_warehouse' => optional($this->loadingZones->first())->name,
             'violations' => ViolationResource::collection($this->violations),
             'weight' => $this->weight,
             'curr_temp' => !empty($curr_temp) ? (integer) $curr_temp : '?',

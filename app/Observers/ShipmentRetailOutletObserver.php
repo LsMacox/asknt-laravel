@@ -76,7 +76,7 @@ class ShipmentRetailOutletObserver
             'radius' => $shipmentRetailOutlet->radius ?? 100
         ];
 
-        $retailOutlet = RetailOutlet::updateOrCreate(['code' => $shipmentRetailOutlet->id], $data);
+        $retailOutlet = RetailOutlet::updateOrCreate(['shipment_retail_outlet_id' => $shipmentRetailOutlet->id], $data);
     }
 
 }

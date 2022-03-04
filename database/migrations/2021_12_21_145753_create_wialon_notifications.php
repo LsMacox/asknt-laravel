@@ -17,7 +17,8 @@ class CreateWialonNotifications extends Migration
         Schema::create('wialon_notifications', function (Blueprint $table) {
             $table->unsignedBigInteger('id');
             $table->string('w_conn_id');
-            $table->foreignId('shipment_id')->constrained()->onDelete('cascade');
+            $table->string('shipment_id');
+            $table->foreign('shipment_id')->references('id')->on('shipments')->onDelete('cascade');
             $table->bigInteger('object_id')->nullable();
             $table->enum('action_type', WialonNotification::ENUM_ACTION)->nullable();
             $table->string('name');

@@ -43,7 +43,7 @@ class DashboardController extends Controller
             Shipment::filter($filter)
                 ->where('completed', false)
                 ->where('not_completed', false)
-            ->with(['retailOutlets', 'violations' => function ($query) {
+            ->with(['retailOutlets', 'loadingZones', 'violations' => function ($query) {
                 $query->where('repaid', false);
             }, 'wialonNotifications.actionGeofences'])
         );
@@ -61,7 +61,18 @@ class DashboardController extends Controller
      */
     public function getDetailByShipmentId (Request $request) {
         $shipment = Shipment::where('id', $request->shipment_id)
-            ->with(['loadingZone', 'retailOutlets.shipmentOrders', 'wialonNotifications.actionGeofences', 'wialonNotifications'])
+            ->where('completed', false)
+            ->where('not_completed', false)
+            ->with([
+                'loadingZones.shipments',
+                'loadingZones.actionWialonGeofences',
+                'retailOutlets.shipmentOrders',
+                'retailOutlets.actionWialonGeofences',
+                'retailOutlets.shipment',
+                'retailOutlets.shipmentRetailOutlet',
+                'wialonNotifications.actionGeofences',
+                'wialonNotifications.actionTemps'
+            ])
             ->first();
 
         if (!$shipment) {

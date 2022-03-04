@@ -6,6 +6,7 @@ namespace App\SoapServices;
 
 use App\Models\ShipmentList\ShipmentOrders;
 use App\Models\ShipmentList\ShipmentRetailOutlet;
+use App\Models\Wialon\WialonObjects;
 use App\SoapServices\Struct\ShipmentStatus\DT_Shipment_ERP_resp;
 use App\SoapServices\Struct\ShipmentStatus\message;
 use App\SoapServices\Struct\ShipmentStatus\messages;
@@ -98,17 +99,11 @@ class ShipmentSoapService
         $this->waybill['date'] = $this->rawDateToIso($this->waybill['date']);
         $this->waybill['mark'] = Shipment::markToBoolean($this->waybill['mark']);
 
-        $wObjects = \WialonResource::getObjectsWithRegPlate();
-        $hostId = $wObjects->search(function ($host) {
-            return $host->contains(function ($item) {
-                    return \WialonResource::equalObjectRegPlate($item, $this->waybill['car']);
-                })
-                || $host->contains(function ($item) {
-                    return \WialonResource::equalObjectRegPlate($item, $this->waybill['trailer']);
-                });
-        });
+        $objects = WialonObjects::where('registration_plate', \WialonResource::prepareRegPlate($this->waybill['car']))
+            ->orWhere('registration_plate', \WialonResource::prepareRegPlate($this->waybill['trailer']))->first();
+        $hostId = optional($objects)->w_conn_id;
 
-        if (!$hostId) {
+        if (!$objects) {
             $errors = [
                 new message('1', 'Такая машина или прицеп не существует не в одной системе wialon')
             ];
@@ -239,18 +234,21 @@ class ShipmentSoapService
     {
         $waybill = $this->objectToArray($waybill);
 
+        $waybill['number'] = (string) \Str::of($waybill['number'])->trim();
         $waybill['mark'] = mb_strtolower($waybill['mark']);
 
         $scores = $waybill['scores']['score'];
         $scores = $this->wrapAssoc($scores);
 
         $waybill['scores']['score'] = collect($scores)->map(function ($score) {
+            $score['score'] = (string) \Str::of($score['score'])->trim();
             $score['long'] = (double) $score['long'];
             $score['lat'] = (double) $score['lat'];
             $orders = $score['orders']['order'];
             $orders = $this->wrapAssoc($orders);
 
             $score['orders']['order'] = collect($orders)->map(function ($order) {
+                $order['order'] = (string) \Str::of($order['order'])->trim();
                 $order['weight'] = (double) $order['weight'];
                 return $order;
             })->toArray();

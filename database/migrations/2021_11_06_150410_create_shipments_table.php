@@ -15,7 +15,7 @@ class CreateShipmentsTable extends Migration
     public function up()
     {
         Schema::create('shipments', function (Blueprint $table) {
-            $table->unsignedBigInteger('id')->unique();
+            $table->string('id')->unique();
             $table->enum('status', Shipment::ENUM_STATUS);
             $table->bigInteger('w_conn_id');
             $table->timestamp('timestamp');

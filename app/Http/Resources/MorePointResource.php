@@ -20,10 +20,10 @@ class MorePointResource extends JsonResource
      */
     public function toArray($request)
     {
-        $shipment = $this->shipment()->first();
+        $shipment = $this->shipment ?? $this->shipments->first();
 
-        $actionGeofenceEntrance = $this->actionWialonGeofences()->where('is_entrance', true)->first();
-        $actionGeofenceDeparture = $this->actionWialonGeofences()->where('is_entrance', false)->first();
+        $actionGeofenceEntrance = $this->actionWialonGeofences->where('is_entrance', true)->first();
+        $actionGeofenceDeparture = $this->actionWialonGeofences->where('is_entrance', false)->first();
 
         $retailOutletTurn = $this->turn;
         $actionGeofenceDoorOpen = $shipment->actionGeofences()
@@ -37,7 +37,7 @@ class MorePointResource extends JsonResource
         $actionGeofenceDoorClose = $actionGeofenceEntrance ?? $actionGeofenceDeparture;
 
         if (!$actionGeofenceDoorOpen) {
-            $actionGeofenceDoorOpen = $shipment->actionGeofences()->where('door', ActionWialonGeofence::DOOR_OPEN)->get()->last();
+            $actionGeofenceDoorOpen = $shipment->actionGeofences->where('door', ActionWialonGeofence::DOOR_OPEN)->last();
         }
 
         $timeOnPoint = '';
@@ -52,27 +52,23 @@ class MorePointResource extends JsonResource
             $timeOnPoint = $this->getTimeBetween($actionGeofenceEntrance->created_at, $actionGeofenceDeparture->created_at);
         }
 
-        if ($actionGeofenceDoorOpen && $actionGeofenceDoorClose && $this->resource instanceof RetailOutlet) {
+        if ($this->resource instanceof RetailOutlet &&
+            $actionGeofenceDoorOpen && $actionGeofenceDoorClose) {
             $doorOpen = $this->getTimeBetween($actionGeofenceDoorOpen->created_at, $actionGeofenceDoorClose->created_at);
         }
 
         if (method_exists($this->resource, 'shipmentRetailOutlet')) {
-            $shipmentRetailOutlet = $this->shipmentRetailOutlet()->first();
+            $planStart = $this->shipmentRetailOutlet->planStart;
+            $planFinish = $this->shipmentRetailOutlet->planFinish;
 
-            $arriveFrom = optional($shipmentRetailOutlet)->arrive_from;
-            $arriveTo = optional($shipmentRetailOutlet)->arrive_to;
-
-            if ($actualStart) {
-                $planStart = Carbon::parse($shipmentRetailOutlet->date->format('d.m.Y') . ' ' . $arriveFrom->format('H:i'));
-                $planFinish = Carbon::parse($shipmentRetailOutlet->date->format('d.m.Y') . ' ' . $arriveTo->format('H:i'));
-
+            if ($actualStart && $this->shipmentRetailOutlet) {
                 $late = !($actualStart->gt($planStart) && $actualStart->lt($planFinish));
             }
         }
 
         return [
             'id' => $this->id,
-            'code' => $this->code,
+            'shipment_retail_outlet_id' => $this->shipment_retail_outlet_id,
             'lat' => $this->lat,
             'lng' => $this->lng,
             'name' => $this->name,

@@ -27,13 +27,13 @@ class RetailOutletObserver
      */
     public function updated(RetailOutlet $retailOutlet)
     {
-        $shipmentRetailOutlet = ShipmentRetailOutlet::find($retailOutlet->code);
+        $shipmentRetailOutlet = ShipmentRetailOutlet::find($retailOutlet->shipment_retail_outlet_id);
         $shipment = $shipmentRetailOutlet->shipment()->first();
         $wialonGeofence = $shipmentRetailOutlet->wialonGeofences()->first();
 
         $wResource = WialonResource::useOnlyHosts($shipment->w_conn_id)
-                                    ->firstResource()
-                                    ->first();
+            ->firstResource()
+            ->first();
 
         $params = [
             'itemId' => $wResource->id,
@@ -49,8 +49,8 @@ class RetailOutletObserver
             'max' => 19,
             'p' => [
                 [
-                    'x' => $retailOutlet->lng,
-                    'y' => $retailOutlet->lat,
+                    'x' => $retailOutlet->lat,
+                    'y' => $retailOutlet->lng,
                     'r' => $retailOutlet->radius ?? 100
                 ]
             ]
@@ -62,7 +62,7 @@ class RetailOutletObserver
 
         $wialonGeofence = $shipmentRetailOutlet->wialonGeofences()->updateOrCreate(
             ['id' => $wResult[$shipment->w_conn_id][0]],
-            ['name' => $retailOutlet->name, 'shipment_id' => $shipment->id]
+            ['name' => $retailOutlet->name, 'shipment_id' => $shipment->id, 'w_conn_id' => $shipment->w_conn_id]
         );
     }
 
@@ -74,13 +74,13 @@ class RetailOutletObserver
      */
     public function deleted(RetailOutlet $retailOutlet)
     {
-        $shipmentRetailOutlet = ShipmentRetailOutlet::find($retailOutlet->code);
+        $shipmentRetailOutlet = ShipmentRetailOutlet::find($retailOutlet->shipment_retail_outlet_id);
         $shipment = $shipmentRetailOutlet->shipment()->first();
         $wialonGeofence = $shipmentRetailOutlet->wialonGeofences()->first();
 
         $wResource = WialonResource::useOnlyHosts($shipment->w_conn_id)
-                                    ->firstResource()
-                                    ->first();
+            ->firstResource()
+            ->first();
 
         if ($wialonGeofence) {
             $params = [
@@ -95,7 +95,6 @@ class RetailOutletObserver
 
             $wialonGeofence->delete();
         }
-
     }
 
     /**

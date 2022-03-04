@@ -64,7 +64,8 @@ class LoadingZonesController extends Controller
     /**
      * Show the form for creating a new resource.
      *
-     * @return \Illuminate\Http\Response
+     * @param CreateRequest $request
+     * @return \Illuminate\Http\JsonResponse
      */
     public function create(CreateRequest $request)
     {
@@ -78,9 +79,9 @@ class LoadingZonesController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @param UpdateRequest $request
+     * @param $id
+     * @return \Illuminate\Http\JsonResponse
      */
     public function update(UpdateRequest $request, $id)
     {

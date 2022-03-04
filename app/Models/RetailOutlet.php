@@ -22,7 +22,7 @@ class RetailOutlet extends BaseModel
      */
     protected $fillable = [
         'name',
-        'code',
+        'shipment_retail_outlet_id',
         'address',
         'shipment_id',
         'lng',
@@ -43,14 +43,14 @@ class RetailOutlet extends BaseModel
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */
     public function shipmentRetailOutlet() {
-        return $this->hasOne(ShipmentRetailOutlet::class, 'id', 'code');
+        return $this->hasOne(ShipmentRetailOutlet::class, 'id', 'shipment_retail_outlet_id');
     }
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function shipmentOrders() {
-        return $this->hasMany(ShipmentOrders::class, 'shipment_retail_outlet_id', 'code');
+        return $this->hasMany(ShipmentOrders::class, 'shipment_retail_outlet_id', 'shipment_retail_outlet_id');
     }
 
     /**

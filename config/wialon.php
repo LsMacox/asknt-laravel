@@ -33,6 +33,4 @@ return [
 
     // additional parameters
     'extra_params' => [],
-
-
 ];

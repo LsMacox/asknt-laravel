@@ -98,20 +98,19 @@ class WialonActionsController
         if ($point instanceof RetailOutlet) {
             // Create violation
             $shipmentRetailOutlet = $point->shipmentRetailOutlet()->first();
-            $arriveFrom = optional($shipmentRetailOutlet)->arrive_from;
-            $arriveTo = optional($shipmentRetailOutlet)->arrive_to;
 
-            if ($shipmentRetailOutlet && $arriveTo) {
-                $planStart = Carbon::parse($shipmentRetailOutlet->date->format('d.m.Y') . ' ' . $arriveFrom->format('H:i'));
-                $planFinish = Carbon::parse($shipmentRetailOutlet->date->format('d.m.Y') . ' ' . $arriveTo->format('H:i'));
+            if ($shipmentRetailOutlet) {
                 $actualFinish = Carbon::parse($actGeofence->created_at);
+
+                $planStart = $shipmentRetailOutlet->planStart;
+                $planFinish = $shipmentRetailOutlet->planFinish;
 
                 $late = !($actualFinish->gt($planStart) && $actualFinish->lt($planFinish));
 
                 if ($late) {
                     $shipment->violations()->create([
                         'name' => 'Опоздание на ТТ',
-                        'text' => 'Прибытие в '.$actualFinish->format('H:i').', норма  '.$arriveFrom->format('H:i').'-'.$arriveTo->format('H:i'),
+                        'text' => 'Прибытие в '.$actualFinish->format('H:i').', норма  '.$planStart->format('H:i').'-'.$planFinish->format('H:i'),
                         'created_at' => $data['msg_time'],
                     ]);
                 }
@@ -233,7 +232,7 @@ class WialonActionsController
             ->count();
 
         if ($loadingCount == 0) {
-            $point = $shipment->loadingZone()->first();
+            $point = $shipment->loadingZones()->first();
         } else {
             $point = $shipment->retailOutlets()->where('turn', $retailCount + 1)->first();
         }

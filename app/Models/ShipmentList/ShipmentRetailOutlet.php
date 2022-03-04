@@ -6,9 +6,13 @@ use App\Models\BaseModel;
 use App\Models\RetailOutlet;
 use App\Models\ShipmentList\ShipmentOrders;
 use App\Models\Wialon\WialonGeofence;
+use Illuminate\Support\Carbon;
 
 class ShipmentRetailOutlet extends BaseModel
 {
+
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     /**
      * The attributes that are mass assignable.
@@ -63,6 +67,20 @@ class ShipmentRetailOutlet extends BaseModel
     public function wialonGeofences()
     {
         return $this->morphMany(WialonGeofence::class, 'geofenceable');
+    }
+
+    /**
+     * @return Carbon
+     */
+    public function getPlanStartAttribute () {
+        return Carbon::parse($this->date->format('d.m.Y') . ' ' . $this->arrive_from->format('H:i'));
+    }
+
+    /**
+     * @return Carbon
+     */
+    public function getPlanFinishAttribute () {
+        return Carbon::parse($this->date->format('d.m.Y') . ' ' . $this->arrive_to->format('H:i'));
     }
 
 }

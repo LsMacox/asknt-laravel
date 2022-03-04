@@ -56,7 +56,8 @@ class CompletedRoutesController extends Controller
      */
     public function downloadShipmentFiles (Request $request) {
         $shipment = Shipment::where('id', $request->shipment_id)
-            ->with(['loadingZone', 'retailOutlets.shipmentOrders', 'wialonNotifications.actionGeofences', 'wialonNotifications.actionTemps'])
+            ->where('completed', true)
+            ->orWhere('not_completed', true)
             ->first();
 
         if (!$shipment) {

@@ -25,7 +25,7 @@ class CreateRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'code' => 'required|string|unique:retail_outlets,code',
+            'shipment_retail_outlet_id' => 'required|string|unique:retail_outlets,shipment_retail_outlet_id',
             'address' => 'required|string|max:255',
             'lng' => 'required|numeric|between:-180,180',
             'lat' => 'required|numeric|between:-90,90',
@@ -37,7 +37,7 @@ class CreateRequest extends FormRequest
     {
         return [
             'name' => 'Название',
-            'code' => 'Код',
+            'shipment_retail_outlet_id' => 'Код',
             'address' => 'Код ТТ',
             'lng' => 'Долгота центра',
             'lat' => 'Широта центра',

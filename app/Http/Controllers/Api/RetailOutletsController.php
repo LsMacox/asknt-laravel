@@ -84,7 +84,7 @@ class RetailOutletsController extends Controller
     public function update(UpdateRequest $request, $id)
     {
         $outlet = RetailOutlet::find($id);
-        $outlet->update($request->except(['code']));
+        $outlet->update($request->except(['shipment_retail_outlet_id']));
 
         return response()->json(new RetailOutletResource($outlet), 200);
     }

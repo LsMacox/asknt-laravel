@@ -25,18 +25,16 @@ class DashboardDetailResource extends JsonResource
                                                     ->flatten(1)
                                                     ->sortBy('created_at');
 
-        $actionsTemps = $this->wialonNotifications->where('action_type', WialonNotification::ACTION_TEMP)
-            ->first();
+        $notificationTemps = $this->wialonNotifications->where('action_type', WialonNotification::ACTION_TEMP)->first();
 
         $temps = null;
         $curr_temp = null;
         $avg_temp = null;
 
-        if ($actionsTemps) {
-            $actionsTemps = $actionsTemps
-                ->actionTemps()
-                ->get()
-                ->sortBy('created_at');
+        if ($notificationTemps) {
+            $actionsTemps = $notificationTemps
+                            ->actionTemps
+                            ->sortBy('created_at');
 
             $temps = $actionsTemps->groupBy(function ($date) {
                 return Carbon::parse($date->created_at)->format('Y.m.d');
@@ -58,7 +56,7 @@ class DashboardDetailResource extends JsonResource
             'trailer' => $this->trailer,
             'driver' => $this->driver,
             'phone' => $this->phone,
-            'loading_zone' => new MorePointResource($this->loadingZone),
+            'loading_zone' => new MorePointResource($this->loadingZones->first()),
             'retail_outlets' => MorePointResource::collection($this->retailOutlets->sortBy('turn')),
             'stock' => $this->stock,
             'temps' => $temps,

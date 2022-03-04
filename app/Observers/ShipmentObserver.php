@@ -23,7 +23,14 @@ class ShipmentObserver
             'id_1c' => $shipment->stock['id1c'],
             'id_sap' => $shipment->stock['idsap'],
         ];
-        $shipment->loadingZone()->create($data);
+
+        $loadingZone = LoadingZone::where('id_1c', $data['id_1c'])->where('id_sap', $data['id_sap'])->first();
+
+        if ($loadingZone) {
+            $shipment->loadingZones()->attach($loadingZone);
+        } else {
+            LoadingZone::create($data);
+        }
     }
 
     /**
@@ -34,13 +41,6 @@ class ShipmentObserver
      */
     public function updated(Shipment $shipment)
     {
-        $data = [
-            'name' => $shipment->stock['name'],
-            'id_1c' => $shipment->stock['id1c'],
-            'id_sap' => $shipment->stock['idsap'],
-        ];
-        $shipment->loadingZone()->update($data);
-
         if ($shipment->completed || $shipment->not_completed) {
             $wResource = WialonResource::useOnlyHosts($shipment->w_conn_id)
                                         ->firstResource()
@@ -49,7 +49,6 @@ class ShipmentObserver
             $wialonGeofences = $shipment->wialonGeofences()->get();
 
             $shipment->retailOutlets()->delete();
-            $shipment->loadingZone()->delete();
 
             foreach ($wialonNotifications as $notification) {
                 $params = [

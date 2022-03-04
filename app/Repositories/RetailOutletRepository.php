@@ -24,7 +24,7 @@ class RetailOutletRepository extends CoreRepository
                 return $query
                     ->where('name', 'ilike', "%$search%")
                     ->orWhere('address', 'ilike', "%$search%")
-                    ->orWhere('code', 'ilike', "%$search%");
+                    ->orWhere('shipment_retail_outlet_id', 'ilike', "%$search%");
             });
     }
 
