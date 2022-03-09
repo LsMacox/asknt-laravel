@@ -65,9 +65,10 @@ class ShipmentRetailOutletObserver
     /**
      * @param ShipmentRetailOutlet $shipmentRetailOutlet
      */
-    protected function updateOrCreateRetailOutlet (ShipmentRetailOutlet $shipmentRetailOutlet) {
+    protected function updateOrCreateRetailOutlet(ShipmentRetailOutlet $shipmentRetailOutlet) {
         $data = [
             'name' => $shipmentRetailOutlet->name,
+            'code' => $shipmentRetailOutlet->code,
             'shipment_id' => $shipmentRetailOutlet->shipment_id,
             'address' => $shipmentRetailOutlet->adres,
             'lng' => $shipmentRetailOutlet->long,
@@ -76,7 +77,7 @@ class ShipmentRetailOutletObserver
             'radius' => $shipmentRetailOutlet->radius ?? 100
         ];
 
-        $retailOutlet = RetailOutlet::updateOrCreate(['shipment_retail_outlet_id' => $shipmentRetailOutlet->id], $data);
+        RetailOutlet::updateOrCreate(['shipment_retail_outlet_id' => $shipmentRetailOutlet->id], $data);
     }
 
 }

@@ -18,6 +18,11 @@ abstract class AbstractSoapServerController extends BaseController
     public $faultResponse = true;
 
     /**
+     * @var bool
+     */
+    public $returnResponse = true;
+
+    /**
      * @return string Server host class name
      */
     abstract protected function getService(): string;
@@ -119,12 +124,14 @@ abstract class AbstractSoapServerController extends BaseController
             // SoapFault thrown directly in a service class bypasses this code.
             if ($response instanceof SoapFault && $this->faultResponse) {
                 return $responseFactory->make(self::serverFault($response), 500, $this->getHeaders());
-            } else {
+            } else if ($this->returnResponse) {
                 return $responseFactory->make($response, 200, $this->getHeaders());
             }
 
         } catch (\Exception $e) {
-            return $responseFactory->make(self::serverFault($e), 500, $this->getHeaders());
+            if ($this->returnResponse) {
+                return $responseFactory->make(self::serverFault($e), 500, $this->getHeaders());
+            }
         }
     }
 

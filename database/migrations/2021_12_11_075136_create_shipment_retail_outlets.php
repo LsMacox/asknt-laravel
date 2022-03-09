@@ -14,7 +14,8 @@ class CreateShipmentRetailOutlets extends Migration
     public function up()
     {
         Schema::create('shipment_retail_outlets', function (Blueprint $table) {
-            $table->string('id')->unique();
+            $table->id();
+            $table->string('code');
             $table->string('shipment_id');
             $table->foreign('shipment_id')->references('id')->on('shipments')->onDelete('cascade');
             $table->string('name');

@@ -10,10 +10,6 @@ use Illuminate\Support\Carbon;
 
 class ShipmentRetailOutlet extends BaseModel
 {
-
-    public $incrementing = false;
-    protected $keyType = 'string';
-
     /**
      * The attributes that are mass assignable.
      *
@@ -21,6 +17,7 @@ class ShipmentRetailOutlet extends BaseModel
      */
     protected $fillable = [
         'id',
+        'code',
         'name',
         'shipment_id',
         'legal_name',

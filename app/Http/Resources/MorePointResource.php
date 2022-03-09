@@ -68,7 +68,7 @@ class MorePointResource extends JsonResource
 
         return [
             'id' => $this->id,
-            'shipment_retail_outlet_id' => $this->shipment_retail_outlet_id,
+            'code' => $this->code,
             'lat' => $this->lat,
             'lng' => $this->lng,
             'name' => $this->name,

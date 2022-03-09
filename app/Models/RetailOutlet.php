@@ -23,6 +23,7 @@ class RetailOutlet extends BaseModel
     protected $fillable = [
         'name',
         'shipment_retail_outlet_id',
+        'code',
         'address',
         'shipment_id',
         'lng',

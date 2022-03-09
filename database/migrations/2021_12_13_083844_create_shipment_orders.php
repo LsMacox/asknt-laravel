@@ -14,9 +14,9 @@ class CreateShipmentOrders extends Migration
     public function up()
     {
         Schema::create('shipment_orders', function (Blueprint $table) {
-            $table->string('id')->unique();
-            $table->string('shipment_retail_outlet_id');
-            $table->foreign('shipment_retail_outlet_id')->references('id')->on('shipment_retail_outlets')->onDelete('cascade');
+            $table->id();
+            $table->string('code');
+            $table->foreignId('shipment_retail_outlet_id')->constrained()->onDelete('cascade');
             $table->string('product');
             $table->string('weight')->nullable();
             $table->boolean('return');

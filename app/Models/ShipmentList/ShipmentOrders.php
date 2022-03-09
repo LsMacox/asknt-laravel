@@ -8,10 +8,6 @@ use App\Models\ShipmentList\ShipmentRetailOutlet;
 
 class ShipmentOrders extends BaseModel
 {
-
-    public $incrementing = false;
-    protected $keyType = 'string';
-
     const RETURN_1 = '1';
     const RETURN_2 = '0';
     const ENUM_RETURN = [self::RETURN_1, self::RETURN_2];
@@ -38,6 +34,7 @@ class ShipmentOrders extends BaseModel
      */
     protected $fillable = [
         'id',
+        'code',
         'shipment_retail_outlet_id',
         'product',
         'return',

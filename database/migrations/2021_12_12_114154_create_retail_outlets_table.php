@@ -16,10 +16,10 @@ class CreateRetailOutletsTable extends Migration
         Schema::create('retail_outlets', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('code');
             $table->string('shipment_id')->nullable();
             $table->foreign('shipment_id')->references('id')->on('shipments')->onDelete('cascade');
-            $table->string('shipment_retail_outlet_id');
-            $table->foreign('shipment_retail_outlet_id')->references('id')->on('shipment_retail_outlets')->onDelete('cascade');
+            $table->foreignId('shipment_retail_outlet_id')->constrained()->onDelete('cascade');
             $table->string('address');
             $table->double('lng');
             $table->double('lat');

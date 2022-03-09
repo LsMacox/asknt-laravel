@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 
 class SoapServerAvanternShipmentController extends AbstractSoapServerController
 {
+    public $returnResponse = false;
     public $faultResponse = false;
 
     protected function getService(): string
