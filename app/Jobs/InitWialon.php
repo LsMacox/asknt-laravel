@@ -7,6 +7,7 @@ use App\Jobs\InitWialon\InitWialonNotifications;
 use App\Models\ShipmentList\Shipment;
 use App\Models\Wialon\WialonNotification;
 use App\Models\Wialon\WialonObjects;
+use App\Models\Wialon\WialonResources;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Bus\Batchable;
@@ -41,25 +42,19 @@ class InitWialon implements ShouldQueue, ShouldBeUnique
      */
     public function handle()
     {
-        if ($this->batch()->cancelled()) {
-            return;
-        }
+//        if ($this->batch()->cancelled()) {
+//            return;
+//        }
 
         $shipment = $this->shipment;
         $retailOutlets = $shipment->shipmentRetailOutlets()
             ->whereNotNull(['long', 'lat'])
             ->get();
 
-        $wObjects = WialonObjects::where('w_conn_id', $shipment->w_conn_id)->get();
+        $wResource = WialonResources::where('w_conn_id', $shipment->w_conn_id)->first();
 
-        $wResource = \WialonResource::useOnlyHosts($shipment->w_conn_id)
-                                    ->firstResource()
-                                    ->first();
-
-        $wObject = \WialonResource::getObjectByRegPlate(
-            $wObjects,
-            [$shipment->car, $shipment->trailer]
-        );
+        $wObject = WialonObjects::where('registration_plate', \WialonResource::prepareRegPlate($shipment->car))
+            ->orWhere('registration_plate', \WialonResource::prepareRegPlate($shipment->trailer))->first();
 
         // Creating a temperature violation notification in wialon
         $this->createWialonTempViolationNotification(
@@ -107,7 +102,7 @@ class InitWialon implements ShouldQueue, ShouldBeUnique
             'fl' => 0,
             'tz' => 3,
             'la' => 'RU',
-            'un' => [$wObject->id],
+            'un' => [$wObject->w_id],
             'sch' => [
                 'f1' => 0,
                 'f2' => 0,
@@ -154,7 +149,7 @@ class InitWialon implements ShouldQueue, ShouldBeUnique
             'w_conn_id' => $host,
             'name' => $wCreate[$host][1]->n,
             'action_type' => WialonNotification::ACTION_TEMP_VIOLATION,
-            'object_id' => $wObject->id,
+            'object_id' => $wObject->w_id,
         ]);
     }
 

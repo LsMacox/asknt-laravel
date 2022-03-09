@@ -16,8 +16,6 @@ class CreateShipmentRetailOutlets extends Migration
         Schema::create('shipment_retail_outlets', function (Blueprint $table) {
             $table->id();
             $table->string('code');
-            $table->string('shipment_id');
-            $table->foreign('shipment_id')->references('id')->on('shipments')->onDelete('cascade');
             $table->string('name');
             $table->string('legal_name')->nullable();
             $table->string('adres');
@@ -27,6 +25,7 @@ class CreateShipmentRetailOutlets extends Migration
             $table->time('arrive_from')->nullable();
             $table->time('arrive_to')->nullable();
             $table->integer('turn');
+            $table->softDeletes();
             $table->timestamps();
         });
     }

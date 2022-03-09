@@ -57,7 +57,7 @@ class DashboardDetailResource extends JsonResource
             'driver' => $this->driver,
             'phone' => $this->phone,
             'loading_zone' => new MorePointResource($this->loadingZones->first()),
-            'retail_outlets' => MorePointResource::collection($this->retailOutlets->sortBy('turn')),
+            'retail_outlets' => MorePointResource::collection($this->shipmentRetailOutlets->sortBy('turn')),
             'stock' => $this->stock,
             'temps' => $temps,
             'temperature' => $this->temperature,

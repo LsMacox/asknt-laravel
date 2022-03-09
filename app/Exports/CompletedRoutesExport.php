@@ -32,7 +32,7 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
     {
         $shipments = $this->shipments->with(['loadingZones' => function ($query) {
             $query->withTrashed();
-        }, 'retailOutlets' => function ($query) {
+        }, 'shipmentRetailOutlets' => function ($query) {
             $query->withTrashed()->with('shipmentOrders');
         }, 'wialonNotifications' => function ($query) {
             $query->withTrashed();
@@ -42,7 +42,7 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
 
         $shipments->each(function ($shipment) use ($res) {
             $res->add($shipment);
-            $shipment->retailOutlets()->withTrashed()->each(function ($retailOutlet) use ($shipment, $res) {
+            $shipment->shipmentRetailOutlets()->withTrashed()->each(function ($retailOutlet) use ($shipment, $res) {
                 $retailOutlet->shipment = $shipment;
                 $res->add($retailOutlet);
             });
@@ -69,7 +69,7 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
         $loadingDepartureDate = optional($loadingType->where('is_entrance', false)->first())->created_at;
 
         $lPlanDate = Carbon::parse($shipment->date->format('d.m.Y').' '.$shipment->time->format('H:i'));
-        $allWeights = $shipment->retailOutlets->pluck('shipmentOrders')->flatten(1)->sum('weight');
+        $allWeights = $shipment->shipmentRetailOutlets->pluck('shipmentOrders')->flatten(1)->sum('weight');
 
         if ($data instanceof Shipment) {
             return [
@@ -88,7 +88,7 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
                 '',
                 '',
                 '',
-                $shipment->retailOutlets->count() ?? '',
+                $shipment->shipmentRetailOutlets->count() ?? '',
                 '',
                 '',
                 '',
@@ -135,12 +135,10 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
 
         $retailOutletActionGeofences = $data->actionWialonGeofences()->get();
 
-        $shipmentRetailOutlet = $data->shipmentRetailOutlet()->first();
-
         $actDeparture = $data->actionWialonGeofences()->where('is_entrance', false)->first();
         $pointable = $actDeparture->pointable()->withTrashed()->first();
-        $actNextEntrance = $shipment->retailOutlets->where('turn',
-            $pointable->turn + 1 <= $shipment->retailOutlets->count()
+        $actNextEntrance = $shipment->shipmentRetailOutlets->where('turn',
+            $pointable->turn + 1 <= $shipment->shipmentRetailOutlets->count()
             ? $pointable->turn + 1
             : $pointable->turn
         )->first()
@@ -188,8 +186,8 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
             return $count ? round(100 * ($count / $actTempsCount)) . '%' : null;
         };
 
-        $planDateFrom = Carbon::parse($shipmentRetailOutlet->date->format('d.m.Y').' '.$shipmentRetailOutlet->arrive_from->format('H:i'));
-        $planDateTo = Carbon::parse($shipmentRetailOutlet->date->format('d.m.Y').' '.$shipmentRetailOutlet->arrive_to->format('H:i'));
+        $planDateFrom = Carbon::parse($data->date->format('d.m.Y').' '.$data->arrive_from->format('H:i'));
+        $planDateTo = Carbon::parse($data->date->format('d.m.Y').' '.$data->arrive_to->format('H:i'));
 
         return [
             $shipment->loadingZones->first()->name ?? '',
@@ -223,7 +221,7 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
             optional($loadingEntranceDate) ? $loadingEntranceDate->between($lPlanDate->subMinutes(5), $lPlanDate->addMinutes(5)) ? 'Вовремя' : 'Опоздал' : '',
             '',
             $planDateFrom->format('d.m.Y'),
-            $shipmentRetailOutlet->arrive_from->format('H:i') . '-' . $shipmentRetailOutlet->arrive_to->format('H:i'),
+            $data->arrive_from->format('H:i') . '-' . $data->arrive_to->format('H:i'),
             optional($actEntranceDate)->format('d.m.Y') ?? '',
             optional($actEntranceDate)->format('H:i') ?? '',
             optional($actDepartureDate)->format('d.m.Y') ?? '',

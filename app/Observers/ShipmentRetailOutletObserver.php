@@ -69,7 +69,6 @@ class ShipmentRetailOutletObserver
         $data = [
             'name' => $shipmentRetailOutlet->name,
             'code' => $shipmentRetailOutlet->code,
-            'shipment_id' => $shipmentRetailOutlet->shipment_id,
             'address' => $shipmentRetailOutlet->adres,
             'lng' => $shipmentRetailOutlet->long,
             'lat' => $shipmentRetailOutlet->lat,

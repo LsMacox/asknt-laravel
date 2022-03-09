@@ -123,7 +123,9 @@ class ShipmentSoapService
         if (!$statusDelete) {
             foreach ($this->waybill['scores']['score'] as $score) {
                 $score['date'] = $this->rawDateToIso($score['date']);
-                $shipmentRetailOutlet = ShipmentRetailOutlet::updateOrCreate(['code' => $score['score'], 'shipment_id' => $shipment->id], $score);
+                $shipmentRetailOutlet = ShipmentRetailOutlet::updateOrCreate(['code' => $score['score']], array_merge($score, ['w_conn_id' => $hostId]));
+
+                $shipment->shipmentRetailOutlets()->attach($shipmentRetailOutlet);
 
                 foreach ($score['orders']['order'] as $order) {
                     $order['return'] = ShipmentOrders::returnToBoolean($order['return']);
@@ -133,7 +135,8 @@ class ShipmentSoapService
         }
 
         if ($statusCreate) {
-            Bus::batch([new InitWialon($shipment)])->dispatch();
+//            Bus::batch([new InitWialon($shipment)])->dispatch();
+            InitWialon::dispatchSync($shipment);
         }
 
         SendShipmentStatus::dispatch(

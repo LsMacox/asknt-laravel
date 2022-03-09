@@ -17,8 +17,6 @@ class CreateRetailOutletsTable extends Migration
             $table->id();
             $table->string('name');
             $table->string('code');
-            $table->string('shipment_id')->nullable();
-            $table->foreign('shipment_id')->references('id')->on('shipments')->onDelete('cascade');
             $table->foreignId('shipment_retail_outlet_id')->constrained()->onDelete('cascade');
             $table->string('address');
             $table->double('lng');

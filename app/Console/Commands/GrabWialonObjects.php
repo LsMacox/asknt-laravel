@@ -49,10 +49,12 @@ class GrabWialonObjects extends Command
                         ->v
                 )->upper()->trim()->replaceMatches('/\s+/', '');
 
-                WialonObjects::updateOrCreate(
-                    ['w_id' => $object->id, 'w_conn_id' => $hostId],
-                    ['name' => $object->nm, 'registration_plate' => $regPlate]
-                );
+                if (!empty($regPlate)) {
+                    WialonObjects::updateOrCreate(
+                        ['w_id' => $object->id, 'w_conn_id' => $hostId],
+                        ['name' => $object->nm, 'registration_plate' => $regPlate]
+                    );
+                }
             });
         });
     }

@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use App\Models\LoadingZone;
 use App\Models\RetailOutlet;
+use App\Models\ShipmentList\ShipmentRetailOutlet;
 use App\Models\Wialon\Action\ActionWialonGeofence;
 use App\Models\Wialon\WialonNotification;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -52,12 +53,10 @@ class MorePointResource extends JsonResource
             $timeOnPoint = $this->getTimeBetween($actionGeofenceEntrance->created_at, $actionGeofenceDeparture->created_at);
         }
 
-        if ($this->resource instanceof RetailOutlet &&
+        if ($this->resource instanceof ShipmentRetailOutlet &&
             $actionGeofenceDoorOpen && $actionGeofenceDoorClose) {
             $doorOpen = $this->getTimeBetween($actionGeofenceDoorOpen->created_at, $actionGeofenceDoorClose->created_at);
-        }
 
-        if (method_exists($this->resource, 'shipmentRetailOutlet')) {
             $planStart = $this->shipmentRetailOutlet->planStart;
             $planFinish = $this->shipmentRetailOutlet->planFinish;
 

@@ -6,7 +6,6 @@ use App\Filters\Filterable;
 use App\Models\BaseModel;
 use App\Models\LoadingZone;
 use App\Models\RetailOutlet;
-use App\Models\ShipmentList\ShipmentRetailOutlet;
 use App\Models\Violation;
 use App\Models\Wialon\Action\ActionWialonGeofence;
 use App\Models\Wialon\WialonGeofence;
@@ -78,11 +77,11 @@ class Shipment extends BaseModel
     ];
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
     public function shipmentRetailOutlets()
     {
-        return $this->hasMany(ShipmentRetailOutlet::class);
+        return $this->belongsToMany(ShipmentRetailOutlet::class);
     }
 
     /**

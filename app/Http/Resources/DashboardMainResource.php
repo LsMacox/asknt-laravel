@@ -51,7 +51,7 @@ class DashboardMainResource extends JsonResource
             'weight' => $this->weight,
             'curr_temp' => !empty($curr_temp) ? (integer) $curr_temp : '?',
             'is_temp_violation' => $is_temp_violation,
-            'points_total' => $this->retailOutlets->count() + 1,
+            'points_total' => $this->shipmentRetailOutlets->count() + 1,
             'points_completed' => $actionGeofences->where('is_entrance', true)->count(),
         ];
     }

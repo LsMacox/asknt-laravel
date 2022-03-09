@@ -10,6 +10,7 @@ use App\Jobs\CompleteShipment\SaveWlnForShipment;
 use App\Models\LoadingZone;
 use App\Models\RetailOutlet;
 use App\Models\ShipmentList\Shipment;
+use App\Models\ShipmentList\ShipmentRetailOutlet;
 use App\Models\Wialon\Action\ActionWialonGeofence;
 use App\Models\Wialon\Action\ActionWialonTempViolation;
 use Illuminate\Http\Request;
@@ -95,25 +96,20 @@ class WialonActionsController
         ]);
 
 
-        if ($point instanceof RetailOutlet) {
-            // Create violation
-            $shipmentRetailOutlet = $point->shipmentRetailOutlet()->first();
+        if ($point instanceof ShipmentRetailOutlet) {
+            $actualFinish = Carbon::parse($actGeofence->created_at);
 
-            if ($shipmentRetailOutlet) {
-                $actualFinish = Carbon::parse($actGeofence->created_at);
+            $planStart = $point->planStart;
+            $planFinish = $point->planFinish;
 
-                $planStart = $shipmentRetailOutlet->planStart;
-                $planFinish = $shipmentRetailOutlet->planFinish;
+            $late = !($actualFinish->gt($planStart) && $actualFinish->lt($planFinish));
 
-                $late = !($actualFinish->gt($planStart) && $actualFinish->lt($planFinish));
-
-                if ($late) {
-                    $shipment->violations()->create([
-                        'name' => 'Опоздание на ТТ',
-                        'text' => 'Прибытие в '.$actualFinish->format('H:i').', норма  '.$planStart->format('H:i').'-'.$planFinish->format('H:i'),
-                        'created_at' => $data['msg_time'],
-                    ]);
-                }
+            if ($late) {
+                $shipment->violations()->create([
+                    'name' => 'Опоздание на ТТ',
+                    'text' => 'Прибытие в '.$actualFinish->format('H:i').', норма  '.$planStart->format('H:i').'-'.$planFinish->format('H:i'),
+                    'created_at' => $data['msg_time'],
+                ]);
             }
         }
     }
@@ -147,7 +143,7 @@ class WialonActionsController
         ]);
 
         // Completed shipment, if the entrance to the last point
-        $lastRetailOutlet = $shipment->retailOutlets()->get()->sortBy('turn')->last();
+        $lastRetailOutlet = $shipment->shipmentRetailOutlets()->get()->sortBy('turn')->last();
 
         if ($point->id === $lastRetailOutlet->id) {
             $actionGeofences = $notification->actionGeofences()->orderBy('created_at')->get();
@@ -228,13 +224,13 @@ class WialonActionsController
             ->count();
 
         $retailCount = $notification->actionGeofences()
-            ->where('pointable_type', RetailOutlet::getMorphClass())
+            ->where('pointable_type', ShipmentRetailOutlet::getMorphClass())
             ->count();
 
         if ($loadingCount == 0) {
             $point = $shipment->loadingZones()->first();
         } else {
-            $point = $shipment->retailOutlets()->where('turn', $retailCount + 1)->first();
+            $point = $shipment->shipmentRetailOutlets()->where('turn', $retailCount + 1)->first();
         }
         return $point;
     }

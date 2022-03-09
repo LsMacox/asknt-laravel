@@ -4,12 +4,15 @@ namespace App\Models\ShipmentList;
 
 use App\Models\BaseModel;
 use App\Models\RetailOutlet;
-use App\Models\ShipmentList\ShipmentOrders;
+use App\Models\Wialon\Action\ActionWialonGeofence;
 use App\Models\Wialon\WialonGeofence;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
 class ShipmentRetailOutlet extends BaseModel
 {
+    use SoftDeletes;
+
     /**
      * The attributes that are mass assignable.
      *
@@ -37,11 +40,11 @@ class ShipmentRetailOutlet extends BaseModel
     ];
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
-    public function shipment()
+    public function shipments()
     {
-        return $this->belongsTo(Shipment::class);
+        return $this->belongsToMany(Shipment::class);
     }
 
     /**
@@ -64,6 +67,14 @@ class ShipmentRetailOutlet extends BaseModel
     public function wialonGeofences()
     {
         return $this->morphMany(WialonGeofence::class, 'geofenceable');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
+     */
+    public function actionWialonGeofences()
+    {
+        return $this->morphMany(ActionWialonGeofence::class, 'pointable');
     }
 
     /**

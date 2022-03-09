@@ -4,7 +4,6 @@ namespace App\Models\ShipmentList;
 
 use App\Models\BaseModel;
 use App\Models\RetailOutlet;
-use App\Models\ShipmentList\ShipmentRetailOutlet;
 
 class ShipmentOrders extends BaseModel
 {
