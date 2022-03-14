@@ -30,7 +30,8 @@ class Kernel extends ConsoleKernel
             Bus::batch([new CompletionShipments()])->dispatch();
         })->dailyAt('00:00');
 
-        $schedule->command('grab:wialon-objects')->dailyAt('02:00');
+        $schedule->command('grab:wialon-resources')->dailyAt('02:00');
+        $schedule->command('grab:wialon-objects')->dailyAt('02:30');
     }
 
     /**

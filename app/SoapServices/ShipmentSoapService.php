@@ -135,8 +135,8 @@ class ShipmentSoapService
         }
 
         if ($statusCreate) {
-//            Bus::batch([new InitWialon($shipment)])->dispatch();
-            InitWialon::dispatchSync($shipment);
+            Bus::batch([new InitWialon($shipment)])->dispatch();
+//            InitWialon::dispatchSync($shipment);
         }
 
         SendShipmentStatus::dispatch(

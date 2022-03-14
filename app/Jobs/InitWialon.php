@@ -42,9 +42,9 @@ class InitWialon implements ShouldQueue, ShouldBeUnique
      */
     public function handle()
     {
-//        if ($this->batch()->cancelled()) {
-//            return;
-//        }
+        if ($this->batch()->cancelled()) {
+            return;
+        }
 
         $shipment = $this->shipment;
         $retailOutlets = $shipment->shipmentRetailOutlets()
@@ -76,7 +76,7 @@ class InitWialon implements ShouldQueue, ShouldBeUnique
      * @param $wObject
      * @param Shipment $shipment
      */
-    protected function createWialonTempViolationNotification (
+    protected function createWialonTempViolationNotification(
         string $host,
         object $resource,
                $wObject,
