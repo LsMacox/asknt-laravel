@@ -59,7 +59,7 @@ class InitWialonGeofences implements ShouldQueue
     {
         foreach ($this->retailOutlets as $zone) {
             $params = [
-                'itemId' => $this->resource->id,
+                'itemId' => $this->resource->w_id,
                 'id' => 0,
                 'callMode' => 'create',
                 'w' => $zone->radius ?? 100,

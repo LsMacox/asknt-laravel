@@ -125,8 +125,6 @@ class Wialon
     {
         $url = $this->base_api_url;
 
-        $args = (array) json_decode($args);
-
         if (stripos($action, 'unit_group') === 0) {
             $svc = $action;
             $svc[mb_strlen('unit_group')] = '/';
@@ -148,7 +146,7 @@ class Wialon
                 $params_str .= '&';
             }
 
-            $params_str .= $k.'='.urlencode(is_object($v) || is_array($v)  ? json_encode($v) : $v);
+            $params_str .= $k.'='.urlencode(is_object($v) || is_array($v)  ? json_encode($v, JSON_UNESCAPED_UNICODE) : $v);
         }
 
         $ch = curl_init();

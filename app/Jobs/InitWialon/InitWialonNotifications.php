@@ -78,16 +78,18 @@ class InitWialonNotifications implements ShouldQueue
                 return $geofence->first();
             });
 
+        // Creating a temperature violation notification in wialon
+        $this->createWialonTempViolationNotification();
+
         foreach (self::WIALON_NOTIFICATION_NAMES as $name) {
             $params = [
-                'itemId' => $this->resource->id,
+                'itemId' => $this->resource->w_id,
                 'id' => 0,
                 'callMode' => 'create',
                 'e' => 1,
                 'n' => '['.$this->wObject->name.']: '.$name,
                 'txt' =>
-                    'unit_id=%UNIT_ID%&sensor_door=%SENSOR(*дверь*)%&mileage=%MILEAGE%&sensor_temp=%SENSOR(*Средняя темп*)%&msg_time=%MSG_TIME%&zone=%ZONE%&zone_min=%ZONE_MIN%&lat=%LAT%&long=%LON%&notification=%NOTIFICATION%&stuff_id='
-                    .config('wialon.connections.stuff_id'),
+                    'unit_id=%UNIT_ID%&sensor_door=%SENSOR(*дверь*)%&mileage=%MILEAGE%&sensor_temp=%SENSOR(*Средняя темп*)%&msg_time=%MSG_TIME%&zone=%ZONE%&zone_min=%ZONE_MIN%&lat=%LAT%&long=%LON%&notification=%NOTIFICATION%',
                 'ta' => 0,
                 'td' => 0,
                 'ma' => 0,
@@ -131,6 +133,77 @@ class InitWialonNotifications implements ShouldQueue
                 'object_id' => $this->wObject->id,
             ]);
         }
+    }
+
+    protected function createWialonTempViolationNotification() {
+        $params = [
+            'itemId' => $this->resource->w_id,
+            'id' => 0,
+            'callMode' => 'create',
+            'e' => 1,
+            'n' => '['.$this->wObject->name.']: Температурное нарушение',
+            'txt' =>
+                'unit_id=%UNIT_ID%&sensor_temp=%SENSOR(*Средняя темп*)%&msg_time=%MSG_TIME%&lat=%LAT%&long=%LON%&notification=%NOTIFICATION%',
+            'ta' => 0,
+            'td' => 0,
+            'ma' => 0,
+            'mmtd' => 0,
+            'cdt' => 0,
+            'mast' => 0,
+            'mpst' => 0,
+            'cp' => 0,
+            'fl' => 0,
+            'tz' => 3,
+            'la' => 'RU',
+            'un' => [$this->wObject->w_id],
+            'sch' => [
+                'f1' => 0,
+                'f2' => 0,
+                't1' => 0,
+                't2' => 0,
+                'm' => 0,
+                'y' => 0,
+                'w' => 0
+            ],
+            'act' => [
+                [
+                    't' => 'push_messages',
+                    'p' => [
+                        'url' => route('wialon.temp-violation'),
+                        'get' => 0
+                    ]
+                ],
+                [
+                    't' => 'event',
+                    'p' => [
+                        'flags' => '0',
+                    ]
+                ]
+            ],
+            'trg' => [
+                't' => 'sensor_value',
+                'p' => [
+                    'merge' => '0',
+                    'type' => '1',
+                    'sensor_name_mask' => '*Средняя темп*',
+                    'sensor_type' => 'temperature',
+                    'lower_bound' => $this->shipment->temperature['from'],
+                    'upper_bound' => $this->shipment->temperature['to'],
+                ]
+            ],
+        ];
+
+        $wCreate = \Wialon::useOnlyHosts([$this->hostId])->resource_update_notification(
+            json_encode($params)
+        );
+
+        $this->shipment->wialonNotifications()->create([
+            'id' => $wCreate[$this->hostId][0],
+            'w_conn_id' => $this->hostId,
+            'name' => $wCreate[$this->hostId][1]->n,
+            'action_type' => WialonNotification::ACTION_TEMP_VIOLATION,
+            'object_id' => $this->wObject->w_id,
+        ]);
     }
 
     /**
