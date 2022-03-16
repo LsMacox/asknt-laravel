@@ -101,7 +101,7 @@ class InitWialonNotifications implements ShouldQueue
                 'fl' => 0,
                 'tz' => 3,
                 'la' => 'RU',
-                'un' => [$this->wObject->id],
+                'un' => [$this->wObject->w_id],
                 'sch' => [
                     'f1' => 0,
                     'f2' => 0,
