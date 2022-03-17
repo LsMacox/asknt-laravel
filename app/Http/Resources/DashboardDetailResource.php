@@ -65,7 +65,7 @@ class DashboardDetailResource extends JsonResource
                 optional($actionGeofences->where('is_entrance', false)->first())->created_at,
                 optional($actionGeofences->last())->created_at
             ),
-            'mileage' => optional($actionGeofences)->sum('mileage'),
+            'mileage' => optional($actionGeofences->last())->mileage,
             'curr_temp' => !empty($curr_temp) ? (integer) $curr_temp : '?',
             'avg_temp' => !empty($avg_temp) ? (integer) $avg_temp : '?',
             'weight' => $this->weight,
