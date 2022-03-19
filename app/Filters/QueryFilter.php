@@ -37,11 +37,7 @@ abstract class QueryFilter
             if ($field === 'filter') {
                 foreach ($value as $f => $v) {
                     $method = 'filter'.ucfirst(camel_case($f));
-                    if (is_array($v)) {
-                        foreach ($v as $fv) $this->callMethod($method, $fv);
-                    } else {
-                        $this->callMethod($method, $v);
-                    }
+                    $this->callMethod($method, $v);
                 }
             } else {
                 $method = camel_case($field);
@@ -56,7 +52,7 @@ abstract class QueryFilter
      */
     protected function callMethod ($method, $value) {
         if (method_exists($this, $method)) {
-            call_user_func_array([$this, $method], (array)$value);
+            call_user_func_array([$this, $method], [$value]);
         }
     }
 

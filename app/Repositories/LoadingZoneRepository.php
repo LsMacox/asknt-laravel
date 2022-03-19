@@ -20,7 +20,12 @@ class LoadingZoneRepository extends CoreRepository
         return $this->startConditions()
             ->when($search, function ($query, $search) {
                 return $query
-                    ->where('name', 'ilike', "%$search%");
+                    ->where('name', 'ilike', "%$search%")
+                    ->orWhere('id_sap', 'ilike', "%$search%")
+                    ->orWhere('id_1c', 'ilike', "%$search%")
+                    ->orWhere('lng', 'ilike', "%$search%")
+                    ->orWhere('lat', 'ilike', "%$search%")
+                    ->orWhere('radius', 'ilike', "%$search%");
             });
     }
 

@@ -28,7 +28,9 @@ class ShipmentObserver
         $loadingZone = LoadingZone::where('id_1c', $data['id_1c'])->where('id_sap', $data['id_sap'])->first();
 
         if ($loadingZoneWithoutName) {
-            $loadingZoneWithoutName->update(['id_1c' => $data['id_1c'], 'id_sap' => $data['id_sap']]);
+            $loadingZoneWithoutName->id_1c = $data['id_1c'];
+            $loadingZoneWithoutName->id_sap = $data['id_sap'];
+            $loadingZoneWithoutName->save();
             $shipment->loadingZones()->attach($loadingZoneWithoutName);
         } else {
             if ($loadingZone) {

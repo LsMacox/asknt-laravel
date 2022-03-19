@@ -8,54 +8,54 @@ class ShipmentFilter extends QueryFilter
 {
 
     /**
-     * @param string $str
+     * @param array $arr
      */
-    public function filterCar($str)
+    public function filterCar(array $arr)
     {
-        $this->builder->where('car', $str);
+        $this->builder->whereIn('car', $arr);
     }
 
     /**
-     * @param string $str
+     * @param array $arr
      */
-    public function filterStockName($str)
+    public function filterStockName($arr)
     {
-        $this->builder->where('stock->name', $str);
+        $this->builder->whereIn('stock->name', $arr);
     }
 
     /**
-     * @param string $str
+     * @param array $arr
      */
-    public function filterCarrier($str)
+    public function filterCarrier(array $arr)
     {
-        $this->builder->where('carrier', $str);
+        $this->builder->whereIn('carrier', $arr);
     }
 
     /**
-     * @param string $str
+     * @param array $arr
      */
-    public function filterWeight($str)
+    public function filterWeight(array $arr)
     {
-        $this->builder->where('weight', $str);
+        $this->builder->whereIn('weight', $arr);
     }
 
     /**
-     * @param string $str
+     * @param array $arr
      */
-    public function filterDriver($str)
+    public function filterDriver(array $arr)
     {
-        $this->builder->where('driver', $str);
+        $this->builder->whereIn('driver', $arr);
     }
 
     /**
-     * @param integer $num
+     * @param array $arr
      */
-    public function filterRoute($num)
+    public function filterRoute(array $arr)
     {
-        $this->builder->where('id', $num);
+        $this->builder->whereIn('id', $arr);
     }
 
-    public function filterDateStart () {
+    public function filterDateStart() {
         $this->builder->whereBetween(
             'created_at',
             [

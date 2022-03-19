@@ -122,10 +122,10 @@ abstract class AbstractSoapServerController extends BaseController
 
             // Deal with a thrown exception that was converted into a SoapFault.
             // SoapFault thrown directly in a service class bypasses this code.
-            if ($response instanceof SoapFault && $this->faultResponse) {
+            if ($response instanceof SoapFault && $this->faultResponse && $this->returnResponse) {
                 return $responseFactory->make(self::serverFault($response), 500, $this->getHeaders());
-            } else if ($this->returnResponse) {
-                return $responseFactory->make($response, 200, $this->getHeaders());
+            } else {
+                return $responseFactory->make($this->returnResponse ? $response : '', 200, $this->getHeaders());
             }
 
         } catch (\Exception $e) {

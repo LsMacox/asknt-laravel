@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
         Model::unguard();
 
         $this->call(RolesTableSeeder::class);
-//        $this->call(UsersTableSeeder::class);
+        $this->call(UsersTableSeeder::class);
         $this->call(LoadingZoneSeeder::class);
         \Artisan::call('grab:wialon-resources');
         \Artisan::call('grab:wialon-objects');

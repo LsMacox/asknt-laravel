@@ -44,7 +44,7 @@ class ShipmentFilterRequest extends FormRequest
             'filter.driver.*' => 'string|exists:shipments,driver',
             'filter.weight.*' => 'string|exists:shipments,weight',
             'filter.stock_name.*' => 'string',
-            'filter.route.*' => 'number|exists:shipments,id',
+            'filter.route.*' => 'numeric|exists:shipments,id',
         ];
     }
 

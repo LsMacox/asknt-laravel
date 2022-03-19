@@ -34,15 +34,20 @@ class ReportController extends Controller
             ->orWhere('not_completed', true)
             ->orderBy('created_at')->get();
 
+        $data = [];
+        $shipmentStartDate = null;
+        $shipmentEndDate = null;
+
         if ($shipmentFilter->count() > 0) {
             $shipmentStartDate = $shipmentFilter->first()->created_at;
             $shipmentEndDate = $shipmentFilter->last()->created_at;
         }
 
-        return response()->json(
-            ['start_date' => $shipmentStartDate ?? null, 'end_date' => $shipmentEndDate ?? null],
-            200
-        );
+        if ($shipmentStartDate) {
+            $data = ['start_date' => $shipmentStartDate, 'end_date' => $shipmentEndDate ?? null];
+        }
+
+        return response()->json($data, 200);
     }
 
     /**
@@ -56,8 +61,8 @@ class ReportController extends Controller
             ->orWhere('not_completed', true)
             ->orderBy('created_at');
 
-        $shipmentStartDate = $shipmentFilter->get()->first()->created_at;
-        $shipmentEndDate = $shipmentFilter->get()->last()->created_at;
+        $shipmentStartDate = optional($shipmentFilter->get()->first())->created_at ?? now();
+        $shipmentEndDate = optional($shipmentFilter->get()->last())->created_at ?? now();
 
         return \Excel::download(
             new CompletedRoutesExport($shipmentFilter),
