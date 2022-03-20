@@ -8,7 +8,6 @@ use App\Models\Wialon\WialonNotification;
 
 class ActionWialonGeofence extends BaseModel
 {
-
     const DOOR_OPEN = 'открыта';
     const DOOR_CLOSE = 'закрыта';
 

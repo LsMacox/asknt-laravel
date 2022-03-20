@@ -17,7 +17,7 @@ class CreateActionWialonTempsTable extends Migration
         Schema::create('action_wialon_temps', function (Blueprint $table) {
             $table->id();
             $table->foreignId('wialon_notification_id');
-            $table->string('temp')->nullable();
+            $table->double('temp')->nullable();
             $table->enum('temp_type', ActionWialonTempViolation::ENUM_TEMP);
             $table->timestamps();
         });

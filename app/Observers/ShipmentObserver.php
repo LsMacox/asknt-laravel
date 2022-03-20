@@ -25,7 +25,7 @@ class ShipmentObserver
         ];
 
         $loadingZoneWithoutName = LoadingZone::whereNull(['id_1c', 'id_sap'])->where('name', trim($data['name']))->first();
-        $loadingZone = LoadingZone::where('id_1c', $data['id_1c'])->where('id_sap', $data['id_sap'])->first();
+        $loadingZone = LoadingZone::where('id_1c', $data['id_1c'])->orWhere('id_sap', $data['id_sap'])->first();
 
         if ($loadingZoneWithoutName) {
             $loadingZoneWithoutName->id_1c = $data['id_1c'];

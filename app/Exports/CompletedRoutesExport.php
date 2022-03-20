@@ -7,7 +7,6 @@ use App\Models\LoadingZone;
 use App\Models\ShipmentList\Shipment;
 use App\Models\Wialon\WialonNotification;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -33,16 +32,16 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
         $shipments = $this->shipments->with(['loadingZones' => function ($query) {
             $query->withTrashed();
         }, 'shipmentRetailOutlets' => function ($query) {
-            $query->withTrashed()->with('shipmentOrders');
+            $query->withTrashed()->with(['shipmentOrders', 'actionWialonGeofences']);
         }, 'wialonNotifications' => function ($query) {
             $query->withTrashed();
-        }])->get();
+        }, 'actionGeofences'])->get();
 
         $res = collect();
 
         $shipments->each(function ($shipment) use ($res) {
             $res->add($shipment);
-            $shipment->shipmentRetailOutlets()->withTrashed()->each(function ($retailOutlet) use ($shipment, $res) {
+            $shipment->shipmentRetailOutlets->each(function ($retailOutlet) use ($shipment, $res) {
                 $retailOutlet->shipment = $shipment;
                 $res->add($retailOutlet);
             });
@@ -51,27 +50,25 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
         return $res;
     }
 
-    public function map($data): array
+    public function map($row): array
     {
-        $shipment = $data->shipment ?? $data;
+        $shipment = $row->shipment ?? $row;
 
         $wNotifications = $shipment->wialonNotifications;
 
-        $actionGeofences = $shipment->actionGeofences()
-            ->get()
-            ->sortBy('created_at');
+        $actionGeofences = $shipment->actionGeofences->sortBy('created_at');
 
         $firstGeofence = $actionGeofences->where('is_entrance', true)->first();
         $lastGeofence = $actionGeofences->where('is_entrance', false)->last();
 
-        $loadingType = $shipment->actionGeofences()->where('pointable_type', LoadingZone::getMorphClass())->get();
+        $loadingType = $actionGeofences->where('pointable_type', LoadingZone::getMorphClass());
         $loadingEntranceDate = optional($loadingType->where('is_entrance', true)->first())->created_at;
         $loadingDepartureDate = optional($loadingType->where('is_entrance', false)->first())->created_at;
 
         $lPlanDate = Carbon::parse($shipment->date->format('d.m.Y').' '.$shipment->time->format('H:i'));
         $allWeights = $shipment->shipmentRetailOutlets->pluck('shipmentOrders')->flatten(1)->sum('weight');
 
-        if ($data instanceof Shipment) {
+        if ($row instanceof Shipment) {
             return [
                 $shipment->loadingZones->first()->name ?? '',
                 $shipment->id ?? '',
@@ -133,9 +130,9 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
             ];
         }
 
-        $retailOutletActionGeofences = $data->actionWialonGeofences()->get();
+        $retailOutletActionGeofences = $row->actionWialonGeofences;
 
-        $actDeparture = $data->actionWialonGeofences()->where('is_entrance', false)->first();
+        $actDeparture = $row->actionWialonGeofences()->where('is_entrance', false)->first();
         $pointable = $actDeparture->pointable()->withTrashed()->first();
         $actNextEntrance = $shipment->shipmentRetailOutlets->where('turn',
             $pointable->turn + 1 <= $shipment->shipmentRetailOutlets->count()
@@ -144,7 +141,7 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
         )->first()
             ->actionWialonGeofences()->where('is_entrance', true)->first();
 
-        $actEntranceDate = optional($data->actionWialonGeofences()->where('is_entrance', true)->first())->created_at;
+        $actEntranceDate = optional($row->actionWialonGeofences()->where('is_entrance', true)->first())->created_at;
         $actDepartureDate = optional($actDeparture)->created_at;
 
         $actTemps = $wNotifications->where('action_type', WialonNotification::ACTION_TEMP)
@@ -186,13 +183,13 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
             return $count ? round(100 * ($count / $actTempsCount)) . '%' : null;
         };
 
-        $planDateFrom = Carbon::parse($data->date->format('d.m.Y').' '.$data->arrive_from->format('H:i'));
-        $planDateTo = Carbon::parse($data->date->format('d.m.Y').' '.$data->arrive_to->format('H:i'));
+        $planDateFrom = Carbon::parse($row->date->format('d.m.Y').' '.$row->arrive_from->format('H:i'));
+        $planDateTo = Carbon::parse($row->date->format('d.m.Y').' '.$row->arrive_to->format('H:i'));
 
         return [
             $shipment->loadingZones->first()->name ?? '',
             $shipment->id ?? '',
-            $data->shipmentOrders->pluck('id')->implode(', '),
+            $row->shipmentOrders->pluck('id')->implode(', '),
             '',
             Shipment::markToString($shipment->mark),
             !empty($shipment->car) ? $wNotifications->first()->object_id : '',
@@ -202,13 +199,13 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
             $shipment->weight,
             $shipment->driver,
             $shipment->carrier,
-            $data->turn ?? '',
-            $data->turn ?? '',
-            $data->code ?? '',
+            $row->turn ?? '',
+            $row->turn ?? '',
+            $row->code ?? '',
             '',
-            $data->name ?? '',
-            $data->name ?? '',
-            $data->address ?? '',
+            $row->name ?? '',
+            $row->name ?? '',
+            $row->address ?? '',
             '',
             $shipment->date->format('d.m.Y'),
             $shipment->time->format('H:i'),
@@ -221,7 +218,7 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
             optional($loadingEntranceDate) ? $loadingEntranceDate->between($lPlanDate->subMinutes(5), $lPlanDate->addMinutes(5)) ? 'Вовремя' : 'Опоздал' : '',
             '',
             $planDateFrom->format('d.m.Y'),
-            $data->arrive_from->format('H:i') . '-' . $data->arrive_to->format('H:i'),
+            $row->arrive_from->format('H:i') . '-' . $row->arrive_to->format('H:i'),
             optional($actEntranceDate)->format('d.m.Y') ?? '',
             optional($actEntranceDate)->format('H:i') ?? '',
             optional($actDepartureDate)->format('d.m.Y') ?? '',
@@ -232,8 +229,8 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
             '',
             optional($actDepartureDate)->diffInMinutes($actNextEntrance->created_at) ?? '',
             '',
-            $data->shipmentOrders()->get()->implode('weight', ', '),
-            $data->shipmentOrders()->get()->implode('product', ', '),
+            $row->shipmentOrders()->get()->implode('weight', ', '),
+            $row->shipmentOrders()->get()->implode('product', ', '),
             $shipment->temperature['from'].'-'.$shipment->temperature['to'],
             '',
             $loadingType->where('is_entrance', false)->first()->temp ?? '',
@@ -279,7 +276,7 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
                 'ID прицепа',
                 'Гос. номер ТС',
                 'Гос. номер прицепа',
-                'Грузоподьемность авто',
+                'Грузоподъемность авто',
                 'Водитель',
                 'Наименование ТК',
                 'Плановый порядок посещения точек',

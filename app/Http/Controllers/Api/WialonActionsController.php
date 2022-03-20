@@ -61,7 +61,7 @@ class WialonActionsController
         $notification = WialonNotification::where('name', $request->notification)->firstOrFail();
 
         $notification->actionTemps()->create([
-            'temp' => $data['sensor_temp'],
+            'temp' => (double) $data['sensor_temp'],
             'temp_type' => $data['sensor_temp_type'],
             'created_at' => $data['msg_time'],
         ]);

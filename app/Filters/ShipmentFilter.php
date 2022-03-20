@@ -18,7 +18,7 @@ class ShipmentFilter extends QueryFilter
     /**
      * @param array $arr
      */
-    public function filterStockName($arr)
+    public function filterStockName(array $arr)
     {
         $this->builder->whereIn('stock->name', $arr);
     }
@@ -60,7 +60,7 @@ class ShipmentFilter extends QueryFilter
             'created_at',
             [
                 Carbon::parse($this->fields()['filter']['date_start']),
-                Carbon::parse($this->fields()['filter']['date_end'])
+                Carbon::parse($this->fields()['filter']['date_end'] ?? now())
             ]
         );
     }

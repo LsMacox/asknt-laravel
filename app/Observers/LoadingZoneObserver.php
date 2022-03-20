@@ -21,7 +21,7 @@ class LoadingZoneObserver
             ->orWhere('stock->idsap', $loadingZone->id_sap)
             ->get();
 
-        if ($shipments) {
+        if ($shipments->isNotEmpty()) {
             $loadingZone->shipments()->attach($shipments);
         }
     }

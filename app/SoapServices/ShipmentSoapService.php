@@ -112,35 +112,52 @@ class ShipmentSoapService
             );
         }
 
-        $shipment = Shipment::updateOrCreate(
-            ['id' => $this->waybill['number']],
-            array_merge($this->waybill, ['w_conn_id' => $hostId])
-        );
+        \DB::beginTransaction();
 
-        $statusCreate = \Str::is(Shipment::STATUS_CREATE, $this->waybill['status']);
-        $statusDelete = \Str::is(Shipment::STATUS_DELETE, $this->waybill['status']);
+        try {
+            $shipment = Shipment::updateOrCreate(
+                ['id' => $this->waybill['number']],
+                array_merge($this->waybill, ['w_conn_id' => $hostId])
+            );
 
-        if (!$statusDelete) {
-            foreach ($this->waybill['scores']['score'] as $score) {
-                $score['date'] = $this->rawDateToIso($score['date']);
-                $shipmentRetailOutlet = ShipmentRetailOutlet::updateOrCreate(['code' => $score['score']], array_merge($score, ['w_conn_id' => $hostId]));
+            $statusCreate = \Str::is(Shipment::STATUS_CREATE, $this->waybill['status']);
+            $statusDelete = \Str::is(Shipment::STATUS_DELETE, $this->waybill['status']);
 
-                $shipment->shipmentRetailOutlets()->attach($shipmentRetailOutlet);
+            if (!$statusDelete) {
+                foreach ($this->waybill['scores']['score'] as $score) {
+                    $score['date'] = $this->rawDateToIso($score['date']);
 
-                foreach ($score['orders']['order'] as $order) {
-                    $order['return'] = ShipmentOrders::returnToBoolean($order['return']);
-                    ShipmentOrders::updateOrCreate(['code' => $order['order'], 'shipment_retail_outlet_id' => $shipmentRetailOutlet->id], $order);
+                    $shipmentRetailOutlet = ShipmentRetailOutlet::where('code', $score['score'])->first();
+                    if (!$shipmentRetailOutlet) {
+                        $shipmentRetailOutlet = ShipmentRetailOutlet::create(
+                            array_merge($score, ['code' => $score['score'], 'w_conn_id' => $hostId])
+                        );
+                    }
+
+                    $shipment->shipmentRetailOutlets()->attach($shipmentRetailOutlet);
+
+                    foreach ($score['orders']['order'] as $order) {
+                        $order['return'] = ShipmentOrders::returnToBoolean($order['return']);
+                        ShipmentOrders::updateOrCreate(['code' => $order['order'], 'shipment_retail_outlet_id' => $shipmentRetailOutlet->id], $order);
+                    }
                 }
             }
-        }
+            \DB::commit();
 
-        if ($statusCreate) {
-            Bus::batch([new InitWialon($shipment)])->dispatch();
-        }
+            if ($statusCreate) {
+                Bus::batch([new InitWialon($shipment)])->dispatch();
+            }
 
-        SendShipmentStatus::dispatch(
-            $this->structShipmentStatus([])
-        );
+            SendShipmentStatus::dispatch(
+                $this->structShipmentStatus([])
+            );
+        } catch (\Exception $e) {
+            \DB::rollback();
+
+            SendShipmentStatus::dispatch(
+                $this->structShipmentStatus([new message('0', $e->getMessage())], true)
+            );
+        }
     }
 
     /**
