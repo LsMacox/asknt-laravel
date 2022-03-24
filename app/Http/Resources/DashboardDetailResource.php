@@ -68,6 +68,8 @@ class DashboardDetailResource extends JsonResource
             'mileage' => optional($actionGeofences->last())->mileage,
             'curr_temp' => !empty($curr_temp) ? (integer) $curr_temp : '?',
             'avg_temp' => !empty($avg_temp) ? (integer) $avg_temp : '?',
+            'points_total' => $this->shipmentRetailOutlets->count() + 1,
+            'points_completed' => $actionGeofences->where('is_entrance', true)->count(),
             'weight' => $this->weight,
         ];
     }

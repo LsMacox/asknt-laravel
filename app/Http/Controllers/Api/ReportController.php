@@ -52,6 +52,8 @@ class ReportController extends Controller
         $shipmentStartDate = optional($shipmentFilter->get()->first())->created_at ?? now();
         $shipmentEndDate = optional($shipmentFilter->get()->last())->created_at ?? now();
 
+        ob_end_clean();
+        ob_start();
         return \Excel::download(
             new CompletedRoutesExport($shipmentFilter),
             'asknt-report_'.$shipmentStartDate->format('d.m.Y').'-'.$shipmentEndDate->format('d.m.Y').'.xls'

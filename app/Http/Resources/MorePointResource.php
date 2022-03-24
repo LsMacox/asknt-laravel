@@ -57,10 +57,10 @@ class MorePointResource extends JsonResource
             $actionGeofenceDoorOpen && $actionGeofenceDoorClose) {
             $doorOpen = $this->getTimeBetween($actionGeofenceDoorOpen->created_at, $actionGeofenceDoorClose->created_at);
 
-            $planStart = $this->shipmentRetailOutlet->planStart;
-            $planFinish = $this->shipmentRetailOutlet->planFinish;
+            $planStart = $this->resource->planStart;
+            $planFinish = $this->resource->planFinish;
 
-            if ($actualStart && $this->shipmentRetailOutlet) {
+            if ($actualStart) {
                 $late = !($actualStart->gt($planStart) && $actualStart->lt($planFinish));
             }
         }

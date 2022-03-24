@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\SoapServices;
 
+use App\Models\LoadingZone;
 use App\Models\ShipmentList\ShipmentOrders;
 use App\Models\ShipmentList\ShipmentRetailOutlet;
 use App\Models\Wialon\WialonObjects;
@@ -145,6 +146,37 @@ class ShipmentSoapService
             \DB::commit();
 
             if ($statusCreate) {
+                $data = [
+                    'name' => $shipment->stock['name'],
+                    'id_1c' => $shipment->stock['id1c'],
+                    'id_sap' => $shipment->stock['idsap'],
+                ];
+
+                $loadingZoneWithoutId = LoadingZone::whereNull(['id_1c', 'id_sap'])->where('name', trim($data['name']))->first();
+                $loadingZone = LoadingZone::when(
+                    !empty($data['id_1c']),
+                    function ($query) use ($data) {
+                        $query->whereNotNull('id_1c')->where('id_1c', $data['id_1c']);
+                    },
+                    function ($query) use ($data) {
+                        $query->whereNotNull('id_sap')->where('id_sap', $data['id_sap']);
+                    }
+                )->first();
+
+                if ($loadingZoneWithoutId) {
+                    $loadingZoneWithoutId->id_1c = $data['id_1c'];
+                    $loadingZoneWithoutId->id_sap = $data['id_sap'];
+                    $loadingZoneWithoutId->save();
+                    $shipment->loadingZones()->attach($loadingZoneWithoutId);
+                } else {
+                    if ($loadingZone) {
+                        $shipment->loadingZones()->syncWithoutDetaching($loadingZone);
+                    } else {
+                        $loadingZone = LoadingZone::create($data);
+                        $shipment->loadingZones()->attach($loadingZone);
+                    }
+                }
+
                 Bus::batch([new InitWialon($shipment)])->dispatch();
             }
 
@@ -240,7 +272,7 @@ class ShipmentSoapService
     }
 
     /**
-     * prepare waybill for save
+     * Prepare waybill for save
      * @param object $waybill
      * @return array
      */
@@ -283,7 +315,7 @@ class ShipmentSoapService
     }
 
     /**
-     * parse raw string date and convert to iso format
+     * Parse raw string date and convert to iso format
      * @param string $date
      * @return string
      */
@@ -293,7 +325,7 @@ class ShipmentSoapService
     }
 
     /**
-     * deep convert of an object into an array
+     * Deep convert of an object into an array
      * @param object|array $data
      * @return object|array
      */

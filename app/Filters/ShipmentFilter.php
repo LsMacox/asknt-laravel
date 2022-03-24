@@ -57,10 +57,10 @@ class ShipmentFilter extends QueryFilter
 
     public function filterDateStart() {
         $this->builder->whereBetween(
-            'created_at',
+            'date',
             [
                 Carbon::parse($this->fields()['filter']['date_start']),
-                Carbon::parse($this->fields()['filter']['date_end'] ?? now())
+                Carbon::parse($this->fields()['filter']['date_end'])
             ]
         );
     }

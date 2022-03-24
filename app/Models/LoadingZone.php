@@ -42,7 +42,7 @@ class LoadingZone extends BaseModel
      */
     public function shipments()
     {
-        return $this->belongsToMany(Shipment::class);
+        return $this->belongsToMany(Shipment::class)->using(LoadingZoneShipment::class);
     }
 
     /**

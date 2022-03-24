@@ -110,7 +110,7 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
                 '',
                 '',
                 '',
-                $lastGeofence->created_at->diffInMinutes($firstGeofence->created_at),
+                $lastGeofence && $firstGeofence ? $lastGeofence->created_at->diffInMinutes($firstGeofence->created_at) : '',
                 $actionGeofences->sum('mileage'),
                 $allWeights,
                 '',
@@ -133,13 +133,15 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
         $retailOutletActionGeofences = $row->actionWialonGeofences;
 
         $actDeparture = $row->actionWialonGeofences()->where('is_entrance', false)->first();
-        $pointable = $actDeparture->pointable()->withTrashed()->first();
-        $actNextEntrance = $shipment->shipmentRetailOutlets->where('turn',
-            $pointable->turn + 1 <= $shipment->shipmentRetailOutlets->count()
-            ? $pointable->turn + 1
-            : $pointable->turn
-        )->first()
-            ->actionWialonGeofences()->where('is_entrance', true)->first();
+        if ($actDeparture) {
+            $pointable = $actDeparture->pointable()->withTrashed()->first();
+            $actNextEntrance = $shipment->shipmentRetailOutlets->where('turn',
+                $pointable->turn + 1 <= $shipment->shipmentRetailOutlets->count()
+                    ? $pointable->turn + 1
+                    : $pointable->turn
+            )->first()
+                ->actionWialonGeofences()->where('is_entrance', true)->first();
+        }
 
         $actEntranceDate = optional($row->actionWialonGeofences()->where('is_entrance', true)->first())->created_at;
         $actDepartureDate = optional($actDeparture)->created_at;
@@ -215,7 +217,7 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
             optional($loadingDepartureDate)->format('H:i') ?? '',
             optional($loadingEntranceDate)->diffInMinutes($loadingDepartureDate) ?? '',
             optional($loadingEntranceDate)->diffInMinutes($lPlanDate) ?? '',
-            optional($loadingEntranceDate) ? $loadingEntranceDate->between($lPlanDate->subMinutes(5), $lPlanDate->addMinutes(5)) ? 'Вовремя' : 'Опоздал' : '',
+            $loadingEntranceDate ? $loadingEntranceDate->between($lPlanDate->subMinutes(5), $lPlanDate->addMinutes(5)) ? 'Вовремя' : 'Опоздал' : '',
             '',
             $planDateFrom->format('d.m.Y'),
             $row->arrive_from->format('H:i') . '-' . $row->arrive_to->format('H:i'),
@@ -225,16 +227,16 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
             optional($actDepartureDate)->format('H:i') ?? '',
             optional($actEntranceDate)->diffInMinutes($actDepartureDate) ?? '',
             optional($actEntranceDate)->diffInMinutes($planDateFrom) ?? '',
-            optional($actEntranceDate) ? $actEntranceDate->between($planDateFrom, $planDateTo) ? 'Вовремя' : 'Опоздал' : '',
+            $actEntranceDate ? $actEntranceDate->between($planDateFrom, $planDateTo) ? 'Вовремя' : 'Опоздал' : '',
             '',
-            optional($actDepartureDate)->diffInMinutes($actNextEntrance->created_at) ?? '',
+            $actDepartureDate && $actNextEntrance ? $actDepartureDate->diffInMinutes($actNextEntrance->created_at) : '',
             '',
             $row->shipmentOrders()->get()->implode('weight', ', '),
             $row->shipmentOrders()->get()->implode('product', ', '),
             $shipment->temperature['from'].'-'.$shipment->temperature['to'],
             '',
             $loadingType->where('is_entrance', false)->first()->temp ?? '',
-            $retailOutletActionGeofences->where('is_entrance', true)->first()->temp,
+            optional($retailOutletActionGeofences->where('is_entrance', true)->first())->temp,
             $avgTemp ?? '',
             $isTempNormal ? 'да' : 'нет',
             '',

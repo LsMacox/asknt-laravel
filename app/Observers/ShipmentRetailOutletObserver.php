@@ -15,7 +15,17 @@ class ShipmentRetailOutletObserver
      */
     public function created(ShipmentRetailOutlet $shipmentRetailOutlet)
     {
-        $this->updateOrCreateRetailOutlet($shipmentRetailOutlet);
+        $data = [
+            'name' => $shipmentRetailOutlet->name,
+            'code' => $shipmentRetailOutlet->code,
+            'address' => $shipmentRetailOutlet->adres,
+            'lng' => $shipmentRetailOutlet->long,
+            'lat' => $shipmentRetailOutlet->lat,
+            'turn' => $shipmentRetailOutlet->turn,
+            'radius' => $shipmentRetailOutlet->radius ?? 100
+        ];
+
+        RetailOutlet::updateOrCreate(['shipment_retail_outlet_id' => $shipmentRetailOutlet->id], $data);
     }
 
     /**
@@ -26,7 +36,7 @@ class ShipmentRetailOutletObserver
      */
     public function updated(ShipmentRetailOutlet $shipmentRetailOutlet)
     {
-        $this->updateOrCreateRetailOutlet($shipmentRetailOutlet);
+        //
     }
 
     /**
@@ -37,7 +47,7 @@ class ShipmentRetailOutletObserver
      */
     public function deleted(ShipmentRetailOutlet $shipmentRetailOutlet)
     {
-        $shipmentRetailOutlet->wialonGeofences()->delete();
+        //
     }
 
     /**
@@ -60,23 +70,6 @@ class ShipmentRetailOutletObserver
     public function forceDeleted(ShipmentRetailOutlet $shipmentRetailOutlet)
     {
         //
-    }
-
-    /**
-     * @param ShipmentRetailOutlet $shipmentRetailOutlet
-     */
-    protected function updateOrCreateRetailOutlet(ShipmentRetailOutlet $shipmentRetailOutlet) {
-        $data = [
-            'name' => $shipmentRetailOutlet->name,
-            'code' => $shipmentRetailOutlet->code,
-            'address' => $shipmentRetailOutlet->adres,
-            'lng' => $shipmentRetailOutlet->long,
-            'lat' => $shipmentRetailOutlet->lat,
-            'turn' => $shipmentRetailOutlet->turn,
-            'radius' => $shipmentRetailOutlet->radius ?? 100
-        ];
-
-        RetailOutlet::updateOrCreate(['shipment_retail_outlet_id' => $shipmentRetailOutlet->id], $data);
     }
 
 }

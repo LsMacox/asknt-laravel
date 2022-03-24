@@ -33,14 +33,6 @@ class RetailOutlet extends BaseModel
     ];
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
-    public function shipment()
-    {
-        return $this->belongsTo(Shipment::class);
-    }
-
-    /**
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */
     public function shipmentRetailOutlet() {

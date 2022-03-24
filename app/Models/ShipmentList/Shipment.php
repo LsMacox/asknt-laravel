@@ -11,6 +11,7 @@ use App\Models\Wialon\Action\ActionWialonGeofence;
 use App\Models\Wialon\WialonGeofence;
 use App\Models\Wialon\WialonNotification;
 use Illuminate\Support\Carbon;
+use App\Models\LoadingZoneShipment;
 use Str;
 
 class Shipment extends BaseModel
@@ -81,7 +82,7 @@ class Shipment extends BaseModel
      */
     public function shipmentRetailOutlets()
     {
-        return $this->belongsToMany(ShipmentRetailOutlet::class);
+        return $this->belongsToMany(ShipmentRetailOutlet::class)->using(ShipmentShipmentRetailOutlet::class);
     }
 
     /**
@@ -89,7 +90,7 @@ class Shipment extends BaseModel
      */
     public function loadingZones()
     {
-        return $this->belongsToMany(LoadingZone::class);
+        return $this->belongsToMany(LoadingZone::class)->using(LoadingZoneShipment::class);
     }
 
     /**
@@ -98,14 +99,6 @@ class Shipment extends BaseModel
     public function violations()
     {
         return $this->hasMany(Violation::class);
-    }
-
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function retailOutlets()
-    {
-        return $this->hasMany(RetailOutlet::class);
     }
 
     /**
@@ -130,6 +123,23 @@ class Shipment extends BaseModel
     public function actionGeofences()
     {
         return $this->hasMany(ActionWialonGeofence::class);
+    }
+
+    /**
+     * @param $query
+     * @param array $idTypes
+     * @return mixed
+     */
+    public function scopeOfStockId($query, array $idTypes = []) {
+        return $query->when(
+            isset($idTypes['id_1c']) && !empty($idTypes['id_1c']),
+            function ($query) use ($idTypes) {
+                $query->whereNotNull('stock->id_1c')->where('stock->id_1c', $idTypes['id_1c']);
+            },
+            function ($query) use ($idTypes) {
+                $query->whereNotNull('stock->id_sap')->where('stock->id_sap', $idTypes['id_sap']);
+            }
+        );
     }
 
     /**

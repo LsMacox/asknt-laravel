@@ -8,6 +8,7 @@ use App\Jobs\CompleteShipment\SaveWlnForShipment;
 use App\Jobs\CompleteShipment\SaveWlpForShipment;
 use App\Models\ShipmentList\Shipment;
 use App\Models\Wialon\WialonNotification;
+use App\Models\Wialon\WialonResources;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Bus\Batchable;
@@ -44,19 +45,17 @@ class CompletionShipments implements ShouldQueue
 
         $shipments->each(function ($shipment) {
             if (now()->diffInDays($shipment->lastArriveDate) > 1) {
-                $notification = $shipment->wialonNotifications()->where('action_type', WialonNotification::ACTION_GEOFENCE)->first();
-                $actionGeofences = $notification->actionGeofences()->orderBy('created_at')->get();
+                $wNotification = $shipment->wialonNotifications()->where('action_type', WialonNotification::ACTION_GEOFENCE)->first();
+                $actionGeofences = $wNotification->actionGeofences()->orderBy('created_at')->get();
 
-                $resource = \WialonResource::useOnlyHosts($shipment->w_conn_id)
-                    ->firstResource()
-                    ->first();
+                $wResource = WialonResources::where('w_conn_id', $shipment->w_conn_id)->first();
 
                 $path = $shipment->date->format('d.m.Y').'/'.$shipment->id.'/';
 
                 $this->batch()->add([
                     new SaveWlnForShipment($shipment, $path),
-                    new SaveKmlForShipment($shipment, $path, $resource),
-                    new GenReportsForShipment($shipment, $path, $notification, $resource, $actionGeofences),
+                    new SaveKmlForShipment($shipment, $path, $wResource),
+                    new GenReportsForShipment($shipment, $path, $wNotification, $wResource, $actionGeofences),
 //                    new SaveWlpForShipment($shipment, $path)
                 ]);
 

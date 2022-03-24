@@ -2,28 +2,25 @@
 
 namespace App\Jobs;
 
-use App\Jobs\InitWialon\InitWialonGeofences;
-use App\Jobs\InitWialon\InitWialonNotifications;
+use App\Jobs\InitWialonNotifications;
 use App\Models\ShipmentList\Shipment;
-use App\Models\Wialon\WialonNotification;
 use App\Models\Wialon\WialonObjects;
 use App\Models\Wialon\WialonResources;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Bus\Batchable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class InitWialon implements ShouldQueue, ShouldBeUnique
+class InitWialon implements ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
      * @var Shipment $shipment
      */
-    protected $shipment;
+    protected Shipment $shipment;
 
     /**
      * Create a new job instance.
@@ -46,19 +43,17 @@ class InitWialon implements ShouldQueue, ShouldBeUnique
             return;
         }
 
-        $shipment = $this->shipment;
-        $retailOutlets = $shipment->shipmentRetailOutlets()
+        $retailOutlets = $this->shipment->shipmentRetailOutlets()
             ->whereNotNull(['long', 'lat'])
             ->get();
 
-        $wResource = WialonResources::where('w_conn_id', $shipment->w_conn_id)->first();
+        $wResource = WialonResources::where('w_conn_id', $this->shipment->w_conn_id)->first();
 
-        $wObject = WialonObjects::where('registration_plate', \WialonResource::prepareRegPlate($shipment->car))
-            ->orWhere('registration_plate', \WialonResource::prepareRegPlate($shipment->trailer))->first();
+        $wObject = WialonObjects::where('registration_plate', \WialonResource::prepareRegPlate($this->shipment->car))
+            ->orWhere('registration_plate', \WialonResource::prepareRegPlate($this->shipment->trailer))->first();
 
         $this->batch()->add([
-            new InitWialonGeofences($shipment->w_conn_id, $retailOutlets, $wResource, $shipment),
-            new InitWialonNotifications($shipment->w_conn_id, $retailOutlets, $wResource, $shipment, $wObject)
+            new InitWialonNotifications($this->shipment->w_conn_id, $retailOutlets, $wResource, $this->shipment, $wObject)
         ]);
     }
 

@@ -1,17 +1,15 @@
 <?php
 
-namespace App\Jobs\InitWialon;
+namespace App\Jobs;
 
 use App\Models\ShipmentList\Shipment;
 use App\Models\Wialon\WialonNotification;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Bus\Batchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Collection;
 
 class InitWialonNotifications implements ShouldQueue
 {
@@ -29,38 +27,38 @@ class InitWialonNotifications implements ShouldQueue
     protected $hostId;
 
     /**
-     * @var Collection $retailOutlets
+     * @var $retailOutlets
      */
     protected $retailOutlets;
 
     /**
-     * @var object $resource
+     * @var object $wResource
      */
-    protected $resource;
+    protected object $wResource;
 
     /**
      * @var Shipment $shipment
      */
-    protected $shipment;
+    protected Shipment $shipment;
 
     /**
      * @var object $wObject
      */
-    protected $wObject;
+    protected object $wObject;
 
     /**
      * Create a new job instance.
-     * @param string|number $hostId
-     * @param Collection $retailOutlets
-     * @param object $resource
+     * @param string|int $hostId
+     * @param $retailOutlets
+     * @param object $wResource
      * @param Shipment $shipment
      * @param object $wObject
      */
-    public function __construct($hostId, Collection $retailOutlets, object $resource, Shipment $shipment, object $wObject)
+    public function __construct($hostId, $retailOutlets, object $wResource, Shipment $shipment, object $wObject)
     {
         $this->hostId = $hostId;
         $this->retailOutlets = $retailOutlets;
-        $this->resource = $resource;
+        $this->wResource = $wResource;
         $this->shipment = $shipment;
         $this->wObject = $wObject;
     }
@@ -83,7 +81,7 @@ class InitWialonNotifications implements ShouldQueue
 
         foreach (self::WIALON_NOTIFICATION_NAMES as $name) {
             $params = [
-                'itemId' => $this->resource->w_id,
+                'itemId' => $this->wResource->w_id,
                 'id' => 0,
                 'callMode' => 'create',
                 'e' => 1,
@@ -137,7 +135,7 @@ class InitWialonNotifications implements ShouldQueue
 
     protected function createWialonTempViolationNotification() {
         $params = [
-            'itemId' => $this->resource->w_id,
+            'itemId' => $this->wResource->w_id,
             'id' => 0,
             'callMode' => 'create',
             'e' => 1,
@@ -285,7 +283,6 @@ class InitWialonNotifications implements ShouldQueue
                     'trg' => [
                         't' => 'sensor_value',
                         'p' => [
-//                            'lower_bound' => 1,
                             'merge' => 0,
                             'prev_msg_diff' => 0,
                             'sensor_name_mask' => '*Средняя темп*',

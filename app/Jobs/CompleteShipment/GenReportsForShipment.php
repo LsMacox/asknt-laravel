@@ -4,14 +4,13 @@ namespace App\Jobs\CompleteShipment;
 
 use App\Models\ShipmentList\Shipment;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Bus\Batchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class GenReportsForShipment implements ShouldQueue, ShouldBeUnique
+class GenReportsForShipment implements ShouldQueue
 {
     use Batchable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 

@@ -61,7 +61,7 @@ class WialonActionsController
         $notification = WialonNotification::where('name', $request->notification)->firstOrFail();
 
         $notification->actionTemps()->create([
-            'temp' => (double) $data['sensor_temp'],
+            'temp' => $data['sensor_temp'],
             'temp_type' => $data['sensor_temp_type'],
             'created_at' => $data['msg_time'],
         ]);
@@ -178,7 +178,7 @@ class WialonActionsController
 
             $data['sensor_temp_type'] = ActionWialonTempViolation::getTempType($data['sensor_temp']);
 
-            $data['sensor_temp'] = (string) $data['sensor_temp']
+            $data['sensor_temp'] = (double) (string) $data['sensor_temp']
                 ->replaceMatches('/('.implode('|',ActionWialonTempViolation::ENUM_TEMP).')/', '')
                 ->trim();
         }
@@ -188,7 +188,7 @@ class WialonActionsController
         }
 
         if ($request->has('mileage')) {
-            $data['mileage'] = (string) \Str::of($data['mileage'])
+            $data['mileage'] = (integer) (string) \Str::of($data['mileage'])
                 ->replaceMatches('/(км|km)/', '')
                 ->trim();
         }
