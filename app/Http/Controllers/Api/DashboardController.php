@@ -67,7 +67,7 @@ class DashboardController extends Controller
                 'loadingZones.shipments',
                 'loadingZones.actionWialonGeofences',
                 'shipmentRetailOutlets.shipmentOrders',
-                'shipmentRetailOutlets.retailOutlet.actionWialonGeofences',
+                'shipmentRetailOutlets.actionWialonGeofences',
                 'shipmentRetailOutlets.shipments',
                 'wialonNotifications.actionGeofences',
                 'wialonNotifications.actionTemps'
