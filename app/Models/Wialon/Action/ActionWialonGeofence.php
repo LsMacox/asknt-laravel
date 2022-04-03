@@ -45,14 +45,6 @@ class ActionWialonGeofence extends BaseModel
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function shipment()
-    {
-        return $this->belongsTo(Shipment::class);
-    }
-
-    /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
-     */
     public function wialonNotification()
     {
         return $this->belongsTo(WialonNotification::class);

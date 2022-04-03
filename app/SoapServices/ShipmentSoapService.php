@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\SoapServices;
 
+use App\Jobs\CreateWialonNotificationsForShipment;
 use App\Models\LoadingZone;
-use App\Models\ShipmentList\ShipmentOrders;
+use App\Models\ShipmentList\ShipmentOrder;
 use App\Models\ShipmentList\ShipmentRetailOutlet;
 use App\Models\Wialon\WialonObjects;
+use App\Models\Wialon\WialonResources;
 use App\SoapServices\Struct\ShipmentStatus\DT_Shipment_ERP_resp;
 use App\SoapServices\Struct\ShipmentStatus\message;
 use App\SoapServices\Struct\ShipmentStatus\messages;
@@ -20,7 +22,6 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
 use App\Models\ShipmentList\Shipment;
 use App\Jobs\SendShipmentStatus;
-use App\Jobs\InitWialon;
 
 
 /**
@@ -125,6 +126,7 @@ class ShipmentSoapService
             $statusDelete = \Str::is(Shipment::STATUS_DELETE, $this->waybill['status']);
 
             if (!$statusDelete) {
+                $this->createLoadingZone($shipment);
                 foreach ($this->waybill['scores']['score'] as $score) {
                     $score['date'] = $this->rawDateToIso($score['date']);
 
@@ -138,46 +140,32 @@ class ShipmentSoapService
                     $shipment->shipmentRetailOutlets()->attach($shipmentRetailOutlet);
 
                     foreach ($score['orders']['order'] as $order) {
-                        $order['return'] = ShipmentOrders::returnToBoolean($order['return']);
-                        ShipmentOrders::updateOrCreate(['code' => $order['order'], 'shipment_retail_outlet_id' => $shipmentRetailOutlet->id], $order);
+                        $order['return'] = ShipmentOrder::returnToBoolean($order['return']);
+
+                        $shipmentOrder = ShipmentOrder::where('code', $order['order'])->first();
+                        if (!$shipmentOrder) {
+                            $shipmentOrder = ShipmentOrder::create(
+                                array_merge($order, ['code' => $order['order']])
+                            );
+                        }
+
+                        $shipmentRetailOutlet->shipmentOrders()->attach($shipmentOrder);
                     }
                 }
             }
             \DB::commit();
 
             if ($statusCreate) {
-                $data = [
-                    'name' => $shipment->stock['name'],
-                    'id_1c' => $shipment->stock['id1c'],
-                    'id_sap' => $shipment->stock['idsap'],
-                ];
+                $retailOutlets = $shipment->shipmentRetailOutlets()
+                    ->whereNotNull(['long', 'lat'])
+                    ->get();
 
-                $loadingZoneWithoutId = LoadingZone::whereNull(['id_1c', 'id_sap'])->where('name', trim($data['name']))->first();
-                $loadingZone = LoadingZone::when(
-                    !empty($data['id_1c']),
-                    function ($query) use ($data) {
-                        $query->whereNotNull('id_1c')->where('id_1c', $data['id_1c']);
-                    },
-                    function ($query) use ($data) {
-                        $query->whereNotNull('id_sap')->where('id_sap', $data['id_sap']);
-                    }
-                )->first();
+                $wResource = WialonResources::where('w_conn_id', $shipment->w_conn_id)->first();
 
-                if ($loadingZoneWithoutId) {
-                    $loadingZoneWithoutId->id_1c = $data['id_1c'];
-                    $loadingZoneWithoutId->id_sap = $data['id_sap'];
-                    $loadingZoneWithoutId->save();
-                    $shipment->loadingZones()->attach($loadingZoneWithoutId);
-                } else {
-                    if ($loadingZone) {
-                        $shipment->loadingZones()->syncWithoutDetaching($loadingZone);
-                    } else {
-                        $loadingZone = LoadingZone::create($data);
-                        $shipment->loadingZones()->attach($loadingZone);
-                    }
-                }
+                $wObject = WialonObjects::where('registration_plate', \WialonResource::prepareRegPlate($shipment->car))
+                    ->orWhere('registration_plate', \WialonResource::prepareRegPlate($shipment->trailer))->first();
 
-                Bus::batch([new InitWialon($shipment)])->dispatch();
+                CreateWialonNotificationsForShipment::dispatch($hostId, $retailOutlets, $wResource, $shipment, $wObject);
             }
 
             SendShipmentStatus::dispatch(
@@ -189,6 +177,44 @@ class ShipmentSoapService
             SendShipmentStatus::dispatch(
                 $this->structShipmentStatus([new message('0', $e->getMessage())], true)
             );
+        }
+    }
+
+    /**
+     * Creates a loading zone from the stock field
+     * @param Shipment $shipment
+     * @return void
+     */
+    protected function createLoadingZone(Shipment $shipment) {
+        $data = [
+            'name' => $shipment->stock['name'],
+            'id_1c' => $shipment->stock['id1c'],
+            'id_sap' => $shipment->stock['idsap'],
+        ];
+
+        $loadingZoneWithoutId = LoadingZone::whereNull(['id_1c', 'id_sap'])->where('name', trim($data['name']))->first();
+        $loadingZone = LoadingZone::when(
+            !empty($data['id_1c']),
+            function ($query) use ($data) {
+                $query->whereNotNull('id_1c')->where('id_1c', $data['id_1c']);
+            },
+            function ($query) use ($data) {
+                $query->whereNotNull('id_sap')->where('id_sap', $data['id_sap']);
+            }
+        )->first();
+
+        if ($loadingZoneWithoutId) {
+            $loadingZoneWithoutId->id_1c = $data['id_1c'];
+            $loadingZoneWithoutId->id_sap = $data['id_sap'];
+            $loadingZoneWithoutId->save();
+            $shipment->loadingZones()->attach($loadingZoneWithoutId);
+        } else {
+            if ($loadingZone) {
+                $shipment->loadingZones()->syncWithoutDetaching($loadingZone);
+            } else {
+                $loadingZone = LoadingZone::create($data);
+                $shipment->loadingZones()->attach($loadingZone);
+            }
         }
     }
 
@@ -250,7 +276,7 @@ class ShipmentSoapService
             'scores.score.*.orders.order.*.order' => $orderId,
             'scores.score.*.orders.order.*.product' => 'required|string|max:255',
             'scores.score.*.orders.order.*.weight' => 'required|regex:/^\s*\d+(\.\d+)?\s*$/',
-            'scores.score.*.orders.order.*.return' => ['required', 'string', Rule::in(ShipmentOrders::ENUM_RETURN)],
+            'scores.score.*.orders.order.*.return' => ['required', 'string', Rule::in(ShipmentOrder::ENUM_RETURN)],
         ]);
     }
 

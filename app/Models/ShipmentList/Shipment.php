@@ -5,14 +5,12 @@ namespace App\Models\ShipmentList;
 use App\Filters\Filterable;
 use App\Models\BaseModel;
 use App\Models\LoadingZone;
-use App\Models\RetailOutlet;
 use App\Models\Violation;
 use App\Models\Wialon\Action\ActionWialonGeofence;
 use App\Models\Wialon\WialonGeofence;
 use App\Models\Wialon\WialonNotification;
 use Illuminate\Support\Carbon;
 use App\Models\LoadingZoneShipment;
-use Str;
 
 class Shipment extends BaseModel
 {
@@ -118,14 +116,6 @@ class Shipment extends BaseModel
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
-    public function actionGeofences()
-    {
-        return $this->hasMany(ActionWialonGeofence::class);
-    }
-
-    /**
      * @param $query
      * @param array $idTypes
      * @return mixed
@@ -146,20 +136,20 @@ class Shipment extends BaseModel
      * @param ENUM_MARK_STR $mark
      */
     public static function markToBoolean (string $mark) {
-        return Str::is(self::MARK_OWN, $mark);
+        return \Str::is(self::MARK_OWN, $mark);
     }
 
     /**
      * @param ENUM_MARK_STR $mark
      */
     public static function markToString (string $mark) {
-        return Str::is(self::MARK_OWN, $mark) ? self::MARK_OWN_STR : self::MARK_HIRED_STR;
+        return \Str::is(self::MARK_OWN, $mark) ? self::MARK_OWN_STR : self::MARK_HIRED_STR;
     }
 
     public function getLastArriveDateAttribute ($value) {
         return Carbon::parse(
             $this->date->format('d.m.Y').' '.
-            $this->shipmentRetailOutlets()->get()->last()->arrive_to
+            $this->time->format('H:i')
         );
     }
 

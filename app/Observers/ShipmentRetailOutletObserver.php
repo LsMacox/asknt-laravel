@@ -27,49 +27,4 @@ class ShipmentRetailOutletObserver
 
         RetailOutlet::updateOrCreate(['shipment_retail_outlet_id' => $shipmentRetailOutlet->id], $data);
     }
-
-    /**
-     * Handle the Shipment "updated" event.
-     *
-     * @param  \App\Models\ShipmentList\ShipmentRetailOutlet  $shipmentRetailOutlet
-     * @return void
-     */
-    public function updated(ShipmentRetailOutlet $shipmentRetailOutlet)
-    {
-        //
-    }
-
-    /**
-     * Handle the Shipment "deleted" event.
-     *
-     * @param  \App\Models\ShipmentList\ShipmentRetailOutlet  $shipmentRetailOutlet
-     * @return void
-     */
-    public function deleted(ShipmentRetailOutlet $shipmentRetailOutlet)
-    {
-        //
-    }
-
-    /**
-     * Handle the Shipment "restored" event.
-     *
-     * @param  \App\Models\ShipmentList\ShipmentRetailOutlet  $shipmentRetailOutlet
-     * @return void
-     */
-    public function restored(ShipmentRetailOutlet $shipmentRetailOutlet)
-    {
-        //
-    }
-
-    /**
-     * Handle the Shipment "force deleted" event.
-     *
-     * @param  \App\Models\ShipmentList\ShipmentRetailOutlet  $shipmentRetailOutlet
-     * @return void
-     */
-    public function forceDeleted(ShipmentRetailOutlet $shipmentRetailOutlet)
-    {
-        //
-    }
-
 }

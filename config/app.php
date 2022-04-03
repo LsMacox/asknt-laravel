@@ -237,6 +237,7 @@ return [
         'Adldap' => Adldap\Laravel\Facades\Adldap::class,
         'Wialon' => \App\Facades\Wialon::class,
         'WialonResource' => \App\Facades\WialonResource::class,
+        'ShipmentDataService' => \App\Facades\ShipmentDataService::class,
         'Excel' => Maatwebsite\Excel\Facades\Excel::class,
     ],
 

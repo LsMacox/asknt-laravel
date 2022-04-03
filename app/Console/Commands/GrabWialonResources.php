@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Wialon\WialonObjects;
 use App\Models\Wialon\WialonResources;
 use Illuminate\Console\Command;
 

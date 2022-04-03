@@ -19,6 +19,7 @@ class CreateViolationsTable extends Migration
             $table->foreign('shipment_id')->references('id')->on('shipments')->onDelete('cascade');
             $table->string('name');
             $table->string('text');
+            $table->boolean('read')->default(false);
             $table->boolean('repaid')->default(false);
             $table->text('repaid_description')->nullable();
             $table->timestamps();

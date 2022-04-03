@@ -43,9 +43,17 @@ class DashboardController extends Controller
             Shipment::filter($filter)
                 ->where('completed', false)
                 ->where('not_completed', false)
-            ->with(['shipmentRetailOutlets', 'loadingZones', 'violations' => function ($query) {
-                $query->where('repaid', false);
-            }, 'wialonNotifications.actionGeofences'])
+            ->with([
+                'shipmentRetailOutlets',
+                'loadingZones',
+                'violations' => function ($query) {
+                    $query
+                        ->where('read', false)
+                        ->where('repaid', false);
+                },
+                'wialonNotifications.actionGeofences',
+                'wialonNotifications.actionTemps'
+            ])
         );
         $items = DashboardMainResource::collection($items);
 
@@ -68,6 +76,7 @@ class DashboardController extends Controller
                 'loadingZones.actionWialonGeofences',
                 'shipmentRetailOutlets.shipmentOrders',
                 'shipmentRetailOutlets.actionWialonGeofences',
+                'shipmentRetailOutlets.retailOutlet.actionWialonGeofences',
                 'shipmentRetailOutlets.shipments',
                 'wialonNotifications.actionGeofences',
                 'wialonNotifications.actionTemps'

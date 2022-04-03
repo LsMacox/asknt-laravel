@@ -66,5 +66,4 @@ class WialonNotification extends BaseModel
         return $this->hasMany(ActionWialonTemp::class);
     }
 
-
 }

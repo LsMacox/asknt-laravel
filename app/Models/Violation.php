@@ -15,6 +15,7 @@ class Violation extends BaseModel
         'name',
         'shipment_id',
         'text',
+        'read',
         'repaid',
         'created_at',
         'repaid_description',

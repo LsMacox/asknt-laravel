@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources;
 
-use App\Models\Wialon\Action\ActionWialonGeofence;
+use App\Facades\ShipmentDataService;
 use App\Models\Wialon\WialonNotification;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Carbon;
@@ -18,25 +18,23 @@ class DashboardDetailResource extends JsonResource
      */
     public function toArray($request)
     {
-        $actionGeofences = $this->wialonNotifications->where('action_type', WialonNotification::ACTION_GEOFENCE)
-                                                    ->map(function ($n) {
-                                                        return $n->actionGeofences;
-                                                    })
-                                                    ->flatten(1)
-                                                    ->sortBy('created_at');
-
-        $notificationTemps = $this->wialonNotifications->where('action_type', WialonNotification::ACTION_TEMP)->first();
+        $actGeofences = ShipmentDataService::wialonNotificationAction(
+            $this->wialonNotifications,
+            WialonNotification::ACTION_GEOFENCE,
+            true
+        );
+        $actTemps = ShipmentDataService::wialonNotificationAction(
+            $this->wialonNotifications,
+            WialonNotification::ACTION_TEMP,
+            true
+        );
 
         $temps = null;
         $curr_temp = null;
         $avg_temp = null;
 
-        if ($notificationTemps) {
-            $actionsTemps = $notificationTemps
-                            ->actionTemps
-                            ->sortBy('created_at');
-
-            $temps = $actionsTemps->groupBy(function ($date) {
+        if ($actTemps) {
+            $temps = $actTemps->groupBy(function ($date) {
                 return Carbon::parse($date->created_at)->format('Y.m.d');
             })->map(function ($group) {
                 return $group->mapWithKeys(function ($at) {
@@ -45,9 +43,18 @@ class DashboardDetailResource extends JsonResource
                 });
             })->sort();
 
-            $curr_temp = optional($actionsTemps->last())->temp;
-            $avg_temp = $actionsTemps->avg('temp');
+            $curr_temp = optional($actTemps->last())->temp;
+            $avg_temp = $actTemps->avg('temp');
         }
+
+        $loadingZone = $this->loadingZones->first();
+        $retailOutlets = $this->shipmentRetailOutlets->sortBy('turn');
+
+        $loadingZone->actGeofences = $actGeofences;
+        $retailOutlets = $retailOutlets->map(function ($retailOutlet) use ($actGeofences) {
+            $retailOutlet->actGeofences = $actGeofences;
+            return $retailOutlet;
+        });
 
         return [
             'id' => $this->id,
@@ -56,20 +63,20 @@ class DashboardDetailResource extends JsonResource
             'trailer' => $this->trailer,
             'driver' => $this->driver,
             'phone' => $this->phone,
-            'loading_zone' => new MorePointResource($this->loadingZones->first()),
-            'retail_outlets' => MorePointResource::collection($this->shipmentRetailOutlets->sortBy('turn')),
+            'loading_zone' => new MorePointResource($loadingZone),
+            'retail_outlets' => MorePointResource::collection($retailOutlets),
             'stock' => $this->stock,
             'temps' => $temps,
             'temperature' => $this->temperature,
             'duration' => MorePointResource::getTimeBetween(
-                optional($actionGeofences->where('is_entrance', false)->first())->created_at,
-                optional($actionGeofences->last())->created_at
+                $actGeofences ? optional($actGeofences->last())->created_at : '',
+                $actGeofences ? optional($actGeofences->first())->created_at : ''
             ),
-            'mileage' => optional($actionGeofences->last())->mileage,
-            'curr_temp' => !empty($curr_temp) ? (integer) $curr_temp : '?',
-            'avg_temp' => !empty($avg_temp) ? (integer) $avg_temp : '?',
+            'mileage' => $actGeofences ? optional($actGeofences->first())->mileage : 0,
+            'curr_temp' => !!$curr_temp ? round($curr_temp, 1) : '?',
+            'avg_temp' => !!$avg_temp ? round($avg_temp, 1) : '?',
             'points_total' => $this->shipmentRetailOutlets->count() + 1,
-            'points_completed' => $actionGeofences->where('is_entrance', true)->count(),
+            'points_completed' => $actGeofences ? $actGeofences->where('is_entrance', true)->count() : '',
             'weight' => $this->weight,
         ];
     }

@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateShipmentOrders extends Migration
+class CreateShipmentRetailOutletShipmentOrderTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,12 +13,8 @@ class CreateShipmentOrders extends Migration
      */
     public function up()
     {
-        Schema::create('shipment_orders', function (Blueprint $table) {
+        Schema::create('shipment_retail_outlet_shipment_order', function (Blueprint $table) {
             $table->id();
-            $table->string('code');
-            $table->string('product');
-            $table->string('weight')->nullable();
-            $table->boolean('return');
             $table->timestamps();
         });
     }
@@ -30,6 +26,6 @@ class CreateShipmentOrders extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('shipment_orders');
+        Schema::dropIfExists('shipment_retail_outlet_shipment_order');
     }
 }

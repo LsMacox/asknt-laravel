@@ -40,6 +40,7 @@ Route::middleware('auth:sanctum')->namespace('Api')->group(function () {
     /* ViolationController */
     Route::get('violation/list/{shipment_id}', 'ViolationController@listViolationByShipment');
     Route::post('violation/repaid', 'ViolationController@repaidViolation');
+    Route::post('violation/read', 'ViolationController@readViolation');
     /* ShipmentController */
     Route::get('shipment/list', 'ShipmentController@list');
 

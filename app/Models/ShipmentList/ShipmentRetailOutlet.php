@@ -55,10 +55,10 @@ class ShipmentRetailOutlet extends BaseModel
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
     public function shipmentOrders() {
-        return $this->hasMany(ShipmentOrders::class);
+        return $this->belongsToMany(ShipmentOrder::class);
     }
 
     /**

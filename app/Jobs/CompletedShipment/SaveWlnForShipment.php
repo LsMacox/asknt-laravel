@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs\CompleteShipment;
+namespace App\Jobs\CompletedShipment;
 
 use App\Models\ShipmentList\Shipment;
 use Illuminate\Bus\Queueable;

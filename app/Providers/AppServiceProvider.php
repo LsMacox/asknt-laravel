@@ -45,7 +45,5 @@ class AppServiceProvider extends ServiceProvider
         RetailOutlet::observe(RetailOutletObserver::class);
         ShipmentShipmentRetailOutlet::observe(ShipmentShipmentRetailOutletObserver::class);
         LoadingZoneShipment::observe(LoadingZoneShipmentObserver::class);
-        WialonGeofence::observe(WialonGeofenceObserver::class);
-        WialonNotification::observe(WialonNotificationObserver::class);
     }
 }

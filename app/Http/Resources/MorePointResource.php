@@ -3,12 +3,9 @@
 namespace App\Http\Resources;
 
 use App\Models\LoadingZone;
-use App\Models\RetailOutlet;
 use App\Models\ShipmentList\ShipmentRetailOutlet;
 use App\Models\Wialon\Action\ActionWialonGeofence;
-use App\Models\Wialon\WialonNotification;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Carbon;
 
 class MorePointResource extends JsonResource
 {
@@ -21,47 +18,30 @@ class MorePointResource extends JsonResource
      */
     public function toArray($request)
     {
-        $shipment = $this->shipment ?? $this->shipments->first();
-
-        $actionGeofenceEntrance = $this->actionWialonGeofences->where('is_entrance', true)->first();
-        $actionGeofenceDeparture = $this->actionWialonGeofences->where('is_entrance', false)->first();
-
-        $retailOutletTurn = $this->turn;
-        $actionGeofenceDoorOpen = $shipment->actionGeofences()
-            ->where('door', ActionWialonGeofence::DOOR_OPEN)
-            ->when($retailOutletTurn, function ($query, $turn) {
-                $query->whereHasMorph('pointable', [RetailOutlet::class], function ($subQuery) use ($turn) {
-                    $subQuery->where('turn', '>=', $turn);
-                });
-            })->get()->last();
-
-        $actionGeofenceDoorClose = $actionGeofenceEntrance ?? $actionGeofenceDeparture;
-
-        if (!$actionGeofenceDoorOpen) {
-            $actionGeofenceDoorOpen = $shipment->actionGeofences->where('door', ActionWialonGeofence::DOOR_OPEN)->last();
+        $entrance = null;
+        $departure = null;
+        if ($this->actGeofences) {
+            $entrance = $this->actGeofences->where('is_entrance', true)
+                ->where('pointable_type', $this->resource->getMorphClass())
+                ->where('pointable_id', $this->id)->first();
+            $departure = $this->actGeofences->where('is_entrance', false)
+                ->where('pointable_type', $this->resource->getMorphClass())
+                ->where('pointable_id', $this->id)->first();
         }
 
-        $timeOnPoint = '';
-        $doorOpen = '';
-        $actualStart = optional($actionGeofenceEntrance)->created_at;
-        $actualFinish = optional($actionGeofenceDeparture)->created_at;
-        $planStart = null;
-        $planFinish = null;
+        $time_on_point = '';
+        $door_open = $departure ? $departure->door : optional($entrance)->door;
+        $actual_start = optional($entrance)->created_at;
+        $actual_finish = optional($departure)->created_at;
         $late = false;
 
-        if ($actionGeofenceEntrance && $actionGeofenceDeparture) {
-            $timeOnPoint = $this->getTimeBetween($actionGeofenceEntrance->created_at, $actionGeofenceDeparture->created_at);
+        if ($entrance && $departure) {
+            $time_on_point = $this->getTimeBetween($entrance->created_at, $departure->created_at);
         }
 
-        if ($this->resource instanceof ShipmentRetailOutlet &&
-            $actionGeofenceDoorOpen && $actionGeofenceDoorClose) {
-            $doorOpen = $this->getTimeBetween($actionGeofenceDoorOpen->created_at, $actionGeofenceDoorClose->created_at);
-
-            $planStart = $this->resource->planStart;
-            $planFinish = $this->resource->planFinish;
-
-            if ($actualStart) {
-                $late = !($actualStart->gt($planStart) && $actualStart->lt($planFinish));
+        if ($this->resource instanceof ShipmentRetailOutlet) {
+            if ($actual_start) {
+                $late = !($actual_start->gt($this->planStart) && $actual_start->lt($this->planFinish));
             }
         }
 
@@ -74,18 +54,18 @@ class MorePointResource extends JsonResource
             'radius' => $this->radius,
             'shipment_orders' => $this->shipmentOrders,
             'turn' => $this->turn,
-            'temp_from' => optional($actionGeofenceEntrance)->temp,
-            'temp_to' => optional($actionGeofenceDeparture)->temp,
-            'arrive_from_plan' => optional($planStart)->format('H:i'),
-            'arrive_to_plan' => optional($planFinish)->format('H:i'),
-            'arrive_from_actual' => optional($actualStart)->format('H:i'),
-            'arrive_to_actual' => optional($actualFinish)->format('H:i'),
-            'time_on_point' => $timeOnPoint,
-            'passed' => optional($actionGeofenceDeparture)->pointable_type === LoadingZone::getMorphClass()
-                ? !!$actionGeofenceDeparture
-                : !!$actionGeofenceEntrance,
+            'temp_from' => optional($entrance)->temp,
+            'temp_to' => optional($departure)->temp,
+            'arrive_from_plan' => optional($this->planStart)->format('H:i'),
+            'arrive_to_plan' => optional($this->planFinish)->format('H:i'),
+            'arrive_from_actual' => optional($actual_start)->format('H:i'),
+            'arrive_to_actual' => optional($actual_finish)->format('H:i'),
+            'time_on_point' => $time_on_point,
+            'passed' => optional($departure)->pointable_type === LoadingZone::getMorphClass()
+                ? !!$departure
+                : !!$entrance,
             'late' => $late,
-            'door_open' => $doorOpen,
+            'door_open' => !is_null($door_open) ? $door_open === ActionWialonGeofence::DOOR_OPEN : null,
         ];
     }
 
@@ -114,4 +94,5 @@ class MorePointResource extends JsonResource
         }
         return $timeStr;
     }
+
 }

@@ -59,8 +59,8 @@ class ShipmentFilter extends QueryFilter
         $this->builder->whereBetween(
             'date',
             [
-                Carbon::parse($this->fields()['filter']['date_start']),
-                Carbon::parse($this->fields()['filter']['date_end'])
+                Carbon::parse($this->fields()['filter']['date_start'])->startOfDay(),
+                Carbon::parse($this->fields()['filter']['date_end'])->endOfDay()
             ]
         );
     }

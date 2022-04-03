@@ -2,25 +2,13 @@
 
 namespace App\Observers;
 
-use App\Models\LoadingZone;
+use App\Jobs\DeleteWialonGeofence;
+use App\Jobs\DeleteWialonNotification;
 use App\Models\ShipmentList\Shipment;
-use App\Facades\WialonResource;
 
 
 class ShipmentObserver
 {
-
-    /**
-     * Handle the Shipment "created" event.
-     *
-     * @param Shipment $shipment
-     * @return void
-     */
-    public function created(Shipment $shipment)
-    {
-        //
-    }
-
     /**
      * Handle the Shipment "updated" event.
      *
@@ -30,42 +18,17 @@ class ShipmentObserver
     public function updated(Shipment $shipment)
     {
         if ($shipment->completed || $shipment->not_completed) {
-            $shipment->wialonNotifications()->delete();
-            $shipment->wialonGeofences()->delete();
+            $wialonNotifications = $shipment->wialonNotifications()->get();
+
+            foreach ($wialonNotifications as $notification) {
+                DeleteWialonNotification::dispatch($notification)->onQueue('wialon');
+            }
+
+            $wialonGeofences = $shipment->wialonGeofences()->get();
+
+            foreach ($wialonGeofences as $geofence) {
+                DeleteWialonGeofence::dispatch($geofence)->onQueue('wialon');
+            }
         }
     }
-
-    /**
-     * Handle the Shipment "deleted" event.
-     *
-     * @param Shipment $shipment
-     * @return void
-     */
-    public function deleted(Shipment $shipment)
-    {
-        //
-    }
-
-    /**
-     * Handle the Shipment "restored" event.
-     *
-     * @param Shipment $shipment
-     * @return void
-     */
-    public function restored(Shipment $shipment)
-    {
-        //
-    }
-
-    /**
-     * Handle the Shipment "force deleted" event.
-     *
-     * @param Shipment $shipment
-     * @return void
-     */
-    public function forceDeleted(Shipment $shipment)
-    {
-        //
-    }
-
 }

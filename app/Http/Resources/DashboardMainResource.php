@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Facades\ShipmentDataService;
 use App\Models\Wialon\WialonNotification;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -16,26 +17,22 @@ class DashboardMainResource extends JsonResource
      */
     public function toArray($request)
     {
-        $actionGeofences = $this->wialonNotifications->where('action_type', WialonNotification::ACTION_GEOFENCE)
-            ->map(function ($n) {
-                return $n->actionGeofences;
-            })
-            ->flatten(1)
-            ->sortBy('created_at');
-
-        $notificationTemp = $this->wialonNotifications->where('action_type', WialonNotification::ACTION_TEMP)
-            ->first();
+        $actGeofences = ShipmentDataService::wialonNotificationAction(
+            $this->wialonNotifications,
+            WialonNotification::ACTION_GEOFENCE,
+            true
+        );
+        $actTemps = ShipmentDataService::wialonNotificationAction(
+            $this->wialonNotifications,
+            WialonNotification::ACTION_TEMP,
+            true
+        );
 
         $curr_temp = null;
         $is_temp_violation = null;
 
-        if ($notificationTemp && $notificationTemp->actionTemps->isNotEmpty()) {
-            $actionsTemps = $notificationTemp
-                ->actionTemps()
-                ->get()
-                ->sortBy('created_at');
-
-            $curr_temp = optional($actionsTemps->last())->temp;
+        if ($actTemps) {
+            $curr_temp = optional($actTemps->last())->temp;
             $tempFrom = $this->temperature['from'];
             $tempTo = $this->temperature['to'];
             $is_temp_violation = !($curr_temp < $tempTo && $curr_temp > $tempFrom);
@@ -49,10 +46,10 @@ class DashboardMainResource extends JsonResource
             'loading_warehouse' => optional($this->loadingZones->first())->name,
             'violations' => ViolationResource::collection($this->violations),
             'weight' => $this->weight,
-            'curr_temp' => !empty($curr_temp) ? (integer) $curr_temp : '?',
+            'curr_temp' => !!$curr_temp ? round($curr_temp, 1) : '?',
             'is_temp_violation' => $is_temp_violation,
             'points_total' => $this->shipmentRetailOutlets->count() + 1,
-            'points_completed' => $actionGeofences->where('is_entrance', true)->count(),
+            'points_completed' => $actGeofences ? $actGeofences->where('is_entrance', true)->count() : 0,
         ];
     }
 }

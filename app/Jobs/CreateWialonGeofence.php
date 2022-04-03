@@ -3,15 +3,13 @@
 namespace App\Jobs;
 
 use App\Models\ShipmentList\Shipment;
-use App\Models\ShipmentList\ShipmentRetailOutlet;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class WialonGeofence implements ShouldQueue
+class CreateWialonGeofence implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -71,7 +69,7 @@ class WialonGeofence implements ShouldQueue
                 [
                     'x' => $this->zone->long ?? $this->zone->lng,
                     'y' => $this->zone->lat,
-                    'r' => $this->retailOutlet->radius ?? 100
+                    'r' => $this->zone->radius ?? 100
                 ]
             ]
         ];

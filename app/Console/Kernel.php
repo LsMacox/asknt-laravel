@@ -16,6 +16,8 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         \App\Console\Commands\GrabWialonObjects::class,
+        \App\Console\Commands\GrabWialonResources::class,
+        \App\Console\Commands\ClearWialon::class,
     ];
 
     /**
@@ -27,11 +29,11 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule->call(function () {
-            Bus::batch([new CompletionShipments()])->dispatch();
+            CompletionShipments::dispatch();
         })->dailyAt('00:00');
 
-        $schedule->command('grab:wialon-resources')->dailyAt('02:00');
-        $schedule->command('grab:wialon-objects')->dailyAt('02:30');
+        $schedule->command('grab:wialon-objects')->dailyAt('02:00');
+        $schedule->command('grab:wialon-resources')->dailyAt('02:30');
     }
 
     /**

@@ -10,7 +10,7 @@ class WialonResource
     /**
      * @var array $useOnlyHosts
      */
-    private $useOnlyHosts = [];
+    private array $useOnlyHosts = [];
 
     /**
      * @param array|integer|string $hosts

@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 
+use App\Facades\ShipmentDataService;
 use App\Models\LoadingZone;
 use App\Models\ShipmentList\Shipment;
 use App\Models\Wialon\WialonNotification;
@@ -35,7 +36,7 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
             $query->withTrashed()->with(['shipmentOrders', 'actionWialonGeofences']);
         }, 'wialonNotifications' => function ($query) {
             $query->withTrashed();
-        }, 'actionGeofences'])->get();
+        }])->get();
 
         $res = collect();
 
@@ -56,7 +57,11 @@ class CompletedRoutesExport implements WithHeadings, FromCollection, WithStyles,
 
         $wNotifications = $shipment->wialonNotifications;
 
-        $actionGeofences = $shipment->actionGeofences->sortBy('created_at');
+        $actionGeofences = ShipmentDataService::wialonNotificationAction(
+            $wNotifications,
+            WialonNotification::ACTION_GEOFENCE,
+            true
+        );
 
         $firstGeofence = $actionGeofences->where('is_entrance', true)->first();
         $lastGeofence = $actionGeofences->where('is_entrance', false)->last();

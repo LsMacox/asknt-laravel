@@ -5,23 +5,23 @@ namespace App\Models\ShipmentList;
 use App\Models\BaseModel;
 use App\Models\RetailOutlet;
 
-class ShipmentOrders extends BaseModel
+class ShipmentOrder extends BaseModel
 {
     const RETURN_1 = '1';
     const RETURN_2 = '0';
     const ENUM_RETURN = [self::RETURN_1, self::RETURN_2];
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
-    public function shipmentRetailOutlet () {
-        return $this->belongsTo(ShipmentRetailOutlet::class);
+    public function shipmentRetailOutlets() {
+        return $this->belongsToMany(ShipmentRetailOutlet::class);
     }
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function retailOutlet () {
+    public function retailOutlet() {
         return $this->belongsTo(RetailOutlet::class);
     }
 
@@ -34,7 +34,6 @@ class ShipmentOrders extends BaseModel
     protected $fillable = [
         'id',
         'code',
-        'shipment_retail_outlet_id',
         'product',
         'return',
         'weight',

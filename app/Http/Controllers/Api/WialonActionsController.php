@@ -3,12 +3,7 @@
 
 namespace App\Http\Controllers\Api;
 
-
-use App\Jobs\CompleteShipment\GenReportsForShipment;
-use App\Jobs\CompleteShipment\SaveKmlForShipment;
-use App\Jobs\CompleteShipment\SaveWlnForShipment;
 use App\Models\LoadingZone;
-use App\Models\RetailOutlet;
 use App\Models\ShipmentList\Shipment;
 use App\Models\ShipmentList\ShipmentRetailOutlet;
 use App\Models\Wialon\Action\ActionWialonGeofence;
@@ -16,7 +11,7 @@ use App\Models\Wialon\Action\ActionWialonTempViolation;
 use Illuminate\Http\Request;
 use App\Models\Wialon\WialonNotification;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Bus;
+use App\Facades\ShipmentDataService;
 
 class WialonActionsController
 {
@@ -25,7 +20,7 @@ class WialonActionsController
      * @param Request $request
      * @return void
      */
-    public function tempViolation (Request $request) {
+    public function tempViolation(Request $request) {
         \Log::channel('wialon-actions')->debug('tempViolation: '.json_encode($request->all()));
 
         $data = $this->normalizeRequest($request);
@@ -53,7 +48,7 @@ class WialonActionsController
      * @param Request $request
      * @return void
      */
-    public function temp (Request $request) {
+    public function temp(Request $request) {
         \Log::channel('wialon-actions')->debug('temp: '.json_encode($request->all()));
 
         $data = $this->normalizeRequest($request);
@@ -71,7 +66,7 @@ class WialonActionsController
      * @param Request $request
      * @return void
      */
-    public function entranceToGeofence (Request $request) {
+    public function entranceToGeofence(Request $request) {
         \Log::channel('wialon-actions')->debug('entranceToGeofence: '.json_encode($request->all()));
 
         $data = $this->normalizeRequest($request);
@@ -79,11 +74,10 @@ class WialonActionsController
         $notification = WialonNotification::where('name', $request->notification)->firstOrFail();
         $shipment = $notification->shipment()->first();
 
-        $point = $this->getPoint($notification, $shipment);
+        $point = $this->getPoint($notification, $shipment, true);
 
         $actGeofence = $point->actionWialonGeofences()->create([
             'wialon_notification_id' => $notification->id,
-            'shipment_id' => $shipment->id,
             'name' => $data['zone'],
             'temp' => $data['sensor_temp'],
             'temp_type' => $data['sensor_temp_type'],
@@ -95,7 +89,7 @@ class WialonActionsController
             'mileage' => $data['mileage'],
         ]);
 
-
+        // Create a violation if there is a delay from the plan
         if ($point instanceof ShipmentRetailOutlet) {
             $actualFinish = Carbon::parse($actGeofence->created_at);
 
@@ -118,19 +112,18 @@ class WialonActionsController
      * @param Request $request
      * @return void
      */
-    public function departureFromGeofence (Request $request) {
+    public function departureFromGeofence(Request $request) {
         \Log::channel('wialon-actions')->debug('departureFromGeofence: '.json_encode($request->all()));
 
         $data = $this->normalizeRequest($request);
 
-        $notification = WialonNotification::where('name', $request->notification)->firstOrFail();
-        $shipment = $notification->shipment()->first();
+        $wNotification = WialonNotification::where('name', $request->notification)->firstOrFail();
+        $shipment = $wNotification->shipment()->first();
 
-        $point = $this->getPoint($notification, $shipment);
+        $point = $this->getPoint($wNotification, $shipment, false);
 
         $point->actionWialonGeofences()->create([
-            'wialon_notification_id' => $notification->id,
-            'shipment_id' => $shipment->id,
+            'wialon_notification_id' => $wNotification->id,
             'name' => $data['zone'],
             'temp' => $data['sensor_temp'],
             'temp_type' => $data['sensor_temp_type'],
@@ -143,25 +136,15 @@ class WialonActionsController
         ]);
 
         // Completed shipment, if the entrance to the last point
-        $lastRetailOutlet = $shipment->shipmentRetailOutlets()->get()->sortBy('turn')->last();
+        $retailOutlets = $shipment->shipmentRetailOutlets()
+            ->get()
+            ->sortBy('turn');
 
-        if ($point->id === $lastRetailOutlet->id) {
-            $actionGeofences = $notification->actionGeofences()->orderBy('created_at')->get();
-
-            $resource = \WialonResource::useOnlyHosts($shipment->w_conn_id)
-                ->firstResource()
-                ->first();
-
-            $path = $shipment->date->format('d.m.Y').'/'.$shipment->id.'/';
-
-            Bus::batch([
-                new SaveWlnForShipment($shipment, $path),
-                new SaveKmlForShipment($shipment, $path, $resource),
-                new GenReportsForShipment($shipment, $path, $notification, $resource, $actionGeofences),
-//                    new SaveWlpForShipment($shipment, $path)
-            ])->dispatch();
-
-            $shipment->update(['completed' => true]);
+        if (
+            $retailOutlets->count() > 0 &&
+            $point->id === $retailOutlets->last()->id
+        ) {
+            ShipmentDataService::completeShipment($shipment);
         }
     }
 
@@ -169,7 +152,7 @@ class WialonActionsController
      * @param Request $request
      * @return array
      */
-    protected function normalizeRequest (Request $request) {
+    protected function normalizeRequest(Request $request) {
         $data = $request->all();
 
         if ($request->has('sensor_temp')) {
@@ -216,22 +199,44 @@ class WialonActionsController
      * @param Shipment $shipment
      * @return mixed
      */
-    public function getPoint(WialonNotification $notification, Shipment $shipment)
+    public function getPoint(WialonNotification $notification, Shipment $shipment, $entrance = true)
     {
-        $loadingCount = $shipment->actionGeofences()
-            ->where('pointable_type', LoadingZone::getMorphClass())
-            ->where('is_entrance', false)
-            ->count();
+        $actGeofences = ShipmentDataService::wialonNotificationAction(
+            $notification,
+            WialonNotification::ACTION_GEOFENCE,
+        );
 
-        $retailCount = $notification->actionGeofences()
-            ->where('pointable_type', ShipmentRetailOutlet::getMorphClass())
-            ->count();
+        $loadingZoneGeofences = $actGeofences
+            ->where('pointable_type', LoadingZone::getMorphClass());
 
-        if ($loadingCount == 0) {
+        if ($loadingZoneGeofences->count() == 0 ||
+            ($loadingZoneGeofences->where('is_entrance', true)->first() && $loadingZoneGeofences->count() == 1 && !$entrance)) {
             $point = $shipment->loadingZones()->first();
+        } else if ($loadingZoneGeofences->where('is_entrance', true)->first() && $loadingZoneGeofences->count() == 1 && $entrance) {
+            throw new \Exception('There must be an exit from the loading zone');
         } else {
-            $point = $shipment->shipmentRetailOutlets()->where('turn', $retailCount + 1)->first();
+            $lastGeofence = $actGeofences
+                ->where('pointable_type', ShipmentRetailOutlet::getMorphClass())
+                ->where('pointable_id', $actGeofences->last()->pointable_id);
+
+            if ((!$lastGeofence->first() || $lastGeofence->count() == 2) && $entrance) {
+                $count = $actGeofences
+                    ->where('pointable_type', ShipmentRetailOutlet::getMorphClass())
+                    ->where('is_entrance', true)
+                    ->count();
+
+                $point = $shipment->shipmentRetailOutlets()->where('turn', $count + 1)->first();
+            } else {
+                if ($entrance && $lastGeofence->where('is_entrance', true)->first()) {
+                    throw new \Exception('You cannot enter the same geofence twice');
+                } else if (!$entrance && ($lastGeofence->where('is_entrance', false)->first() || !$lastGeofence->first())) {
+                    throw new \Exception('You cannot leave without entering the geofence');
+                } else {
+                    $point = $lastGeofence->first()->pointable()->first();
+                }
+            }
         }
+
         return $point;
     }
 
