@@ -74,7 +74,9 @@ class DashboardController extends Controller
             ->with([
                 'loadingZones.shipments',
                 'loadingZones.actionWialonGeofences',
-                'shipmentRetailOutlets.shipmentOrders',
+                'shipmentRetailOutlets.shipmentOrders' => function ($query) use ($request) {
+                    $query->where('shipment_id', $request->shipment_id);
+                },
                 'shipmentRetailOutlets.actionWialonGeofences',
                 'shipmentRetailOutlets.retailOutlet.actionWialonGeofences',
                 'shipmentRetailOutlets.shipments',

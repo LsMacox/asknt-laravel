@@ -17,6 +17,7 @@ class CreateShipmentOrderShipmentRetailOutletTable extends Migration
             $table->id();
             $table->foreignId('shipment_retail_outlet_id')->constrained()->onDelete('cascade');
             $table->foreignId('shipment_order_id')->constrained()->onDelete('cascade');
+            $table->foreignId('shipment_id');
         });
     }
 

@@ -149,7 +149,7 @@ class ShipmentSoapService
                             );
                         }
 
-                        $shipmentRetailOutlet->shipmentOrders()->attach($shipmentOrder);
+                        $shipmentRetailOutlet->shipmentOrders()->attach($shipmentOrder, ['shipment_id' => $shipment->id]);
                     }
                 }
             }

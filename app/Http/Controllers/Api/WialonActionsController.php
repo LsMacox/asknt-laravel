@@ -37,11 +37,13 @@ class WialonActionsController
             'created_at' => $data['msg_time'],
         ]);
 
-        $shipment->violations()->create([
-            'name' => 'Нарушение температуры',
-            'text' => 'Температура '. $data['sensor_temp'].', норма от '.$temperature['from'].' до '.$temperature['to'],
-            'created_at' => $data['msg_time'],
-        ]);
+        if ($data['sensor_temp'] < $temperature['from'] && $data['sensor_temp'] > $temperature['to']) {
+            $shipment->violations()->create([
+                'name' => 'Нарушение температуры',
+                'text' => 'Температура '. $data['sensor_temp'].', норма от '.$temperature['from'].' до '.$temperature['to'],
+                'created_at' => $data['msg_time'],
+            ]);
+        }
     }
 
     /**
