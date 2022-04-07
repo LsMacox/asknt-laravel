@@ -316,14 +316,22 @@ class ShipmentSoapService
             $score['score'] = (string) \Str::of($score['score'])->trim();
             $score['long'] = (double) $score['long'];
             $score['lat'] = (double) $score['lat'];
-            $orders = $score['orders']['order'];
-            $orders = $this->wrapAssoc($orders);
 
-            $score['orders']['order'] = collect($orders)->map(function ($order) {
-                $order['order'] = (string) \Str::of($order['order'])->trim();
-                $order['weight'] = (double) $order['weight'];
-                return $order;
-            })->toArray();
+            if (!isset($score['turn'])) {
+                $score['turn'] = 1;
+            }
+
+            if (isset($score['orders'])) {
+                $orders = $score['orders']['order'];
+                $orders = $this->wrapAssoc($orders);
+
+                $score['orders']['order'] = collect($orders)->map(function ($order) {
+                    $order['order'] = (string) \Str::of($order['order'])->trim();
+                    $order['weight'] = (double) $order['weight'];
+                    return $order;
+                })->toArray();
+            }
+
             return $score;
         })->toArray();
 
