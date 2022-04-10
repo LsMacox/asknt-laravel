@@ -27,8 +27,8 @@ class ReportController extends Controller
         $shipmentEndDate = null;
 
         if ($shipmentFilter->count() > 0) {
-            $shipmentStartDate = $shipmentFilter->first()->created_at;
-            $shipmentEndDate = $shipmentFilter->last()->created_at;
+            $shipmentStartDate = $shipmentFilter->first()->date;
+            $shipmentEndDate = $shipmentFilter->last()->date;
         }
 
         if ($shipmentStartDate) {
@@ -43,14 +43,14 @@ class ReportController extends Controller
      * @param ShipmentFilter $filter
      * @return mixed
      */
-    public function downloadReport (ShipmentFilterRequest $request, ShipmentFilter $filter) {
+    public function downloadReport(ShipmentFilterRequest $request, ShipmentFilter $filter) {
         $shipmentFilter = Shipment::filter($filter)
             ->where('completed', true)
             ->orWhere('not_completed', true)
             ->orderBy('created_at');
 
-        $shipmentStartDate = optional($shipmentFilter->get()->first())->created_at ?? now();
-        $shipmentEndDate = optional($shipmentFilter->get()->last())->created_at ?? now();
+        $shipmentStartDate = optional($shipmentFilter->get()->first())->date ?? now();
+        $shipmentEndDate = optional($shipmentFilter->get()->last())->date ?? now();
 
         ob_end_clean();
         ob_start();

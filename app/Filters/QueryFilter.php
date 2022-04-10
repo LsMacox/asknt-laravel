@@ -63,6 +63,9 @@ abstract class QueryFilter
     {
         return array_filter(array_map(
             function ($v) {
+                if (is_string($v) && !empty(json_decode($v))) {
+                    return (array) json_decode($v);
+                }
                 return is_string($v) ? trim($v) : $v;
             },
             $this->request->all()

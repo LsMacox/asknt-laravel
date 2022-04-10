@@ -208,7 +208,7 @@ class ShipmentSoapService
 
 
                     $this->busChain[] = function () use ($shipment) {
-                        $shipment->shipmentRetailOutlets()->delete();
+                        $shipment->shipmentRetailOutlets()->detach();
                     };
 
                     $this->busChain[] = function () use ($shipment, $retailOutlets) {
