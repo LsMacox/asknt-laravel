@@ -14,6 +14,13 @@ class CreateWialonGeofence implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
+     * The number of times the job may be attempted.
+     *
+     * @var int
+     */
+    public $tries = 10;
+
+    /**
      * @var string|int $hostId
      */
     protected $hostId;
@@ -40,6 +47,7 @@ class CreateWialonGeofence implements ShouldQueue
      */
     public function __construct($zone, object $wResource, Shipment $shipment)
     {
+        $this->onQueue('wialon');
         $this->hostId = $shipment->w_conn_id;
         $this->zone = $zone;
         $this->wResource = $wResource;
@@ -74,6 +82,8 @@ class CreateWialonGeofence implements ShouldQueue
             ]
         ];
 
+        \Wialon::newSession($this->hostId);
+
         $wCreate = \Wialon::useOnlyHosts([$this->hostId])->resource_update_zone(
             json_encode($params)
         );
@@ -86,7 +96,7 @@ class CreateWialonGeofence implements ShouldQueue
                 'name' => $wCreate[$this->hostId][1]->n
             ]);
         } else {
-            $this->release(3);
+            $this->release(10);
         }
     }
 

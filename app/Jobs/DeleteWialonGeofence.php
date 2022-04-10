@@ -15,6 +15,13 @@ class DeleteWialonGeofence implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    /**
+     * The number of times the job may be attempted.
+     *
+     * @var int
+     */
+    public $tries = 10;
+
     protected WialonGeofence $wialonGeofence;
 
     /**
@@ -23,6 +30,7 @@ class DeleteWialonGeofence implements ShouldQueue
      * @return void
      */
     public function __construct(WialonGeofence $wialonGeofence) {
+        $this->onQueue('wialon');
         $this->wialonGeofence = $wialonGeofence;
     }
 
@@ -40,8 +48,16 @@ class DeleteWialonGeofence implements ShouldQueue
             'callMode' => 'delete',
         ];
 
-        \Wialon::useOnlyHosts([$this->wialonGeofence->w_conn_id])->resource_update_zone(
+        \Wialon::newSession($this->wialonGeofence->w_conn_id);
+
+        $wUpdate = \Wialon::useOnlyHosts([$this->wialonGeofence->w_conn_id])->resource_update_zone(
             json_encode($params)
         );
+
+        if (!isset($wUpdate[$this->wialonGeofence->w_conn_id][0])) {
+            $this->release(10);
+        } else {
+            $this->wialonGeofence->delete();
+        }
     }
 }

@@ -21,13 +21,13 @@ class ShipmentObserver
             $wialonNotifications = $shipment->wialonNotifications()->get();
 
             foreach ($wialonNotifications as $notification) {
-                DeleteWialonNotification::dispatch($notification)->onQueue('wialon');
+                DeleteWialonNotification::dispatch($notification);
             }
 
             $wialonGeofences = $shipment->wialonGeofences()->get();
 
             foreach ($wialonGeofences as $geofence) {
-                DeleteWialonGeofence::dispatch($geofence)->onQueue('wialon');
+                DeleteWialonGeofence::dispatch($geofence);
             }
         }
     }

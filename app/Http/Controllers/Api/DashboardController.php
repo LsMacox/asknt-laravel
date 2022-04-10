@@ -39,7 +39,7 @@ class DashboardController extends Controller
             $inp('offset'),
             $inp('limit'),
             $inp('sortBy'),
-            $inp('sortByDesc') || false,
+            $inp('sortByDesc') ?? true,
             Shipment::filter($filter)
                 ->where('completed', false)
                 ->where('not_completed', false)

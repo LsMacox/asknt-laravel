@@ -21,6 +21,6 @@ class LoadingZoneShipmentObserver
         $shipment = $loadingZoneShipment->pivotParent;
         $wResource = WialonResources::where('w_conn_id', $shipment->w_conn_id)->first();
 
-        CreateWialonGeofence::dispatch($loadingZone, $wResource, $shipment)->onQueue('wialon');
+        CreateWialonGeofence::dispatch($loadingZone, $wResource, $shipment);
     }
 }

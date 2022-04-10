@@ -41,7 +41,7 @@ class LoadingZoneObserver
 
         foreach ($shipments as $shipment) {
             $loadigZone = $shipment->loadingZones()->first();
-            UpdateWialonGeofence::dispatch($loadigZone)->onQueue('wialon');
+            UpdateWialonGeofence::dispatch($loadigZone);
         }
     }
 
@@ -56,7 +56,7 @@ class LoadingZoneObserver
         $wialonGeofences = $loadingZone->wialonGeofences()->get();
 
         foreach ($wialonGeofences as $geofence) {
-            DeleteWialonGeofence::dispatch($geofence)->onQueue('wialon');
+            DeleteWialonGeofence::dispatch($geofence);
         }
     }
 }

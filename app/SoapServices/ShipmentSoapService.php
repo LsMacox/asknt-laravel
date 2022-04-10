@@ -4,10 +4,15 @@ declare(strict_types=1);
 
 namespace App\SoapServices;
 
-use App\Jobs\CreateWialonNotificationsForShipment;
+use App\Jobs\CreateGeofenceWialonNotifications;
+use App\Jobs\CreateTempWialonNotifications;
+use App\Jobs\CreateWialonGeofence;
+use App\Jobs\DeleteWialonGeofence;
+use App\Jobs\DeleteWialonNotification;
 use App\Models\LoadingZone;
 use App\Models\ShipmentList\ShipmentOrder;
 use App\Models\ShipmentList\ShipmentRetailOutlet;
+use App\Models\Wialon\WialonNotification;
 use App\Models\Wialon\WialonObjects;
 use App\Models\Wialon\WialonResources;
 use App\SoapServices\Struct\ShipmentStatus\DT_Shipment_ERP_resp;
@@ -50,6 +55,24 @@ class ShipmentSoapService
     private $origWaybill;
 
     /**
+     * Wialon ресурс данного маршрутника
+     * @var $wResource
+     */
+    private $wResource;
+
+    /**
+     * Wialon объект данного маршрутника
+     * @var $wObject
+     */
+    private $wObject;
+
+    /**
+     * Цепочка заданий
+     * @var $busChain
+     */
+    private $busChain;
+
+    /**
      * Method to call the operation originally named saveAvanternShipment
      * Meta information extracted from the WSDL
      * - documentation: saving data
@@ -57,7 +80,7 @@ class ShipmentSoapService
      * @param object $waybill
      * @return \stdClass $waybill
      */
-    public function saveAvanternShipment (string $system, object $waybill)
+    public function saveAvanternShipment(string $system, object $waybill)
     {
         $this->system = $system;
         $this->origWaybill = $waybill;
@@ -77,7 +100,7 @@ class ShipmentSoapService
     /**
      * @param $errors
      */
-    protected function handleValidatorErrors ($errors)
+    protected function handleValidatorErrors($errors)
     {
         \Log::channel('soap-server')->debug('Shipment errors['.$this->waybill['number'].']: '.json_encode($errors));
 
@@ -95,7 +118,7 @@ class ShipmentSoapService
     /**
      * @return PendingDispatch|void
      */
-    protected function saveWaybill ()
+    protected function saveWaybill()
     {
         $this->waybill['timestamp'] = $this->rawDateToIso($this->waybill['timestamp']);
         $this->waybill['date'] = $this->rawDateToIso($this->waybill['date']);
@@ -122,22 +145,34 @@ class ShipmentSoapService
                 array_merge($this->waybill, ['w_conn_id' => $hostId])
             );
 
+            $this->wResource = WialonResources::where('w_conn_id', $shipment->w_conn_id)->first();
+            $this->wObject = WialonObjects::where('registration_plate', \WialonResource::prepareRegPlate($shipment->car))
+                ->orWhere('registration_plate', \WialonResource::prepareRegPlate($shipment->trailer))->first();
+
             $statusCreate = \Str::is(Shipment::STATUS_CREATE, $this->waybill['status']);
+            $statusUpdate = \Str::is(Shipment::STATUS_UPDATE, $this->waybill['status']);
             $statusDelete = \Str::is(Shipment::STATUS_DELETE, $this->waybill['status']);
 
             if (!$statusDelete) {
                 $this->createLoadingZone($shipment);
+
+                $retailOutlets = collect();
+
                 foreach ($this->waybill['scores']['score'] as $score) {
                     $score['date'] = $this->rawDateToIso($score['date']);
 
+                    $orders = collect();
                     $shipmentRetailOutlet = ShipmentRetailOutlet::where('code', $score['score'])->first();
+
                     if (!$shipmentRetailOutlet) {
                         $shipmentRetailOutlet = ShipmentRetailOutlet::create(
                             array_merge($score, ['code' => $score['score'], 'w_conn_id' => $hostId])
                         );
                     }
 
-                    $shipment->shipmentRetailOutlets()->attach($shipmentRetailOutlet);
+                    $shipmentRetailOutlet->update(['turn' => $score['turn']]);
+
+                    $retailOutlets->push($shipmentRetailOutlet->toArray());
 
                     foreach ($score['orders']['order'] as $order) {
                         $order['return'] = ShipmentOrder::returnToBoolean($order['return']);
@@ -149,24 +184,58 @@ class ShipmentSoapService
                             );
                         }
 
-                        $shipmentRetailOutlet->shipmentOrders()->attach($shipmentOrder, ['shipment_id' => $shipment->id]);
+                        $orders->push($shipmentOrder->toArray());
                     }
+
+                    $shipmentRetailOutlet->shipmentOrders()
+                        ->where('shipment_id', $shipment->id)
+                        ->sync(
+                            $orders->mapWithKeys(function ($item) use ($shipment) {
+                                return [$item['id'] => ['shipment_id' => $shipment->id]];
+                            })->toArray()
+                        );
+                }
+
+                if ($statusUpdate) {
+                    $notificationGeofences = $shipment->wialonNotifications->where('action_type', WialonNotification::ACTION_GEOFENCE);
+                    foreach ($notificationGeofences as $notification) {
+                        $this->busChain[] = new DeleteWialonNotification($notification);
+                    }
+
+                    foreach ($shipment->shipmentRetailOutlets()->get() as $shipmentRetailOutlet) {
+                        $wialonGeofences = $shipmentRetailOutlet->wialonGeofences()
+                            ->where('shipment_id', $shipment->id)
+                            ->get();
+
+                        foreach ($wialonGeofences as $geofence) {
+                            $this->busChain[] = new DeleteWialonGeofence($geofence);
+                        }
+                    }
+
+
+                    $this->busChain[] = function () use ($shipment) {
+                        $shipment->shipmentRetailOutlets()->delete();
+                    };
+
+                    $this->busChain[] = function () use ($shipment, $retailOutlets) {
+                        $shipment->shipmentRetailOutlets()->sync($retailOutlets->pluck('id'));
+                    };
+
+                    $this->chainWialonGeofences($shipment);
+                    $this->busChain[] = new CreateGeofenceWialonNotifications($hostId, $this->wResource, $shipment, $this->wObject);
+                } else {
+                    $shipment->shipmentRetailOutlets()->sync($retailOutlets->pluck('id'));
+                    $this->chainWialonGeofences($shipment);
                 }
             }
             \DB::commit();
 
             if ($statusCreate) {
-                $retailOutlets = $shipment->shipmentRetailOutlets()
-                    ->whereNotNull(['long', 'lat'])
-                    ->get();
-
-                $wResource = WialonResources::where('w_conn_id', $shipment->w_conn_id)->first();
-
-                $wObject = WialonObjects::where('registration_plate', \WialonResource::prepareRegPlate($shipment->car))
-                    ->orWhere('registration_plate', \WialonResource::prepareRegPlate($shipment->trailer))->first();
-
-                CreateWialonNotificationsForShipment::dispatch($hostId, $retailOutlets, $wResource, $shipment, $wObject);
+                CreateTempWialonNotifications::dispatch($hostId, $this->wResource, $shipment, $this->wObject);
+                $this->busChain[] = new CreateGeofenceWialonNotifications($hostId, $this->wResource, $shipment, $this->wObject);
             }
+
+            Bus::chain($this->busChain)->dispatch();
 
             SendShipmentStatus::dispatch(
                 $this->structShipmentStatus([])
@@ -177,6 +246,17 @@ class ShipmentSoapService
             SendShipmentStatus::dispatch(
                 $this->structShipmentStatus([new message('0', $e->getMessage())], true)
             );
+        }
+    }
+
+    /**
+     * @param Shipment $shipment
+     * @return void
+     */
+    protected function chainWialonGeofences(Shipment $shipment) {
+        foreach ($shipment->shipmentRetailOutlets()->get() as $shipmentRetailOutlet) {
+            $wResource = WialonResources::where('w_conn_id', $shipment->w_conn_id)->first();
+            $this->busChain[] = new CreateWialonGeofence($shipmentRetailOutlet, $wResource, $shipment);
         }
     }
 
@@ -222,7 +302,7 @@ class ShipmentSoapService
      * Validate waybill
      * @return \Illuminate\Contracts\Validation\Validator
      */
-    protected function validate (): \Illuminate\Contracts\Validation\Validator
+    protected function validate(): \Illuminate\Contracts\Validation\Validator
     {
         $statusCreate = \Str::is(Shipment::STATUS_CREATE, $this->waybill['status']);
 
@@ -271,7 +351,7 @@ class ShipmentSoapService
             'scores.score.*.arrive_from' => 'string|date_format:H:i',
             'scores.score.*.arrive_to' => 'string|date_format:H:i',
             'scores.score.*.turn' => 'required|numeric|min:0',
-            'scores.score.*.orders' => 'required|array',
+            'scores.score.*.orders' => 'array',
 
             'scores.score.*.orders.order.*.order' => $orderId,
             'scores.score.*.orders.order.*.product' => 'required|string|max:255',
@@ -285,7 +365,7 @@ class ShipmentSoapService
      * @param bool $error
      * @return DT_Shipment_ERP_resp
      */
-    protected function structShipmentStatus (array $messages, bool $error = false): DT_Shipment_ERP_resp
+    protected function structShipmentStatus(array $messages, bool $error = false): DT_Shipment_ERP_resp
     {
         $struct_messages = new messages($messages);
         $struct_waybill = new waybill(
@@ -302,7 +382,7 @@ class ShipmentSoapService
      * @param object $waybill
      * @return array
      */
-    protected function prepareWaybill (object $waybill): array
+    protected function prepareWaybill(object $waybill): array
     {
         $waybill = $this->objectToArray($waybill);
 
@@ -316,10 +396,6 @@ class ShipmentSoapService
             $score['score'] = (string) \Str::of($score['score'])->trim();
             $score['long'] = (double) $score['long'];
             $score['lat'] = (double) $score['lat'];
-
-            if (!isset($score['turn'])) {
-                $score['turn'] = 1;
-            }
 
             if (isset($score['orders'])) {
                 $orders = $score['orders']['order'];
@@ -343,7 +419,7 @@ class ShipmentSoapService
      * @param array $arr
      * @return array|array[]
      */
-    protected function wrapAssoc (array $arr): array
+    protected function wrapAssoc(array $arr): array
     {
         return Arr::isAssoc($arr) ? [$arr] : $arr;
     }
@@ -353,7 +429,7 @@ class ShipmentSoapService
      * @param string $date
      * @return string
      */
-    protected function rawDateToIso (string $date): string
+    protected function rawDateToIso(string $date): string
     {
         return Carbon::parse($date)->toIso8601String();
     }
@@ -363,7 +439,7 @@ class ShipmentSoapService
      * @param object|array $data
      * @return object|array
      */
-    protected function objectToArray ($data)
+    protected function objectToArray($data)
     {
         if (is_array($data) || is_object($data))
         {

@@ -18,7 +18,7 @@ class RetailOutletObserver
     public function updated(RetailOutlet $retailOutlet)
     {
         $shipmentRetailOutlet = ShipmentRetailOutlet::find($retailOutlet->shipment_retail_outlet_id);
-        UpdateWialonGeofence::dispatch($shipmentRetailOutlet)->onQueue('wialon');
+        UpdateWialonGeofence::dispatch($shipmentRetailOutlet);
     }
 
     /**

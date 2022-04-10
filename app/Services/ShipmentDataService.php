@@ -18,7 +18,7 @@ class ShipmentDataService
      * @param Shipment $shipment
      * @return void
      */
-    public function completeShipment (Shipment $shipment, $completed = true) {
+    public function completeShipment(Shipment $shipment, $completed = true) {
         $wNtfGeofence = $shipment->wialonNotifications()
             ->where('action_type', WialonNotification::ACTION_GEOFENCE)
             ->first();

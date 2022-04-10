@@ -21,7 +21,7 @@ class WialonActionsController
      * @return void
      */
     public function tempViolation(Request $request) {
-        \Log::channel('wialon-actions')->debug('tempViolation: '.json_encode($request->all()));
+        \Log::channel('wialon-actions')->debug('tempViolation: '.json_encode($request->all(), JSON_UNESCAPED_UNICODE));
 
         $data = $this->normalizeRequest($request);
 
@@ -51,7 +51,7 @@ class WialonActionsController
      * @return void
      */
     public function temp(Request $request) {
-        \Log::channel('wialon-actions')->debug('temp: '.json_encode($request->all()));
+        \Log::channel('wialon-actions')->debug('temp: '.json_encode($request->all(), JSON_UNESCAPED_UNICODE));
 
         $data = $this->normalizeRequest($request);
 
@@ -67,16 +67,17 @@ class WialonActionsController
     /**
      * @param Request $request
      * @return void
+     * @throws \Exception
      */
     public function entranceToGeofence(Request $request) {
-        \Log::channel('wialon-actions')->debug('entranceToGeofence: '.json_encode($request->all()));
+        \Log::channel('wialon-actions')->debug('entranceToGeofence: '.json_encode($request->all(), JSON_UNESCAPED_UNICODE));
 
         $data = $this->normalizeRequest($request);
 
         $notification = WialonNotification::where('name', $request->notification)->firstOrFail();
         $shipment = $notification->shipment()->first();
 
-        $point = $this->getPoint($notification, $shipment, true);
+        $point = $this->getPoint($notification, $shipment);
 
         $actGeofence = $point->actionWialonGeofences()->create([
             'wialon_notification_id' => $notification->id,
@@ -113,9 +114,10 @@ class WialonActionsController
     /**
      * @param Request $request
      * @return void
+     * @throws \Exception
      */
     public function departureFromGeofence(Request $request) {
-        \Log::channel('wialon-actions')->debug('departureFromGeofence: '.json_encode($request->all()));
+        \Log::channel('wialon-actions')->debug('departureFromGeofence: '.json_encode($request->all(), JSON_UNESCAPED_UNICODE));
 
         $data = $this->normalizeRequest($request);
 

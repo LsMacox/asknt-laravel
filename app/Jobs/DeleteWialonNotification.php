@@ -14,6 +14,13 @@ class DeleteWialonNotification implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    /**
+     * The number of times the job may be attempted.
+     *
+     * @var int
+     */
+    public $tries = 10;
+
     protected WialonNotification $wialonNotification;
 
     /**
@@ -23,6 +30,7 @@ class DeleteWialonNotification implements ShouldQueue
      */
     public function __construct(WialonNotification $wialonNotification)
     {
+        $this->onQueue('wialon');
         $this->wialonNotification = $wialonNotification;
     }
 
@@ -40,8 +48,16 @@ class DeleteWialonNotification implements ShouldQueue
             'callMode' => 'delete',
         ];
 
-        \Wialon::useOnlyHosts([$this->wialonNotification->w_conn_id])->resource_update_notification(
+        \Wialon::newSession($this->wialonNotification->w_conn_id);
+
+        $wUpdate = \Wialon::useOnlyHosts([$this->wialonNotification->w_conn_id])->resource_update_notification(
             json_encode($params)
         );
+
+        if (!isset($wUpdate[$this->wialonNotification->w_conn_id][0])) {
+            $this->release(10);
+        } else {
+            $this->wialonNotification->delete();
+        }
     }
 }

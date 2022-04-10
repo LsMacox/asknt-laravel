@@ -25,6 +25,7 @@ class UpdateWialonGeofence implements ShouldQueue
      */
     public function __construct($zone)
     {
+        $this->onQueue('wialon');
         $this->zone = $zone;
     }
 
@@ -62,6 +63,8 @@ class UpdateWialonGeofence implements ShouldQueue
                         ]
                     ]
                 ];
+
+                \Wialon::newSession($shipment->w_conn_id);
 
                 \Wialon::useOnlyHosts([$shipment->w_conn_id])->resource_update_zone(
                     json_encode($params)

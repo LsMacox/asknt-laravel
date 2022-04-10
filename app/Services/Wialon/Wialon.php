@@ -61,7 +61,7 @@ class Wialon
      * @param string $port
      * @param array $extra_params
      */
-    function __construct (
+    function __construct(
         string $scheme = 'http',
         string $host = '',
         string $port = '',
@@ -75,7 +75,32 @@ class Wialon
         }
     }
 
-    public function setHostId ($hostId) {
+    /**
+     * @param array|int $hosts
+     * @return $this
+     */
+    public function newSession($hosts): Wialon
+    {
+        if (!empty($hosts)) {
+            if (is_array($hosts)) {
+                foreach ($hosts as $host) {
+                    static::$sids[$host] = [];
+                }
+            } else {
+                static::$sids[$hosts] = [];
+            }
+        } else {
+            static::$sids = [];
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param $hostId
+     * @return void
+     */
+    public function setHostId($hostId) {
         $this->host_id = $hostId;
     }
 
@@ -84,7 +109,7 @@ class Wialon
      * @param $extra_params
      * @return void
      */
-    public function update_extra_params ($extra_params): void {
+    public function update_extra_params($extra_params): void {
         $this->default_params = array_replace($this->default_params, $extra_params);
     }
 
@@ -92,7 +117,7 @@ class Wialon
      * @param array $hosts
      * @return $this
      */
-    public function useOnlyHosts (array $hosts = []) {
+    public function useOnlyHosts(array $hosts = []) {
         $this->only_hosts = $hosts;
         return $this;
     }
@@ -101,7 +126,7 @@ class Wialon
      * @param bool $return_raw
      * @return $this
      */
-    public function returnRaw (bool $return_raw = true) {
+    public function returnRaw(bool $return_raw = true) {
         $this->return_raw = $return_raw;
         return $this;
     }
@@ -109,7 +134,7 @@ class Wialon
     /**
      * @return $this
      */
-    public function debug () {
+    public function debug() {
         $this->debug = true;
         return $this;
     }
@@ -121,7 +146,7 @@ class Wialon
      * @param $action
      * @param $args
      */
-    public function call ($action, $args)
+    public function call($action, $args)
     {
         $url = $this->base_api_url;
 
@@ -177,7 +202,7 @@ class Wialon
      * @param $action
      * @param $args
      */
-    public function call_default ($action, $args)
+    public function call_default($action, $args)
     {
         $results = [];
         $connections = collect(config('wialon.connections.default'));
@@ -211,6 +236,7 @@ class Wialon
             } else {
                 $wialon->setHostId($id);
                 $res = call_user_func_array([$wialon, $action], Arr::wrap($args));
+
                 if ($this->debug) {
                     $results[$id] = ['request' => $wialon->debug_request, 'response' => $res];
                 } else {
@@ -231,7 +257,7 @@ class Wialon
      * @param $id
      * @return mixed
      */
-    public function login ($token, $id = null) {
+    public function login($token, $id = null) {
         $data = json_encode([
             'token' => urlencode($token),
         ]);
@@ -254,7 +280,7 @@ class Wialon
      * return - server response
      * @return mixed
      */
-    public function logout ($id = null) {
+    public function logout($id = null) {
         $result = $this->core_logout();
 
         if (empty($id)) {
@@ -274,7 +300,7 @@ class Wialon
      * @param $args
      * @return bool|array|Collection
      */
-    public function __call (string $name, array $args) {
+    public function __call(string $name, array $args) {
         $arguments = count($args) === 0 ? '{}' : $args[0];
 
         return !empty($this->base_api_url) ?
