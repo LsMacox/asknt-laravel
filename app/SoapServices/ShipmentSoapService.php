@@ -176,13 +176,7 @@ class ShipmentSoapService
 
                     foreach ($score['orders']['order'] as $order) {
                         $order['return'] = ShipmentOrder::returnToBoolean($order['return']);
-
-                        $shipmentOrder = ShipmentOrder::where('code', $order['order'])->first();
-                        if (!$shipmentOrder) {
-                            $shipmentOrder = ShipmentOrder::create(
-                                array_merge($order, ['code' => $order['order']])
-                            );
-                        }
+                        $shipmentOrder = ShipmentOrder::updateOrCreate(['code' => $order['order']], $order);
 
                         $orders->push($shipmentOrder->toArray());
                     }
